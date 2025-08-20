@@ -58,7 +58,7 @@ const Home = () => {
         title={isLastSlide ? "Get Started" : "Next"}
         onPress={() =>
           isLastSlide
-            ? router.replace("/sign-in")
+            ? router.replace("/(root)/(tabs)/home")
             : swiperRef.current?.scrollBy(1)
         }
         className="w-11/12 mt-10 mb-5"

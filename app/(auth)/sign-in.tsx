@@ -1,6 +1,7 @@
 import CustomButton from "@/components/CustomButton";
 import InputField from "@/components/InputField";
 import OAuth from "@/components/OAuth";
+import React from "react";
 import { icons } from "@/constants";
 import { Link, router } from "expo-router";
 import { useState } from "react";

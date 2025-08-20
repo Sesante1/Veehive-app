@@ -1,11 +1,13 @@
 import { Stack } from "expo-router";
+import React from "react";
 
-const Layout = () => {
+export default function Layout() {
   return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="create-car" options={{ headerShown: false }} />
     </Stack>
   );
-};
+}
 
-export default Layout;
+// export default Layout;

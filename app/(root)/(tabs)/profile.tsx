@@ -1,31 +1,122 @@
+import { Feather, MaterialIcons, SimpleLineIcons } from "@expo/vector-icons";
 import React from "react";
-import { Image, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useUserData } from "../../../hooks/useUser";
+import ProfileSkeleton from "../../../components/ProfileSkeleton";
 
-const Profile = () => {
+export default function Profile() {
+  const { userData, loading } = useUserData();
+
+  if (loading) {
+    return <ProfileSkeleton />;
+  }
+
+  if (!userData) {
+    return <Text>No user data found.</Text>;
+  }
+
   return (
-    <View className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white">
       <ScrollView
         className="p-4"
         // contentContainerStyle={{ paddingBottom: 120 }}
       >
         <Text className="text-2xl font-JakartaBold">Account</Text>
 
-        <View className="flex items-center justify-center my-5">
+        <View className="flex items-center justify-center my-5 mb-20">
           <Image
-            // source={{
-            //   uri: user?.externalAccounts[0]?.imageUrl ?? user?.imageUrl,
-            // }}
-            source={require("../../../assets/images/person1.jpg")}
+            source={{
+              uri: userData.profileImage,
+            }}
             style={{ width: 110, height: 110, borderRadius: 110 / 2 }}
             className=" rounded-full h-[110px] w-[110px] border-[3px] border-white shadow-sm shadow-neutral-300"
           />
 
-          <Text className="mt-5 font-JakartaSemiBold">Jhon Doe</Text>
+          <Text className="mt-5 font-JakartaSemiBold">
+            {userData.firstName + " " + userData.lastName}
+          </Text>
           <Text className="font-Jakarta">Guest</Text>
         </View>
-      </ScrollView>
-    </View>
-  );
-};
 
-export default Profile;
+        <View className="flex-1">
+          <View className="border-b border-gray-200 mb-4 pb-4">
+            <Pressable className="flex flex-row items-center gap-4 p-4 rounded-lg">
+              <Feather name="calendar" size={20} color="#00000" />
+              <Text className="text-lg font-Jakarta">My Booking</Text>
+              <MaterialIcons
+                className="absolute right-0"
+                name="navigate-next"
+                size={30}
+                color="#00000"
+              />
+            </Pressable>
+
+            <Pressable className="flex flex-row items-center gap-3 p-4">
+              <Feather name="list" size={20} color="black" />
+              <Text className="text-lg font-Jakarta">Your listing</Text>
+              <MaterialIcons
+                className="absolute right-0"
+                name="navigate-next"
+                size={30}
+                color="#00000"
+              />
+            </Pressable>
+
+            <Pressable className="flex flex-row items-center gap-3 p-4">
+              <Feather name="check" size={20} color="#00000" />
+              <Text className="text-lg font-Jakarta">Booking Recieved</Text>
+              <MaterialIcons
+                className="absolute right-0"
+                name="navigate-next"
+                size={30}
+                color="#00000"
+              />
+            </Pressable>
+
+            <Pressable className="flex flex-row items-center gap-3 p-4">
+              <Feather name="heart" size={20} color="#00000" />
+              <Text className="text-lg font-Jakarta">Wishlists</Text>
+              <MaterialIcons
+                className="absolute right-0"
+                name="navigate-next"
+                size={30}
+                color="#00000"
+              />
+            </Pressable>
+          </View>
+          <View>
+            <Pressable className="flex flex-row items-center gap-3 p-4">
+              <Feather name="user" size={20} color="#00000" />
+              <Text className="text-lg font-Jakarta">Personal Information</Text>
+              <MaterialIcons
+                className="absolute right-0"
+                name="navigate-next"
+                size={30}
+                color="#00000"
+              />
+            </Pressable>
+
+            <Pressable className="flex flex-row items-center gap-3 p-4">
+              <SimpleLineIcons name="logout" size={20} color="#00000" />
+              <Text className="text-lg font-Jakarta">Logout</Text>
+              <MaterialIcons
+                className="absolute right-0"
+                name="navigate-next"
+                size={30}
+                color="#00000"
+              />
+            </Pressable>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}

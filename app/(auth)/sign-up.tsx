@@ -1,6 +1,7 @@
 import { Link } from "expo-router";
 import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
+import React from "react";
 
 import CustomButton from "@/components/CustomButton";
 import InputField from "@/components/InputField";
@@ -14,10 +15,11 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
-// import { FIREBASE_AUTH } from "../../FirebaseConfig";
-import { getAuth } from "firebase/auth";
+import { FIREBASE_AUTH } from "../../FirebaseConfig";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../../FirebaseConfig";
 
-const SignUp = () => {
+export default function SignUp (){
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -26,31 +28,60 @@ const SignUp = () => {
     lastName: "",
     email: "",
     password: "",
+    phoneNumber: "",
+    birthDate: "", 
+    profileImage: "", 
+    role: "user",
   });
 
   const onSignUpPress = async () => {
-    const { firstName, lastName, email, password } = form;
+    const {
+      firstName,
+      lastName,
+      email,
+      password,
+      phoneNumber,
+      birthDate,
+      profileImage,
+      role,
+    } = form;
 
     if (!firstName || !lastName || !email || !password) {
       Alert.alert("Error", "All fields are required.");
       return;
     }
 
+    setIsLoading(true);
+
     try {
       const userCredential = await createUserWithEmailAndPassword(
-        getAuth(),
+        FIREBASE_AUTH,
         email,
         password
       );
       const user = userCredential.user;
+      const defaultImageURL = "https://firebasestorage.googleapis.com/v0/b/car-rental-1e1a1.firebasestorage.app/o/carrots.png?alt=media&token=84647180-bcfd-4f2d-a842-4de43ec97b49";
 
       await updateProfile(user, {
         displayName: `${firstName} ${lastName}`,
+        photoURL: defaultImageURL || null
+      });
+
+      await setDoc(doc(db, "users", user.uid), {
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        birthDate,
+        profileImage: defaultImageURL,
+        role,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
 
       await sendEmailVerification(user);
 
-      await signOut(getAuth());
+      await signOut(FIREBASE_AUTH);
 
       Alert.alert(
         "Verify Email",
@@ -62,6 +93,8 @@ const SignUp = () => {
     } catch (error) {
       // console.error("Sign Up Error", error);
       Alert.alert("Sign Up Failed", String(error));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -108,7 +141,7 @@ const SignUp = () => {
             onChangeText={(value) => setForm({ ...form, password: value })}
           />
 
-          {true ? (
+          {isLoading ? (
             <View className="flex-row items-center justify-center w-full bg-primary-500 p-4 rounded-full mt-6">
               <ActivityIndicator size="small" color="#FFFFFF" />
             </View>
@@ -121,7 +154,7 @@ const SignUp = () => {
           )}
 
           <OAuth />
-          
+
           <Link
             href="/sign-in"
             className="text-lg text-center text-general-200 mt-10"
@@ -134,4 +167,4 @@ const SignUp = () => {
     </ScrollView>
   );
 };
-export default SignUp;
+// export default SignUp;
