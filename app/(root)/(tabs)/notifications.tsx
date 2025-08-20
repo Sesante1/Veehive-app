@@ -1,6 +1,6 @@
-import { View, Text, Image, ScrollView } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import React from 'react'
+import React from "react";
+import { Image, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { images } from "@/constants";
 
@@ -13,9 +13,15 @@ const Notifications = () => {
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <Text className="text-2xl font-JakartaBold">Notifications</Text>
         <View className="flex-1 h-fit flex justify-center items-center">
-          <Image
+          {/* <Image
             source={images.message}
             alt="message"
+            className="w-full h-40"
+            resizeMode="contain"
+          /> */}
+          <Image
+            source={images.message}
+            accessibilityLabel="Message illustration"
             className="w-full h-40"
             resizeMode="contain"
           />
@@ -28,7 +34,7 @@ const Notifications = () => {
         </View>
       </ScrollView>
     </SafeAreaView>
-  )
-}
+  );
+};
 
-export default Notifications
+export default Notifications;

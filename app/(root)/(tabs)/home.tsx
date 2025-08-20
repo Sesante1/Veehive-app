@@ -2,11 +2,10 @@ import InputField from "@/components/InputField";
 import { icons } from "@/constants";
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { FlatList, Text, View } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
 
 import CarCard from "@/components/CarCard";
 import { router } from "expo-router";
-import { useNavigation } from "@react-navigation/native";
 
 const cars = [
   {
@@ -106,13 +105,21 @@ const Home = () => {
               <Text className="text-2xl font-JakartaMedium mt-6">
                 Explore new {"\n"}Destinations with ease!
               </Text>
-              <MaterialIcons
+              {/* <MaterialIcons
                 className="add-box"
                 name="add-box"
                 size={40}
                 color="#007DFC"
                 onPress={() => router.push("/(root)/create-car")}
-              />
+              /> */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Add car"
+                hitSlop={8}
+                onPress={() => router.push("/create-car")}
+              >
+                <MaterialIcons name="add-box" size={40} color="#007DFC" />
+              </Pressable>
             </View>
 
             <InputField

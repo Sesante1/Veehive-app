@@ -26,7 +26,8 @@ export function useUserData() {
           const docSnap = await getDoc(docRef);
 
           if (docSnap.exists()) {
-            setUserData(docSnap.data());
+            // setUserData(docSnap.data());
+            setUserData(docSnap.data() as UserData);
           } else {
             console.log("No user document found!");
             setUserData(null);

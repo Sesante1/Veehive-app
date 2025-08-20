@@ -10,6 +10,7 @@ import {
 } from "react-native";
 
 import { InputFieldProps } from "@/types/type";
+import clsx from "clsx";
 
 interface TextAreaFieldProps extends InputFieldProps {
   numberOfLines?: number;
@@ -31,9 +32,9 @@ const TextAreaField = ({
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View className="my-4 w-full">
+        <View className={clsx("my-4 w-full", className)}>
           {/* Label */}
-          <Text className={`text-lg font-JakartaSemiBold mb-3 ${labelStyle}`}>
+          <Text className={clsx("text-lg font-JakartaSemiBold mb-3", labelStyle)}>
             {label}
           </Text>
 
@@ -54,7 +55,7 @@ const TextAreaField = ({
               multiline={true}
               numberOfLines={numberOfLines}
               textAlignVertical="top" // ensures text starts from the top
-              className={`p-4 font-JakartaSemiBold text-[15px] flex-1 text-left ${inputStyle}`}
+              className={clsx("p-4 font-JakartaSemiBold text-[15px] flex-1 text-left", inputStyle)}
               {...props}
             />
           </View>

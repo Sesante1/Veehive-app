@@ -4,7 +4,7 @@ import {
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
 import React from "react";
-import { Image, Text, View, Pressable } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 
 type CarProps = {
   id: string;
@@ -31,7 +31,13 @@ const CarCard: React.FC<CarProps> = ({
   imageUrl,
 }) => {
   return (
-    <Pressable className="flex-col mt-5 mb-2 bg-secondary-100 p-3 rounded-[20px]">
+    <Pressable
+      className="flex-col mt-5 mb-2 bg-secondary-100 p-3 rounded-[20px]"
+      onPress={() => {
+        // TODO: Navigate to car details screen
+        //        console.log(`Car selected: ${id}`);
+      }}
+    >
       <View className="w-full">
         <Image
           source={{ uri: imageUrl }}
@@ -44,7 +50,7 @@ const CarCard: React.FC<CarProps> = ({
             <Text className="color-secondary-700">{avgRating ?? "N/A"}</Text>
           </View>
 
-          <View className="bg-white w-[26] h-[26] flex justify-center items-center rounded-full">
+          <View className="bg-white w-[26px] h-[26px] flex justify-center items-center rounded-full">
             <AntDesign name="heart" size={18} color="#F40F1F" />
           </View>
         </View>

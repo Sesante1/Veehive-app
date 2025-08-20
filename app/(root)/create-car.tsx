@@ -15,7 +15,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const CreateCar = () => {
   const [carImages, setCarImages] = useState<ImageType[]>([]);
-  const [receipt, setReceipt] = useState([]);
+  const [receipt, setReceipt] = useState<ImageType[]>([]);
+  const [certificateRegistration, setCertificateRegistration] = useState<ImageType[]>([]);
 
   const [form, setForm] = useState({
     make: "",
@@ -154,9 +155,9 @@ const CreateCar = () => {
 
           <CarImagesComponent onImagesChange={setCarImages} />
 
-          <OfficialReceiptComponent onImagesChange={setCarImages} />
+          <OfficialReceiptComponent onImagesChange={setReceipt} />
 
-          <CertificateRegistrationComponent onImagesChange={setCarImages} />
+          <CertificateRegistrationComponent onImagesChange={setCertificateRegistration} />
 
           <CustomButton title="Upload listing" onPress={onCreateCarPress} className="mt-10"/>
         </ScrollView>
