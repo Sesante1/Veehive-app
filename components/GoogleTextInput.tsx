@@ -1,5 +1,5 @@
-import { View, Image, Text, TextInput, TouchableOpacity } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { icons } from "@/constants";
 import { GoogleInputProps } from "@/types/type";
@@ -16,6 +16,7 @@ const GoogleTextInput = ({
   const [searchText, setSearchText] = useState("");
   const [predictions, setPredictions] = useState([]);
   const [showPredictions, setShowPredictions] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Check if API key exists
   if (!googlePlacesApiKey) {
@@ -42,9 +43,9 @@ const GoogleTextInput = ({
           text
         )}&key=${googlePlacesApiKey}&language=en&types=address`
       );
-      
+
       const data = await response.json();
-      
+
       if (data.status === "OK" && Array.isArray(data.predictions)) {
         setPredictions(data.predictions.slice(0, 5)); // Limit to 5 results
         setShowPredictions(true);
@@ -65,39 +66,40 @@ const GoogleTextInput = ({
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${googlePlacesApiKey}&fields=geometry`
       );
-      
+
       const data = await response.json();
-      
+
       if (data.status === "OK" && data.result?.geometry?.location) {
         const location = {
           latitude: data.result.geometry.location.lat,
           longitude: data.result.geometry.location.lng,
           address: description,
         };
-        
+
         if (handlePress) {
           handlePress(location);
         }
       } else {
         // Fallback without coordinates
-        if (handlePress) {
-          handlePress({
-            latitude: 0,
-            longitude: 0,
-            address: description,
-          });
-        }
+        // if (handlePress) {
+        //   handlePress({
+        //     latitude: 0,
+        //     longitude: 0,
+        //     address: description,
+        //   });
+        // }
+        console.warn("No geometry in Place Details response");
       }
     } catch (error) {
       console.error("Error fetching place details:", error);
       // Fallback without coordinates
-      if (handlePress) {
-        handlePress({
-          latitude: 0,
-          longitude: 0,
-          address: description,
-        });
-      }
+      // if (handlePress) {
+      //   handlePress({
+      //     latitude: 0,
+      //     longitude: 0,
+      //     address: description,
+      //   });
+      // }
     }
   };
 
@@ -105,7 +107,7 @@ const GoogleTextInput = ({
     setSearchText(prediction.description);
     setShowPredictions(false);
     setPredictions([]);
-    
+
     if (prediction.place_id) {
       await getPlaceDetails(prediction.place_id, prediction.description);
     } else if (handlePress) {
@@ -117,22 +119,37 @@ const GoogleTextInput = ({
     }
   };
 
+  // const handleTextChange = (text: string) => {
+  //   setSearchText(text);
+
+  //   // Debounce the API call
+  //   const timeoutId = setTimeout(() => {
+  //     searchPlaces(text);
+  //   }, 300);
+
+  //   return () => clearTimeout(timeoutId);
+  // };
   const handleTextChange = (text: string) => {
     setSearchText(text);
-    
-    // Debounce the API call
-    const timeoutId = setTimeout(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
       searchPlaces(text);
     }, 300);
-
-    return () => clearTimeout(timeoutId);
   };
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   return (
     <View className={`relative z-50 ${containerStyle || ""}`}>
       <View className="relative">
         {/* Search Input */}
-        <View className={'flex-row items-center bg-general-500 rounded-full px-4 '}>
+        <View
+          className={"flex-row items-center bg-general-500 rounded-full px-4 "}
+        >
           <View className="mr-3">
             <Image
               source={icon || icons.pin}
@@ -166,7 +183,9 @@ const GoogleTextInput = ({
                 key={prediction.place_id || index}
                 onPress={() => handleSelectPlace(prediction)}
                 className={`px-4 py-3 ${
-                  index !== predictions.length - 1 ? "border-b border-gray-100" : ""
+                  index !== predictions.length - 1
+                    ? "border-b border-gray-100"
+                    : ""
                 }`}
               >
                 <View className="flex-row items-center">
@@ -175,7 +194,10 @@ const GoogleTextInput = ({
                     className="w-4 h-4 mr-3 opacity-50"
                     resizeMode="contain"
                   />
-                  <Text className="flex-1 text-sm text-gray-700" numberOfLines={2}>
+                  <Text
+                    className="flex-1 text-sm text-gray-700"
+                    numberOfLines={2}
+                  >
                     {prediction.description || "Unknown location"}
                   </Text>
                 </View>
