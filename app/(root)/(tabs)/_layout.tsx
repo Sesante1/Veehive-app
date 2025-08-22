@@ -1,11 +1,10 @@
+import { icons } from "@/constants";
 import { Tabs } from "expo-router";
 import { Image, ImageSourcePropType, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-
-import { icons } from "@/constants";
 
 const TabIcon = ({
   source,

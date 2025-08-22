@@ -1,13 +1,15 @@
 import { Link } from "expo-router";
-import { useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import React from "react";
 
 import CustomButton from "@/components/CustomButton";
 import InputField from "@/components/InputField";
 import OAuth from "@/components/OAuth";
 import { icons } from "@/constants";
-import { ActivityIndicator, Alert } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import LottieView from "lottie-react-native";
+import { ActivityIndicator, Alert, TouchableOpacity } from "react-native";
+import ReactNativeModal from "react-native-modal";
 
 import {
   createUserWithEmailAndPassword,
@@ -15,11 +17,10 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
-import { FIREBASE_AUTH } from "../../FirebaseConfig";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../../FirebaseConfig";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { db, FIREBASE_AUTH } from "../../FirebaseConfig";
 
-export default function SignUp (){
+export default function SignUp() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -29,8 +30,8 @@ export default function SignUp (){
     email: "",
     password: "",
     phoneNumber: "",
-    birthDate: "", 
-    profileImage: "", 
+    birthDate: "",
+    profileImage: "",
     role: "user",
   });
 
@@ -60,11 +61,12 @@ export default function SignUp (){
         password
       );
       const user = userCredential.user;
-      const defaultImageURL = "https://firebasestorage.googleapis.com/v0/b/car-rental-1e1a1.firebasestorage.app/o/carrots.png?alt=media&token=84647180-bcfd-4f2d-a842-4de43ec97b49";
+      const defaultImageURL =
+        "https://firebasestorage.googleapis.com/v0/b/car-rental-1e1a1.firebasestorage.app/o/carrots.png?alt=media&token=84647180-bcfd-4f2d-a842-4de43ec97b49";
 
       await updateProfile(user, {
         displayName: `${firstName} ${lastName}`,
-        photoURL: defaultImageURL || null
+        photoURL: defaultImageURL || null,
       });
 
       await setDoc(doc(db, "users", user.uid), {
@@ -83,10 +85,10 @@ export default function SignUp (){
 
       await signOut(FIREBASE_AUTH);
 
-      Alert.alert(
-        "Verify Email",
-        "A verification email has been sent to your inbox. Please verify your email before logging in."
-      );
+      // Alert.alert(
+      //   "Verify Email",
+      //   "A verification email has been sent to your inbox. Please verify your email before logging in."
+      // );
 
       setShowSuccessModal(true);
       // router.push("/sign-in");
@@ -163,8 +165,31 @@ export default function SignUp (){
             <Text className="text-primary-500 font-Jakarta">Log In</Text>
           </Link>
         </View>
+        <ReactNativeModal isVisible={showSuccessModal} backdropColor="black" backdropOpacity={0.5}>
+          <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px] flex items-center justify-center">
+            <LottieView
+              source={require("../../assets/animations/Email Sent.json")}
+              loop={false}
+              autoPlay
+              style={{ width: 150, height: 150 }}
+            />
+            <Text className="text-3xl font-JakartaBold text-center">
+              Verify email
+            </Text>
+            <Text className="text-base text-gray-400 font-Jakarta text-center mt-2">
+              A verification email has been sent to your inbox. Please verify
+              your email before logging in.
+            </Text>
+            <TouchableOpacity
+              className="absolute top-2 right-2 bg-gray-400 rounded-full w-6 h-6 justify-center items-center"
+              onPress={() => setShowSuccessModal(false)}
+            >
+              <Ionicons name="close" size={16} color="white" />
+            </TouchableOpacity>
+          </View>
+        </ReactNativeModal>
       </View>
     </ScrollView>
   );
-};
+}
 // export default SignUp;

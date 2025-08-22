@@ -22,7 +22,7 @@ const DropdownField = ({
   const [localItems, setLocalItems] = useState(items);
 
   return (
-      <View className="my-4 w-full">
+      <View className="my-4 w-full" style={{ zIndex: 1 }}>
         <Text className="text-lg font-JakartaSemiBold mb-3">
           {label}
         </Text>

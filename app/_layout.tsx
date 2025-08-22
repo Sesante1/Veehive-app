@@ -1,14 +1,10 @@
-// import { ClerkProvider } from "@clerk/clerk-expo";
-// import { tokenCache } from "@clerk/clerk-expo/token-cache";
-import React from "react";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import "react-native-reanimated";
 
 export default function RootLayout() {
-
   const [loaded] = useFonts({
     "Jakarta-Bold": require("../assets/fonts/PlusJakartaSans-Bold.ttf"),
     "Jakarta-ExtraBold": require("../assets/fonts/PlusJakartaSans-ExtraBold.ttf"),

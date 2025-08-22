@@ -1,5 +1,6 @@
 import CustomButton from "@/components/CustomButton";
 import DropdownField from "@/components/DropDownField";
+import GoogleTextInput from "@/components/GoogleTextInput";
 import type { ImageType } from "@/components/ImagePicker";
 import {
   CarImagesComponent,
@@ -10,13 +11,21 @@ import InputField from "@/components/InputField";
 import TextAreaField from "@/components/TextAreaField";
 import { icons } from "@/constants";
 import React, { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, Text } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const CreateCar = () => {
   const [carImages, setCarImages] = useState<ImageType[]>([]);
   const [receipt, setReceipt] = useState<ImageType[]>([]);
-  const [certificateRegistration, setCertificateRegistration] = useState<ImageType[]>([]);
+  const [certificateRegistration, setCertificateRegistration] = useState<
+    ImageType[]
+  >([]);
 
   const [form, setForm] = useState({
     make: "",
@@ -26,6 +35,8 @@ const CreateCar = () => {
     description: "",
     dailyRate: "",
     location: "",
+    latitude: 0,
+    longitude: 0,
     transmission: "",
     seats: "",
   });
@@ -39,11 +50,28 @@ const CreateCar = () => {
       description,
       dailyRate,
       location,
+      latitude,
+      longitude,
       transmission,
       seats,
     } = form;
 
     console.log("clicked");
+  };
+
+  // const handleDestinationPress = () => {};
+  const handlePress = (location: {
+    address: string;
+    latitude: number;
+    longitude: number;
+  }) => {
+    console.log("Selected location:", location);
+    setForm({
+      ...form,
+      location: location.address,
+      latitude: location.latitude,
+      longitude: location.longitude,
+    });
   };
 
   return (
@@ -117,14 +145,16 @@ const CreateCar = () => {
             onChangeText={(value) => setForm({ ...form, dailyRate: value })}
           />
 
-          <InputField
-            label="Location"
-            placeholder="e.g San Francisco, CA"
-            icon={icons.email}
-            textContentType="none"
-            value={form.location}
-            onChangeText={(value) => setForm({ ...form, location: value })}
-          />
+          <View className="mb-4" style={{ zIndex: 1000 }}>
+            <Text className="text-lg font-JakartaSemiBold mb-3">Location</Text>
+            <GoogleTextInput
+              icon={icons.pin}
+              handlePress={(location) => {
+                console.log("Selected location:", location);
+                setForm({ ...form, location: location.address });
+              }}
+            />
+          </View>
 
           <Text className="text-2xl font-JakartaBold my-5">Specifications</Text>
 
@@ -157,9 +187,15 @@ const CreateCar = () => {
 
           <OfficialReceiptComponent onImagesChange={setReceipt} />
 
-          <CertificateRegistrationComponent onImagesChange={setCertificateRegistration} />
+          <CertificateRegistrationComponent
+            onImagesChange={setCertificateRegistration}
+          />
 
-          <CustomButton title="Upload listing" onPress={onCreateCarPress} className="mt-10"/>
+          <CustomButton
+            title="Upload listing"
+            onPress={onCreateCarPress}
+            className="mt-10"
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -32,7 +32,7 @@ const CarCard: React.FC<CarProps> = ({
 }) => {
   return (
     <Pressable
-      className="flex-col mt-5 mb-2 bg-secondary-100 p-3 rounded-[20px]"
+      className="flex-col mt-5 mb-2 bg-secondary-400 p-3 rounded-[20px]"
       onPress={() => {
         // TODO: Navigate to car details screen
         //        console.log(`Car selected: ${id}`);
@@ -71,17 +71,17 @@ const CarCard: React.FC<CarProps> = ({
 
       <View className="flex-row justify-between items-center mt-4 mb-2">
         <View className="flex-row items-center gap-2">
-          <AntDesign name="setting" size={24} color="#2054DC" />
+          <AntDesign name="setting" size={24} color="#007DFC" />
           <Text className="color-secondary-500 text-lg">{transmission}</Text>
         </View>
 
         <View className="flex-row items-center gap-2">
-          <MaterialCommunityIcons name="fuel" size={24} color="#2054DC" />
+          <MaterialCommunityIcons name="fuel" size={24} color="#007DFC" />
           <Text className="color-secondary-500 text-lg">{fuel}</Text>
         </View>
 
         <View className="flex-row items-center gap-2">
-          <FontAwesome name="user" size={24} color="#2054DC" />
+          <FontAwesome name="user" size={24} color="#007DFC" />
           <Text className="color-secondary-500 text-lg">{seats} Seats</Text>
         </View>
       </View>
