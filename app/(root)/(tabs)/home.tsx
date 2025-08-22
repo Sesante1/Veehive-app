@@ -1,10 +1,10 @@
-import InputField from "@/components/InputField";
-import { icons } from "@/constants";
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 
 import CarCard from "@/components/CarCard";
+import InputField from "@/components/InputField";
+import { icons } from "@/constants";
 import { router } from "expo-router";
 
 const cars = [
@@ -90,6 +90,9 @@ const cars = [
 
 const Home = () => {
   const [search, setSearch] = useState("");
+  const [active, setActive] = useState("Automatic");
+
+  const options = ["Automatic", "Electric", "Manual"];
 
   return (
     <View className="flex-1 bg-white px-4">
@@ -98,6 +101,7 @@ const Home = () => {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => <CarCard {...item} />}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 80 }}
         ListHeaderComponent={
           <View>
@@ -105,13 +109,6 @@ const Home = () => {
               <Text className="text-2xl font-JakartaMedium mt-6">
                 Explore new {"\n"}Destinations with ease!
               </Text>
-              {/* <MaterialIcons
-                className="add-box"
-                name="add-box"
-                size={40}
-                color="#007DFC"
-                onPress={() => router.push("/(root)/create-car")}
-              /> */}
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Add car"
@@ -130,6 +127,30 @@ const Home = () => {
               value={search}
               onChangeText={setSearch}
             />
+
+            <Text className="font-JakartaMedium mt-6">
+              Select by transmission
+            </Text>
+
+            <View className="flex-row items-center my-6 gap-5">
+              {options.map((option) => (
+                <Pressable
+                  key={option}
+                  onPress={() => setActive(option)}
+                  className={`px-5 py-3 rounded-full ${
+                    active === option ? "bg-primary-500" : "bg-secondary-400"
+                  }`}
+                >
+                  <Text
+                    className={`font-JakartaMedium ${
+                      active === option ? "text-white" : "text-black"
+                    }`}
+                  >
+                    {option}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
 
             <Text className="font-JakartaMedium mt-6">Car Recommendation</Text>
           </View>
