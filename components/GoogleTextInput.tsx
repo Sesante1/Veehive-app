@@ -16,7 +16,6 @@ const GoogleTextInput = ({
   const [searchText, setSearchText] = useState("");
   const [predictions, setPredictions] = useState([]);
   const [showPredictions, setShowPredictions] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Check if API key exists
   if (!googlePlacesApiKey) {
@@ -41,7 +40,7 @@ const GoogleTextInput = ({
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
           text
-        )}&key=${googlePlacesApiKey}&language=en&types=address`
+        )}&key=${googlePlacesApiKey}&language=en&components=country:ph`
       );
 
       const data = await response.json();
@@ -64,7 +63,7 @@ const GoogleTextInput = ({
   const getPlaceDetails = async (placeId: string, description: string) => {
     try {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${googlePlacesApiKey}&fields=geometry`
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${googlePlacesApiKey}&language=en&fields=geometry`
       );
 
       const data = await response.json();
@@ -129,6 +128,8 @@ const GoogleTextInput = ({
 
   //   return () => clearTimeout(timeoutId);
   // };
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleTextChange = (text: string) => {
     setSearchText(text);
     if (debounceRef.current) clearTimeout(debounceRef.current);

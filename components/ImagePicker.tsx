@@ -61,7 +61,7 @@ const ImagePickerComponent = ({
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: "images",
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: allowMultiple,
       selectionLimit: allowMultiple ? remainingSlots : 1,
       aspect: [4, 3],
@@ -93,7 +93,6 @@ const ImagePickerComponent = ({
     }
   };
 
-  // Remove image
   const removeImage = (imageId: string) => {
     setImages((prev) => {
       const updated = prev.filter((img) => img.id !== imageId);
