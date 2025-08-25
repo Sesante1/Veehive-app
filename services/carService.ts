@@ -113,7 +113,8 @@ export const uploadCarListing = async (
 
     onProgress?.(100, "Upload complete");
 
-    return { success: true, carId: docRef.id, data: carDocument };
+    // return { success: true, carId: docRef.id, data: carDocument };
+    return { success: true, docId: docRef.id, storageFolder: carId, data: carDocument };
   } catch (error) {
     console.error("Error uploading car listing:", error);
     throw error;
