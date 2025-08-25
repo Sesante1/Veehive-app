@@ -10,14 +10,19 @@ import {
 import InputField from "@/components/InputField";
 import TextAreaField from "@/components/TextAreaField";
 import { icons } from "@/constants";
+import { uploadCarListing } from "@/services/carService";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Text,
   View,
 } from "react-native";
+import ReactNativeModal from "react-native-modal";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const CreateCar = () => {
@@ -27,7 +32,25 @@ const CreateCar = () => {
     ImageType[]
   >([]);
 
-  const [form, setForm] = useState({
+  const [isUploading, setIsUploading] = useState(false);
+
+  const [success, setSuccess] = useState(false);
+
+  type FormFields = {
+    make: string;
+    model: string;
+    year: string;
+    carType: string;
+    description: string;
+    dailyRate: string;
+    location: string;
+    latitude: number;
+    longitude: number;
+    transmission: string;
+    seats: string;
+  };
+
+  const [form, setForm] = useState<FormFields>({
     make: "",
     model: "",
     year: "",
@@ -41,25 +64,108 @@ const CreateCar = () => {
     seats: "",
   });
 
-  const onCreateCarPress = () => {
-    const {
-      make,
-      model,
-      year,
-      carType,
-      description,
-      dailyRate,
-      location,
-      latitude,
-      longitude,
-      transmission,
-      seats,
-    } = form;
+  // Validation function
+  const validateForm = () => {
+    const required: (keyof FormFields)[] = [
+      "make",
+      "model",
+      "year",
+      "carType",
+      "dailyRate",
+      "location",
+      "transmission",
+      "seats",
+    ];
+    const missing = required.filter((field) => !form[field]);
 
-    console.log("clicked");
+    if (missing.length > 0) {
+      Alert.alert(
+        "Missing Information",
+        `Please fill in: ${missing.join(", ")}`
+      );
+      return false;
+    }
+
+    if (carImages.length < 3) {
+      Alert.alert("Missing Images", "Please upload at least 3 car images");
+      return false;
+    }
+
+    if (receipt.length === 0) {
+      Alert.alert("Missing Document", "Please upload the Official Receipt");
+      return false;
+    }
+
+    if (certificateRegistration.length === 0) {
+      Alert.alert(
+        "Missing Document",
+        "Please upload the Certificate of Registration"
+      );
+      return false;
+    }
+
+    return true;
   };
 
-  // const handleDestinationPress = () => {};
+  const onCreateCarPress = async () => {
+    if (!validateForm()) return;
+
+    setIsUploading(true);
+
+    try {
+      const result = await uploadCarListing(
+        form,
+        carImages,
+        receipt,
+        certificateRegistration
+      );
+
+      setSuccess(true);
+      Alert.alert(
+        "Success!",
+        "Your car listing has been uploaded successfully and is pending approval.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              // Navigate back or reset form
+              router.back();
+              resetForm();
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(error.message);
+      } else {
+        console.error(String(error));
+      }
+    } finally {
+      setIsUploading(false);
+      setSuccess(false);
+    }
+  };
+
+  const resetForm = () => {
+    setForm({
+      make: "",
+      model: "",
+      year: "",
+      carType: "",
+      description: "",
+      dailyRate: "",
+      location: "",
+      latitude: 0,
+      longitude: 0,
+      transmission: "",
+      seats: "",
+    });
+    setCarImages([]);
+    setReceipt([]);
+    setCertificateRegistration([]);
+  };
+
   const handlePress = (location: {
     address: string;
     latitude: number;
@@ -86,6 +192,7 @@ const CreateCar = () => {
           <Text className="text-2xl font-JakartaBold mb-5">
             Basic Information
           </Text>
+
           <InputField
             label="Make"
             placeholder="e.g. Toyota"
@@ -147,13 +254,7 @@ const CreateCar = () => {
 
           <View className="mb-4" style={{ zIndex: 1000 }}>
             <Text className="text-lg font-JakartaSemiBold mb-3">Location</Text>
-            <GoogleTextInput
-              icon={icons.pin}
-              handlePress={(location) => {
-                console.log("Selected location:", location);
-                setForm({ ...form, location: location.address });
-              }}
-            />
+            <GoogleTextInput icon={icons.pin} handlePress={handlePress} />
           </View>
 
           <Text className="text-2xl font-JakartaBold my-5">Specifications</Text>
@@ -194,8 +295,22 @@ const CreateCar = () => {
           <CustomButton
             title="Upload listing"
             onPress={onCreateCarPress}
+            disabled={isUploading}
             className="mt-10"
           />
+
+          <ReactNativeModal
+            isVisible={isUploading}
+            backdropColor="black"
+            backdropOpacity={0.5}
+          >
+            <View className="bg-white px-7 py-9 rounded-[5px] flex items-center justify-center">
+              <ActivityIndicator size="large" color="#007DFC" />
+              <Text className="text-base text-gray-400 font-Jakarta text-center mt-2">
+                Please wait while we upload your car listing.
+              </Text>
+            </View>
+          </ReactNativeModal>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
