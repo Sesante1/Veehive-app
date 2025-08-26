@@ -137,24 +137,22 @@ const Home = () => {
   const filteredCars = useMemo(() => {
     let filtered = cars;
 
-    if (search.trim()) {
+    const q = search.trim().toLowerCase();
+    if (q) {
       filtered = filtered.filter(
         (car) =>
-          car.name.toLowerCase().includes(search.toLowerCase()) ||
-          car.type.toLowerCase().includes(search.toLowerCase())
+          car.name.toLowerCase().includes(q) ||
+          (car.type ? car.type.toLowerCase().includes(q) : false)
       );
     }
 
     if (active !== "All") {
+      const activeLower = active.toLowerCase();
       filtered = filtered.filter((car) => {
-        if (active === "Electric") {
-          return (
-            car.fuel?.toLowerCase() === "electric" ||
-            car.transmission?.toLowerCase() === "electric"
-          );
+        if (activeLower === "electric") {
+          return car.fuel?.toLowerCase() === "electric";
         }
-
-        return car.transmission?.toLowerCase() === active.toLowerCase();
+        return car.transmission?.toLowerCase() === activeLower;
       });
     }
 
