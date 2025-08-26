@@ -11,6 +11,7 @@ import {
 
 import { InputFieldProps } from "@/types/type";
 import clsx from "clsx";
+import React, { useState } from "react";
 
 interface TextAreaFieldProps extends InputFieldProps {
   numberOfLines?: number;
@@ -23,26 +24,26 @@ const TextAreaField = ({
   containerStyle,
   inputStyle,
   iconStyle,
-  numberOfLines = 5,
+  numberOfLines = 20,
   className,
   ...props
 }: TextAreaFieldProps) => {
+  const [height, setHeight] = useState(128);
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View className={clsx("my-4 w-full", className)}>
-          {/* Label */}
-          <Text className={clsx("text-lg font-JakartaSemiBold mb-3", labelStyle)}>
+          <Text
+            className={clsx("text-lg font-JakartaSemiBold mb-3", labelStyle)}
+          >
             {label}
           </Text>
-
-          {/* Container */}
           <View
             className={`flex flex-row justify-start items-start relative bg-neutral-100 rounded-2xl border border-neutral-100 focus:border-primary-500 ${containerStyle}`}
           >
-            {/* Icon (optional) */}
             {icon && (
               <Image
                 source={icon}
@@ -50,12 +51,18 @@ const TextAreaField = ({
               />
             )}
 
-            {/* TextArea */}
             <TextInput
               multiline={true}
+              onContentSizeChange={(e) =>
+                setHeight(e.nativeEvent.contentSize.height)
+              }
+              style={{ height: Math.max(128, height) }}
               numberOfLines={numberOfLines}
-              textAlignVertical="top" // ensures text starts from the top
-              className={clsx("p-4 font-JakartaSemiBold text-[15px] flex-1 text-left", inputStyle)}
+              textAlignVertical="top"
+              className={clsx(
+                "p-4 font-JakartaSemiBold text-[15px] flex-1 text-left",
+                inputStyle
+              )}
               {...props}
             />
           </View>

@@ -47,6 +47,7 @@ const CreateCar = () => {
     latitude: number;
     longitude: number;
     transmission: string;
+    fuel: string;
     seats: string;
   };
 
@@ -61,6 +62,7 @@ const CreateCar = () => {
     latitude: 0,
     longitude: 0,
     transmission: "",
+    fuel: "",
     seats: "",
   });
 
@@ -74,6 +76,7 @@ const CreateCar = () => {
       "dailyRate",
       "location",
       "transmission",
+      "fuel",
       "seats",
     ];
     const missing = required.filter((field) => !form[field]);
@@ -128,7 +131,6 @@ const CreateCar = () => {
           {
             text: "OK",
             onPress: () => {
-              // Navigate back or reset form
               router.back();
               resetForm();
             },
@@ -159,6 +161,7 @@ const CreateCar = () => {
       latitude: 0,
       longitude: 0,
       transmission: "",
+      fuel: "",
       seats: "",
     });
     setCarImages([]);
@@ -282,6 +285,20 @@ const CreateCar = () => {
             textContentType="none"
             value={form.seats}
             onChangeText={(value) => setForm({ ...form, seats: value })}
+          />
+
+          <DropdownField
+            label="Fuel Type"
+            items={[
+              { label: "Gasoline", value: "Gasoline" },
+              { label: "Diesel", value: "Diesel" },
+              { label: "Electric", value: "Electric" },
+            ]}
+            placeholder="Select Fuel Type"
+            onChangeValue={(value) =>
+              setForm({ ...form, fuel: value ?? "" })
+            }
+            value={form.fuel}
           />
 
           <CarImagesComponent onImagesChange={setCarImages} />

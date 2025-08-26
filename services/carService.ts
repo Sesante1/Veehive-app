@@ -13,6 +13,7 @@ interface CarData {
   latitude: number;
   longitude: number;
   transmission: string;
+  fuel: string;
   seats: string | number;
 }
 
@@ -78,9 +79,10 @@ export const uploadCarListing = async (
 
     onProgress?.(90, "Saving listing...");
 
-    // === Firestore document ===
+    const {latitude, longitude, ...rest} = carData;
+
     const carDocument = {
-      ...carData,
+      ...rest,
       year: parseInt(String(carData.year)),
       dailyRate: parseFloat(carData.dailyRate.toString()),
       location: {
@@ -108,13 +110,18 @@ export const uploadCarListing = async (
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
-
+    
     const docRef = await addDoc(collection(db, "cars"), carDocument);
 
     onProgress?.(100, "Upload complete");
 
     // return { success: true, carId: docRef.id, data: carDocument };
-    return { success: true, docId: docRef.id, storageFolder: carId, data: carDocument };
+    return {
+      success: true,
+      docId: docRef.id,
+      storageFolder: carId,
+      data: carDocument,
+    };
   } catch (error) {
     console.error("Error uploading car listing:", error);
     throw error;
