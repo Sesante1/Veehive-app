@@ -1,13 +1,23 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { FlatList, Pressable, Text, View } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Pressable,
+  RefreshControl,
+  Text,
+  View,
+} from "react-native";
 
 import CarCard from "@/components/CarCard";
 import InputField from "@/components/InputField";
-import { icons } from "@/constants";
+import { icons, images } from "@/constants";
 import { router } from "expo-router";
+import { useMemo } from "react";
+import { fetchAllCars } from "../../../services/firestore";
 
-const cars = [
+const Cars = [
   {
     id: "1",
     name: "Hyundai Verna",
@@ -89,20 +99,100 @@ const cars = [
 ];
 
 const Home = () => {
-  const [search, setSearch] = useState("");
-  const [active, setActive] = useState("Automatic");
+  const [cars, setCars] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isRefetching, setIsRefetching] = useState(false);
 
-  const options = ["Automatic", "Electric", "Manual"];
+  const [search, setSearch] = useState("");
+  const [active, setActive] = useState("All");
+
+  const options = ["All", "Automatic", "Electric", "Manual"];
+
+  const fetchCars = async () => {
+    try {
+      const carList = await fetchAllCars();
+      setCars(carList);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+      setIsRefetching(false);
+    }
+  };
+
+  const handlePullToRefresh = useCallback(async () => {
+    setIsRefetching(true);
+    await fetchCars();
+    setIsRefetching(false);
+  }, []);
+
+  useEffect(() => {
+    const load = async () => {
+      await fetchCars();
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  const filteredCars = useMemo(() => {
+    let filtered = cars;
+
+    const q = search.trim().toLowerCase();
+    if (q) {
+      filtered = filtered.filter(
+        (car) =>
+          car.name.toLowerCase().includes(q) ||
+          (car.type ? car.type.toLowerCase().includes(q) : false)
+      );
+    }
+
+    if (active !== "All") {
+      const activeLower = active.toLowerCase();
+      filtered = filtered.filter((car) => {
+        if (activeLower === "electric") {
+          return car.fuel?.toLowerCase() === "electric";
+        }
+        return car.transmission?.toLowerCase() === activeLower;
+      });
+    }
+
+    return filtered;
+  }, [cars, search, active]);
 
   return (
     <View className="flex-1 bg-white px-4">
       <FlatList
-        data={cars}
+        data={filteredCars}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => <CarCard {...item} />}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 80 }}
+        ListEmptyComponent={() => (
+          <View className="flex flex-col items-center justify-center">
+            {!loading ? (
+              <>
+                <Image
+                  source={images.noResult}
+                  className="w-40 h-40"
+                  alt="No cars found"
+                  resizeMode="contain"
+                />
+                <Text className="text-sm">No cars found</Text>
+              </>
+            ) : (
+              <ActivityIndicator size="large" color="#007DFC" />
+            )}
+          </View>
+        )}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={handlePullToRefresh}
+            tintColor={"#007DFC"}
+            colors={["#007DFC"]}
+          />
+        }
         ListHeaderComponent={
           <View>
             <View className="flex-row items-center justify-between">

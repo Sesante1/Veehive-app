@@ -2,6 +2,7 @@ import {
   AntDesign,
   FontAwesome,
   MaterialCommunityIcons,
+  MaterialIcons
 } from "@expo/vector-icons";
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
@@ -14,8 +15,6 @@ type CarProps = {
   transmission: string;
   fuel: string;
   seats: number;
-  avgRating: number;
-  reviewCount: number;
   imageUrl: string;
 };
 
@@ -26,13 +25,11 @@ const CarCard: React.FC<CarProps> = ({
   transmission,
   fuel,
   seats,
-  avgRating,
-  reviewCount,
   imageUrl,
 }) => {
   return (
     <Pressable
-      className="flex-col mt-5 mb-2 bg-secondary-400 p-3 rounded-[20px]"
+      className="flex-col mt-5 mb-2 bg-secondary-400 p-3 rounded-[10px]"
       onPress={() => {
         // TODO: Navigate to car details screen
         //        console.log(`Car selected: ${id}`);
@@ -41,17 +38,22 @@ const CarCard: React.FC<CarProps> = ({
       <View className="w-full">
         <Image
           source={{ uri: imageUrl }}
-          style={{ width: "100%", height: 160, borderRadius: 10 }}
+          style={{ width: "100%", height: 160, borderRadius: 5 }}
           resizeMode="cover"
         />
         <View className="absolute top-2 flex-row justify-between items-center w-full px-2">
           <View className="bg-white flex flex-row justify-center items-center gap-2 p-1 px-2 rounded-[5px]">
             <AntDesign name="star" size={16} color="#FFD700" />
-            <Text className="color-secondary-700">{avgRating ?? "N/A"}</Text>
+            {/* <Text className="color-secondary-700">{avgRating ?? "N/A"}</Text> */}
+            <Text className="color-secondary-700">4.7</Text>
           </View>
 
           <View className="bg-white w-[26px] h-[26px] flex justify-center items-center rounded-full">
-            <AntDesign name="heart" size={18} color="#F40F1F" />
+            {false ? (
+              <AntDesign name="heart" size={18} color="#F40F1F" />
+            ) : (
+              <AntDesign name="heart" size={18} color="#d6d6d6ff" />
+            )}
           </View>
         </View>
       </View>
@@ -62,7 +64,7 @@ const CarCard: React.FC<CarProps> = ({
         </View>
 
         <View className="flex-row items-center gap-1">
-          <Text className="color-primary-500">₱ {pricePerHour}</Text>
+          <Text className="color-primary-500">₱{pricePerHour}</Text>
           <Text className="color-secondary-700">/hr</Text>
         </View>
       </View>
@@ -76,7 +78,12 @@ const CarCard: React.FC<CarProps> = ({
         </View>
 
         <View className="flex-row items-center gap-2">
-          <MaterialCommunityIcons name="fuel" size={24} color="#007DFC" />
+          {(fuel === "Gasoline" || fuel === "Diesel") && (
+            <MaterialCommunityIcons name="gas-station" size={24} color="#007DFC" />
+          )}
+          {fuel === "Electric" && (
+            <MaterialIcons name="electric-bolt" size={24} color="#007DFC" />
+          )}
           <Text className="color-secondary-500 text-lg">{fuel}</Text>
         </View>
 
