@@ -1,16 +1,9 @@
 import { Feather, MaterialIcons, SimpleLineIcons } from "@expo/vector-icons";
 import React from "react";
-import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useUserData } from "../../../hooks/useUser";
 import ProfileSkeleton from "../../../components/ProfileSkeleton";
+import { useUserData } from "../../../hooks/useUser";
 
 export default function Profile() {
   const { userData, loading } = useUserData();
@@ -48,7 +41,10 @@ export default function Profile() {
 
         <View className="flex-1">
           <View className="border-b border-gray-200 mb-4 pb-4">
-            <Pressable className="flex flex-row items-center gap-4 p-4 rounded-lg">
+            <Pressable
+              className="flex flex-row items-center gap-4 p-4 rounded-lg"
+              onPress={() => {}}
+            >
               <Feather name="calendar" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">My Booking</Text>
               <MaterialIcons
@@ -59,7 +55,10 @@ export default function Profile() {
               />
             </Pressable>
 
-            <Pressable className="flex flex-row items-center gap-3 p-4">
+            <Pressable
+              className="flex flex-row items-center gap-3 p-4"
+              onPress={() => {}}
+            >
               <Feather name="list" size={20} color="black" />
               <Text className="text-lg font-Jakarta">Your listing</Text>
               <MaterialIcons
@@ -70,7 +69,10 @@ export default function Profile() {
               />
             </Pressable>
 
-            <Pressable className="flex flex-row items-center gap-3 p-4">
+            <Pressable
+              className="flex flex-row items-center gap-3 p-4"
+              onPress={() => {}}
+            >
               <Feather name="check" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">Booking Recieved</Text>
               <MaterialIcons
@@ -81,7 +83,10 @@ export default function Profile() {
               />
             </Pressable>
 
-            <Pressable className="flex flex-row items-center gap-3 p-4">
+            <Pressable
+              className="flex flex-row items-center gap-3 p-4"
+              onPress={() => {}}
+            >
               <Feather name="heart" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">Wishlists</Text>
               <MaterialIcons
@@ -93,7 +98,10 @@ export default function Profile() {
             </Pressable>
           </View>
           <View>
-            <Pressable className="flex flex-row items-center gap-3 p-4">
+            <Pressable
+              className="flex flex-row items-center gap-3 p-4"
+              onPress={() => {}}
+            >
               <Feather name="user" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">Personal Information</Text>
               <MaterialIcons
@@ -104,7 +112,10 @@ export default function Profile() {
               />
             </Pressable>
 
-            <Pressable className="flex flex-row items-center gap-3 p-4">
+            <Pressable
+              className="flex flex-row items-center gap-3 p-4"
+              onPress={() => {}}
+            >
               <SimpleLineIcons name="logout" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">Logout</Text>
               <MaterialIcons
