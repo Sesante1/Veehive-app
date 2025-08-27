@@ -1,4 +1,4 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
 
 export const fetchAllCars = async () => {
@@ -9,15 +9,16 @@ export const fetchAllCars = async () => {
 
       return {
         id: doc.id,
-        name: `${data.make} ${data.model}`,   
-        type: data.carType,                   
-        pricePerHour: data.dailyRate,            
+        name: `${data.make} ${data.model}`,
+        type: data.carType,
+        pricePerHour: data.dailyRate,
         seats: data.seats,
         transmission: data.transmission || "Automatic",
         fuel: data.fuel || "Gasoline",
-        imageUrl: Array.isArray(data.images) && data.images.length > 0 
-        ? data.images[0].url
-        : null,   
+        imageUrl:
+          Array.isArray(data.images) && data.images.length > 0
+            ? data.images[0].url
+            : null,
         status: data.status,
       };
     });
@@ -28,3 +29,22 @@ export const fetchAllCars = async () => {
     throw error;
   }
 };
+
+export const toggleWishlist = async (userId: string, carId: string, isWishlisted: boolean) => {
+  const wishlistRef = doc(db, "users", userId, "wishlist", carId);
+
+  if (isWishlisted) {
+    await deleteDoc(wishlistRef);
+  } else {
+    await setDoc(wishlistRef, { carId, createdAt: new Date() });
+  }
+};
+
+export const fetchUserWishlist = async (userId: string): Promise<string[]> => {
+  const wishlistRef = collection(db, "users", userId, "wishlist");
+  const snapshot = await getDocs(wishlistRef);
+
+  return snapshot.docs.map((doc) => doc.id);
+};
+
+

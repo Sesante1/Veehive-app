@@ -3,9 +3,7 @@ import { View } from "react-native";
 
 const Row = () => (
   <View className="flex flex-row items-center gap-2 p-4">
-    <View className="h-5 w-5 rounded-md bg-neutral-200/80 animate-pulse" />
-    <View className="h-5 flex-1 rounded-md bg-neutral-200/80 animate-pulse" />
-    <View className="ml-auto h-6 w-6 rounded-md bg-neutral-200/80 animate-pulse" />
+    <View className="h-8 flex-1 rounded-md bg-neutral-200/80 animate-pulse" />
   </View>
 );
 

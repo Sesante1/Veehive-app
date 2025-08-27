@@ -15,7 +15,8 @@ import InputField from "@/components/InputField";
 import { icons, images } from "@/constants";
 import { router } from "expo-router";
 import { useMemo } from "react";
-import { fetchAllCars } from "../../../services/firestore";
+import { FIREBASE_AUTH } from "../../../FirebaseConfig";
+import { fetchAllCars, toggleWishlist, fetchUserWishlist } from "../../../services/firestore";
 
 const Cars = [
   {
@@ -99,7 +100,11 @@ const Cars = [
 ];
 
 const Home = () => {
+  const currentUser = FIREBASE_AUTH.currentUser;
+
   const [cars, setCars] = useState<any[]>([]);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
 
@@ -120,6 +125,30 @@ const Home = () => {
     }
   };
 
+  useEffect(() => {
+    const loadWishlist = async () => {
+      if (!currentUser) return;
+      const data = await fetchUserWishlist(currentUser.uid);
+      setWishlist(data);
+    };
+    loadWishlist();
+  }, [currentUser]);
+
+  const handleToggleWishlist = async (carId: string) => {
+    const user = FIREBASE_AUTH.currentUser;
+
+    if (!user) return;
+
+    const isWishlisted = wishlist.includes(carId);
+
+    await toggleWishlist(user.uid, carId, isWishlisted);
+
+    setWishlist((prev) =>
+      isWishlisted ? prev.filter((id) => id !== carId) : [...prev, carId]
+    );
+  };
+
+  // HandlePullToRefresh
   const handlePullToRefresh = useCallback(async () => {
     setIsRefetching(true);
     await fetchCars();
@@ -164,7 +193,13 @@ const Home = () => {
       <FlatList
         data={filteredCars}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <CarCard {...item} />}
+        renderItem={({ item }) => (
+          <CarCard
+            {...item}
+            isWishlisted={wishlist.includes(item.id)}
+            onToggleWishlist={handleToggleWishlist}
+          />
+        )}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 80 }}

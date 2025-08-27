@@ -2,7 +2,7 @@ import {
   AntDesign,
   FontAwesome,
   MaterialCommunityIcons,
-  MaterialIcons
+  MaterialIcons,
 } from "@expo/vector-icons";
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
@@ -15,10 +15,13 @@ type CarProps = {
   transmission: string;
   fuel: string;
   seats: number;
-  imageUrl: string;
+  imageUrl: string | null;
+  isWishlisted: boolean;
+  onToggleWishlist?: (carId: string, isWishlisted: boolean) => void;
 };
 
 const CarCard: React.FC<CarProps> = ({
+  id,
   name,
   type,
   pricePerHour,
@@ -26,6 +29,8 @@ const CarCard: React.FC<CarProps> = ({
   fuel,
   seats,
   imageUrl,
+  isWishlisted,
+  onToggleWishlist,
 }) => {
   return (
     <Pressable
@@ -36,11 +41,15 @@ const CarCard: React.FC<CarProps> = ({
       }}
     >
       <View className="w-full">
-        <Image
-          source={{ uri: imageUrl }}
-          style={{ width: "100%", height: 160, borderRadius: 5 }}
-          resizeMode="cover"
-        />
+        {imageUrl ? (
+          <Image
+            source={{ uri: imageUrl }}
+            style={{ width: "100%", height: 160, borderRadius: 5 }}
+            resizeMode="cover"
+          />
+        ) : (
+          <View className="w-full h-40 bg-gray-200 rounded-md" />
+        )}
         <View className="absolute top-2 flex-row justify-between items-center w-full px-2">
           <View className="bg-white flex flex-row justify-center items-center gap-2 p-1 px-2 rounded-[5px]">
             <AntDesign name="star" size={16} color="#FFD700" />
@@ -48,13 +57,16 @@ const CarCard: React.FC<CarProps> = ({
             <Text className="color-secondary-700">4.7</Text>
           </View>
 
-          <View className="bg-white w-[26px] h-[26px] flex justify-center items-center rounded-full">
-            {false ? (
+          <Pressable
+            className="bg-white w-[26px] h-[26px] flex justify-center items-center rounded-full"
+            onPress={() => onToggleWishlist?.(id, isWishlisted)}
+          >
+            {isWishlisted ? (
               <AntDesign name="heart" size={18} color="#F40F1F" />
             ) : (
               <AntDesign name="heart" size={18} color="#d6d6d6ff" />
             )}
-          </View>
+          </Pressable>
         </View>
       </View>
 
@@ -79,7 +91,11 @@ const CarCard: React.FC<CarProps> = ({
 
         <View className="flex-row items-center gap-2">
           {(fuel === "Gasoline" || fuel === "Diesel") && (
-            <MaterialCommunityIcons name="gas-station" size={24} color="#007DFC" />
+            <MaterialCommunityIcons
+              name="gas-station"
+              size={24}
+              color="#007DFC"
+            />
           )}
           {fuel === "Electric" && (
             <MaterialIcons name="electric-bolt" size={24} color="#007DFC" />
