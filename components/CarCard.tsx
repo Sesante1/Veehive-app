@@ -15,7 +15,7 @@ type CarProps = {
   transmission: string;
   fuel: string;
   seats: number;
-  imageUrl: string;
+  imageUrl: string | null;
   isWishlisted: boolean;
   onToggleWishlist?: (carId: string, isWishlisted: boolean) => void;
 };
@@ -41,11 +41,15 @@ const CarCard: React.FC<CarProps> = ({
       }}
     >
       <View className="w-full">
-        <Image
-          source={{ uri: imageUrl }}
-          style={{ width: "100%", height: 160, borderRadius: 5 }}
-          resizeMode="cover"
-        />
+        {imageUrl ? (
+          <Image
+            source={{ uri: imageUrl }}
+            style={{ width: "100%", height: 160, borderRadius: 5 }}
+            resizeMode="cover"
+          />
+        ) : (
+          <View className="w-full h-40 bg-gray-200 rounded-md" />
+        )}
         <View className="absolute top-2 flex-row justify-between items-center w-full px-2">
           <View className="bg-white flex flex-row justify-center items-center gap-2 p-1 px-2 rounded-[5px]">
             <AntDesign name="star" size={16} color="#FFD700" />
