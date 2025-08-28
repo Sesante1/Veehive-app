@@ -1,4 +1,11 @@
-import { collection, getDocs, doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+} from "firebase/firestore";
 import { db } from "../FirebaseConfig";
 
 // Fetch all cars
@@ -31,7 +38,11 @@ export const fetchAllCars = async () => {
   }
 };
 
-export const toggleWishlist = async (userId: string, carId: string, isWishlisted: boolean) => {
+export const toggleWishlist = async (
+  userId: string,
+  carId: string,
+  isWishlisted: boolean
+) => {
   const wishlistRef = doc(db, "users", userId, "wishlist", carId);
 
   if (isWishlisted) {
@@ -60,13 +71,14 @@ export const fetchWishlistCars = async (userId: string) => {
     if (carIds.length === 0) return [];
 
     // Step 2: Fetch car details and return in CarCard shape
-    const cars: any[] = [];
-    for (const carId of carIds) {
-      const carDoc = await getDoc(doc(db, "cars", carId));
-      if (carDoc.exists()) {
-        const data = carDoc.data();
-
-        cars.push({
+    const carDocs = await Promise.all(
+      carIds.map((carId) => getDoc(doc(db, "cars", carId)))
+    );
+    const cars = carDocs
+      .filter((carDoc) => carDoc.exists())
+      .map((carDoc) => {
+        const data = carDoc.data()!;
+        return {
           id: carDoc.id,
           name: `${data.make} ${data.model}`,
           type: data.carType,
@@ -79,9 +91,8 @@ export const fetchWishlistCars = async (userId: string) => {
               ? data.images[0].url
               : null,
           status: data.status,
-        });
-      }
-    }
+        };
+      });
 
     return cars;
   } catch (error) {
@@ -89,4 +100,3 @@ export const fetchWishlistCars = async (userId: string) => {
     return [];
   }
 };
-
