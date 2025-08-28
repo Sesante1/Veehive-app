@@ -1,19 +1,34 @@
-import { Feather, MaterialIcons, SimpleLineIcons } from "@expo/vector-icons";
+import { Feather, MaterialIcons, SimpleLineIcons, FontAwesome6 } from "@expo/vector-icons";
 import React from "react";
-import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ProfileSkeleton from "../../../components/ProfileSkeleton";
 import { useUserData } from "../../../hooks/useUser";
+import { router } from "expo-router";
+import { useSignOut } from "@/hooks/useSignOut";
 
 export default function Profile() {
   const { userData, loading } = useUserData();
+  const { SignOutModal, setVisible } = useSignOut();
 
   if (loading) {
     return <ProfileSkeleton />;
   }
 
   if (!userData) {
-    return <Text>No user data found.</Text>;
+    return (
+      <SafeAreaView className="flex-1 bg-white p-4">
+        <Text className="text-2xl font-JakartaBold">Account</Text>
+        <Text className="my-5 font-Jakarta">Log in and start planning your next booking.</Text>
+
+        <TouchableOpacity
+          className="mt-5 p-4 bg-black rounded-lg"
+          onPress={() => router.push("/(auth)/sign-in")}
+        >
+          <Text className="text-white text-center font-JakartaSemiBold">Log In or Sign Up</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -56,6 +71,20 @@ export default function Profile() {
             </Pressable>
 
             <Pressable
+              className="flex flex-row items-center gap-4 p-4 rounded-lg"
+              onPress={() => router.push("/create-car")}
+            >
+              <FontAwesome6 name="add" size={20} color="#00000" />
+              <Text className="text-lg font-Jakarta">Create listing</Text>
+              <MaterialIcons
+                className="absolute right-0"
+                name="navigate-next"
+                size={30}
+                color="#00000"
+              />
+            </Pressable>
+
+            <Pressable
               className="flex flex-row items-center gap-3 p-4"
               onPress={() => {}}
             >
@@ -85,7 +114,7 @@ export default function Profile() {
 
             <Pressable
               className="flex flex-row items-center gap-3 p-4"
-              onPress={() => {}}
+              onPress={() => router.push("/favorites")}
             >
               <Feather name="heart" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">Wishlists</Text>
@@ -97,6 +126,7 @@ export default function Profile() {
               />
             </Pressable>
           </View>
+          
           <View>
             <Pressable
               className="flex flex-row items-center gap-3 p-4"
@@ -114,8 +144,9 @@ export default function Profile() {
 
             <Pressable
               className="flex flex-row items-center gap-3 p-4"
-              onPress={() => {}}
+              onPress={() => setVisible(true)}
             >
+              <SignOutModal /> 
               <SimpleLineIcons name="logout" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">Logout</Text>
               <MaterialIcons

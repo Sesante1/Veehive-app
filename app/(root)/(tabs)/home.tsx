@@ -1,4 +1,3 @@
-import { MaterialIcons } from "@expo/vector-icons";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -13,10 +12,13 @@ import {
 import CarCard from "@/components/CarCard";
 import InputField from "@/components/InputField";
 import { icons, images } from "@/constants";
-import { router } from "expo-router";
 import { useMemo } from "react";
 import { FIREBASE_AUTH } from "../../../FirebaseConfig";
-import { fetchAllCars, toggleWishlist, fetchUserWishlist } from "../../../services/firestore";
+import {
+  fetchAllCars,
+  fetchUserWishlist,
+  toggleWishlist,
+} from "../../../services/firestore";
 
 const Cars = [
   {
@@ -234,14 +236,14 @@ const Home = () => {
               <Text className="text-2xl font-JakartaMedium mt-6">
                 Explore new {"\n"}Destinations with ease!
               </Text>
-              <Pressable
+              {/* <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Add car"
                 hitSlop={8}
                 onPress={() => router.push("/create-car")}
               >
                 <MaterialIcons name="add-box" size={40} color="#007DFC" />
-              </Pressable>
+              </Pressable> */}
             </View>
 
             <InputField
