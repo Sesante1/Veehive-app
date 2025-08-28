@@ -1,5 +1,6 @@
 import { images } from "@/constants";
 import { FIREBASE_AUTH } from "@/FirebaseConfig";
+import { useAuth } from "@/hooks/useUser";
 import {
   fetchUserWishlist,
   fetchWishlistCars,
@@ -21,7 +22,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import CarCard from "../../components/CarCard";
 
 const Favorites = () => {
-  const currentUser = FIREBASE_AUTH.currentUser;
+  const { user } = useAuth();
+
   const [wishlistCars, setWishlistCars] = useState<any[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
 
@@ -39,44 +41,62 @@ const Favorites = () => {
   ];
 
   useEffect(() => {
-    const loadWishlist = async () => {
-      if (!currentUser) return;
+    let mounted = true;
+    const load = async () => {
+      setLoading(true);
+      if (!user) {
+        if (mounted) {
+          setWishlistCars([]);
+          setWishlist([]);
+          setLoading(false);
+        }
+
+        return;
+      }
       try {
-        const cars = await fetchWishlistCars(currentUser.uid);
-        setWishlistCars(cars);
+        const [cars, ids] = await Promise.all([
+          fetchWishlistCars(user.uid),
+          fetchUserWishlist(user.uid),
+        ]);
+        if (mounted) {
+          setWishlistCars(cars);
+          setWishlist(ids);
+        }
       } catch (err) {
         console.error("Error loading wishlist:", err);
       } finally {
-        setLoading(false);
+        mounted && setLoading(false);
       }
     };
-
-    loadWishlist();
-  }, [currentUser]);
-
-  useEffect(() => {
-    const loadWishlist = async () => {
-      if (!currentUser) return;
-      const data = await fetchUserWishlist(currentUser.uid);
-      setWishlist(data);
+    load();
+    return () => {
+      mounted = false;
     };
-    loadWishlist();
-  }, [currentUser]);
+  }, [user]);
 
-  const handleToggleWishlist = async (carId: string) => {
+  const handleToggleWishlist = async (
+    carId: string,
+    isWishlistedFromCard?: boolean
+  ) => {
     const user = FIREBASE_AUTH.currentUser;
-
-    if (!user) return;
-
-    const isWishlisted = wishlist.includes(carId);
-
-    await toggleWishlist(user.uid, carId, isWishlisted);
-
-    setWishlist((prev) =>
-      isWishlisted ? prev.filter((id) => id !== carId) : [...prev, carId]
-    );
+    if (!user) {
+      // Optionally navigate to sign-in
+      // router.push("/sign-in");
+      return;
+    }
+    const isWishlisted = isWishlistedFromCard ?? wishlist.includes(carId);
+    try {
+      await toggleWishlist(user.uid, carId, isWishlisted);
+      setWishlist((prev) =>
+        isWishlisted ? prev.filter((id) => id !== carId) : [...prev, carId]
+      );
+      if (isWishlisted) {
+        setWishlistCars((prev) => prev.filter((c) => c.id !== carId));
+      }
+    } catch (e) {
+      console.error("Failed to toggle wishlist:", e);
+    }
   };
-
   return (
     <SafeAreaView className="flex-1 bg-white px-4">
       <FlatList
@@ -133,7 +153,7 @@ const Favorites = () => {
               contentContainerStyle={{
                 flexDirection: "row",
                 alignItems: "center",
-                gap: 10, 
+                gap: 10,
               }}
             >
               {options.map((option) => (
