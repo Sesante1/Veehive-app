@@ -13,13 +13,13 @@ import CarCard from "@/components/CarCard";
 import InputField from "@/components/InputField";
 import { icons, images } from "@/constants";
 import { useMemo } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { FIREBASE_AUTH } from "../../../FirebaseConfig";
 import {
   fetchAllCars,
   fetchUserWishlist,
   toggleWishlist,
 } from "../../../services/firestore";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const Cars = [
   {

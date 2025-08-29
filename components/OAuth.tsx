@@ -24,8 +24,8 @@ const OAuth = () => {
             className="w-5 h-5 mx-2"
           />
         )}
-        bgVariant="outline"
-        textVariant="primary"
+        bgVariant="google-outline"
+        textVariant="text-black"
         onPress={handleGoogleSignIn}
       />
     </View>

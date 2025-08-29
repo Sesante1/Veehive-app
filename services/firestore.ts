@@ -5,6 +5,8 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  where,
+  query,
 } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
 
@@ -62,7 +64,7 @@ export const fetchUserWishlist = async (userId: string): Promise<string[]> => {
 // Fetch users wishlist cars
 export const fetchWishlistCars = async (userId: string) => {
   try {
-    // Step 1: Get wishlist items (carIds)
+    //  Get wishlist items (carIds)
     const wishlistRef = collection(db, "users", userId, "wishlist");
     const snapshot = await getDocs(wishlistRef);
 
@@ -70,7 +72,7 @@ export const fetchWishlistCars = async (userId: string) => {
 
     if (carIds.length === 0) return [];
 
-    // Step 2: Fetch car details and return in CarCard shape
+    // Fetch car details and return in CarCard shape
     const carDocs = await Promise.all(
       carIds.map((carId) => getDoc(doc(db, "cars", carId)))
     );
@@ -98,5 +100,40 @@ export const fetchWishlistCars = async (userId: string) => {
   } catch (error) {
     console.error("Error fetching wishlist cars:", error);
     return [];
+  }
+};
+
+export const fetchCarsByOwner = async (ownerId: string) => {
+  try {
+    const carsRef = collection(db, "cars");
+
+    const q = query(carsRef, where("ownerId", "==", ownerId));
+    const querySnapshot = await getDocs(q);
+
+    const cars = querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+
+      return {
+        id: doc.id,
+        name: `${data.make} ${data.model}`,
+        type: data.carType,
+        pricePerHour: data.dailyRate,
+        seats: data.seats,
+        transmission: data.transmission || "Automatic",
+        fuel: data.fuel || "Gasoline",
+        imageUrl:
+          Array.isArray(data.images) && data.images.length > 0
+            ? data.images[0].url
+            : null,
+        status: data.status,
+        ownerId: data.ownerId, 
+        available: data.isActive,
+      };
+    });
+
+    return cars;
+  } catch (error) {
+    console.error("Error fetching cars by owner:", error);
+    throw error;
   }
 };

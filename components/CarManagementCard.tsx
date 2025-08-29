@@ -1,5 +1,4 @@
 import CustomButton from "@/components/CustomButton";
-import { useAuth } from "@/hooks/useUser";
 import {
   AntDesign,
   FontAwesome,
@@ -18,11 +17,17 @@ type CarProps = {
   fuel: string;
   seats: number;
   imageUrl: string | null;
-  isWishlisted: boolean;
-  onToggleWishlist?: (carId: string, isWishlisted: boolean) => void;
+  available: boolean;
+  status: String;
+
+  onToggleAvailability?: (
+    id: string,
+    nextAvailable: boolean
+  ) => void | Promise<void>;
+  onPress?: (id: string) => void;
 };
 
-const CarCard: React.FC<CarProps> = ({
+const CarManagementCard: React.FC<CarProps> = ({
   id,
   name,
   type,
@@ -31,11 +36,11 @@ const CarCard: React.FC<CarProps> = ({
   fuel,
   seats,
   imageUrl,
-  isWishlisted,
-  onToggleWishlist,
+  available,
+  status,
+  onToggleAvailability,
+  onPress,
 }) => {
-  const { user } = useAuth();
-
   return (
     <Pressable
       className="flex-col mt-5 mb-2 bg-secondary-400 p-3 rounded-[10px]"
@@ -61,20 +66,6 @@ const CarCard: React.FC<CarProps> = ({
             {/* TODO: Replace with actual rating once data is available */}
             <Text className="color-secondary-700">4.7</Text>
           </View>
-
-          {/* wishlist only show if not user is logged in */}
-          {user && (
-            <Pressable
-              className="bg-white w-[26px] h-[26px] flex justify-center items-center rounded-full"
-              onPress={() => onToggleWishlist?.(id, isWishlisted)}
-            >
-              {isWishlisted ? (
-                <AntDesign name="heart" size={18} color="#F40F1F" />
-              ) : (
-                <AntDesign name="heart" size={18} color="#d6d6d6ff" />
-              )}
-            </Pressable>
-          )}
         </View>
       </View>
 
@@ -119,8 +110,24 @@ const CarCard: React.FC<CarProps> = ({
           <Text className="color-secondary-500 text-lg">{seats} Seats</Text>
         </View>
       </View>
+
+      {!available ? (
+        <CustomButton
+          title="Mark as available"
+          className="my-6"
+          bgVariant="outline"
+          textVariant="primary"
+        />
+      ) : (
+        <CustomButton
+          title="Mark as unavailable"
+          className="my-6"
+          bgVariant="danger-outline"
+          textVariant="danger"
+        />
+      )}
     </Pressable>
   );
 };
 
-export default CarCard;
+export default CarManagementCard;

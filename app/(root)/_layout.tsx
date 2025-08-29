@@ -7,6 +7,7 @@ export default function Layout() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="create-car" options={{ headerShown: false }} />
       <Stack.Screen name="favorites" options={{ headerShown: false }} />
+      <Stack.Screen name="user-listing" options={{ headerShown: false }} />
     </Stack>
   );
 }
