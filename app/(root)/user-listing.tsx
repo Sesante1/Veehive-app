@@ -1,4 +1,3 @@
-import CarCard from "@/components/CarCard";
 import CarManagementCard from "@/components/CarManagementCard";
 import { images } from "@/constants";
 import { useAuth } from "@/hooks/useUser";
@@ -23,16 +22,21 @@ const UserListing = () => {
   const [loading, setLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
 
-  const fetchCars = async () => {
+  const fetchCars = React.useCallback(async () => {
+    if (!user?.uid) {
+      setCars([]);
+      setLoading(false);
+      return;
+    }
     try {
-      const carList = await fetchCarsByOwner(user?.uid || "");
+      const carList = await fetchCarsByOwner(user.uid);
       setCars(carList);
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.uid]);
 
   // HandlePullToRefresh
   // const handlePullToRefresh = useCallback(async () => {
@@ -49,7 +53,7 @@ const UserListing = () => {
     } finally {
       setIsRefetching(false);
     }
-  }, [user?.uid]);
+  }, [fetchCars]);
 
   // useEffect(() => {
   //   const load = async () => {
@@ -83,11 +87,7 @@ const UserListing = () => {
       <FlatList
         data={userCars}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <CarManagementCard
-            {...item}
-          />
-        )}
+        renderItem={({ item }) => <CarManagementCard {...item} />}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={() => (

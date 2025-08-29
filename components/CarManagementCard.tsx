@@ -19,6 +19,12 @@ type CarProps = {
   imageUrl: string | null;
   available: boolean;
   status: String;
+
+  onToggleAvailability?: (
+    id: string,
+    nextAvailable: boolean
+  ) => void | Promise<void>;
+  onPress?: (id: string) => void;
 };
 
 const CarManagementCard: React.FC<CarProps> = ({
@@ -32,6 +38,8 @@ const CarManagementCard: React.FC<CarProps> = ({
   imageUrl,
   available,
   status,
+  onToggleAvailability,
+  onPress,
 }) => {
   return (
     <Pressable
