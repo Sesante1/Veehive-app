@@ -6,12 +6,16 @@ import { ButtonProps } from "@/types/type";
 const getBgVariantStyle = (variant: ButtonProps["bgVariant"]) => {
   switch (variant) {
     case "secondary":
-      return "bg-gray-500";
+      return "bg-secondary-800";
     case "danger":
       return "bg-red-500";
     case "success":
       return "bg-green-500";
     case "outline":
+      return "border-primary-500 border-[0.5px]";
+    case "danger-outline":
+      return "border-danger-900 border-[0.5px]";
+    case "google-outline":
       return "bg-transparent border-neutral-300 border-[0.5px]";
     default:
       return "bg-[#007DFC]";
@@ -21,11 +25,13 @@ const getBgVariantStyle = (variant: ButtonProps["bgVariant"]) => {
 const getTextVariantStyle = (variant: ButtonProps["textVariant"]) => {
   switch (variant) {
     case "primary":
+      return "text-primary-500";
+    case "text-black":
       return "text-black";
     case "secondary":
       return "text-gray-100";
     case "danger":
-      return "text-red-100";
+      return "text-danger-900";
     case "success":
       return "text-green-100";
     default:
@@ -49,7 +55,7 @@ const CustomButton = ({
       // className={`w-full rounded-full p-4 flex flex-row justify-center items-center shadow-md shadow-neutral-400/70 ${getBgVariantStyle(bgVariant)} ${className}`}
       // {...props}
       className={clsx(
-        "rounded-full p-4 flex flex-row justify-center items-center shadow-md shadow-neutral-400/70",
+        "rounded-full p-4 flex flex-row justify-center items-center",
         getBgVariantStyle(bgVariant),
         className ?? "w-full"
       )}
@@ -57,7 +63,7 @@ const CustomButton = ({
     >
       {IconLeft && <IconLeft />}
       <Text
-        className={`text-lg font-JakartaBold ${getTextVariantStyle(textVariant)}`}
+        className={`text-lg font-JakartaSemiBold ${getTextVariantStyle(textVariant)}`}
       >
         {title}
       </Text>

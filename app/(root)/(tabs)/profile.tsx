@@ -108,7 +108,7 @@ export default function Profile() {
 
             <Pressable
               className="flex flex-row items-center gap-3 p-4"
-              onPress={() => {}}
+              onPress={() => router.push("/user-listing")}
             >
               <Feather name="list" size={20} color="black" />
               <Text className="text-lg font-Jakarta">Your listing</Text>

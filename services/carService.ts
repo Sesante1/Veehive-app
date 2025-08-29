@@ -107,6 +107,8 @@ export const uploadCarListing = async (
         photoURL: currentUser.photoURL || null,
       },
       status: "pending",
+      isActive: false,
+      isArchive: false,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
