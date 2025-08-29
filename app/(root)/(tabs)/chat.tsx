@@ -67,7 +67,7 @@ const Chat = () => {
   return (
     <SafeAreaView className="flex-1 bg-white " >
       {/* HEADER */}
-      <View className="flex-row items-center justify-between px-4 pb-3 border-b border-gray-100">
+      <View className="flex-row items-center justify-between px-4 pb-3 mt-6 border-b border-gray-100">
         <Text className="text-2xl font-JakartaBold">Messages</Text>
         <TouchableOpacity>
           <Feather name="edit" size={24} color="#1DA1F2" />

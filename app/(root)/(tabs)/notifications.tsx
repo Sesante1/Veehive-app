@@ -9,10 +9,10 @@ const Notifications = () => {
     // <View className='flex-1 bg-white p-4'>
     //   <Text className="text-2xl font-JakartaBold">Notifications</Text>
     // </View>
-    <SafeAreaView className="flex-1 bg-white p-4">
+    <SafeAreaView className="flex-1 bg-white px-4">
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <Text className="text-2xl font-JakartaBold">Notifications</Text>
-        <View className="flex-1 h-fit flex justify-center items-center">
+        <Text className="text-2xl mt-6 font-JakartaBold">Notifications</Text>
+        <View className="flex-1 justify-center items-center">
           {/* <Image
             source={images.message}
             alt="message"

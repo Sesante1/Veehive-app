@@ -1,3 +1,4 @@
+import { useAuth } from "@/hooks/useUser";
 import {
   AntDesign,
   FontAwesome,
@@ -32,6 +33,8 @@ const CarCard: React.FC<CarProps> = ({
   isWishlisted,
   onToggleWishlist,
 }) => {
+  const {user} = useAuth();
+
   return (
     <Pressable
       className="flex-col mt-5 mb-2 bg-secondary-400 p-3 rounded-[10px]"
@@ -54,9 +57,11 @@ const CarCard: React.FC<CarProps> = ({
           <View className="bg-white flex flex-row justify-center items-center gap-2 p-1 px-2 rounded-[5px]">
             <AntDesign name="star" size={16} color="#FFD700" />
             {/* <Text className="color-secondary-700">{avgRating ?? "N/A"}</Text> */}
+            {/* TODO: Replace with actual rating once data is available */}
             <Text className="color-secondary-700">4.7</Text>
           </View>
 
+          {user && (
           <Pressable
             className="bg-white w-[26px] h-[26px] flex justify-center items-center rounded-full"
             onPress={() => onToggleWishlist?.(id, isWishlisted)}
@@ -67,6 +72,7 @@ const CarCard: React.FC<CarProps> = ({
               <AntDesign name="heart" size={18} color="#d6d6d6ff" />
             )}
           </Pressable>
+          )}
         </View>
       </View>
 

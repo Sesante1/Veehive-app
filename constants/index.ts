@@ -21,6 +21,7 @@ import profile from "@/assets/icons/profile.png";
 import search from "@/assets/icons/search.png";
 import selectedMarker from "@/assets/icons/selected-marker.png";
 import star from "@/assets/icons/star.png";
+import notification from "@/assets/icons/notification.png";
 import target from "@/assets/icons/target.png";
 import to from "@/assets/icons/to.png";
 import check from "@/assets/images/check.png";
@@ -31,6 +32,7 @@ import onboarding1 from "@/assets/images/onboarding1.png";
 import onboarding2 from "@/assets/images/onboarding2.png";
 import onboarding3 from "@/assets/images/onboarding3.png";
 import signUpCar from "@/assets/images/signup-car.png";
+
 
 export const images = {
   onboarding1,
@@ -69,6 +71,7 @@ export const icons = {
   star,
   target,
   to,
+  notification,
 };
 
 export const onboarding = [

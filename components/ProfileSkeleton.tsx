@@ -9,7 +9,7 @@ const Row = () => (
 
 const ProfileSkeleton = () => {
   return (
-    <View className="px-4 bg-white flex-1">
+    <View className="px-4 bg-white my-11 flex-1">
       {/* Header avatar + name */}
       <View className="flex items-center justify-center my-5 mb-20">
         {/* Avatar placeholder with shadow */}

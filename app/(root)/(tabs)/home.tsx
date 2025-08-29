@@ -19,6 +19,7 @@ import {
   fetchUserWishlist,
   toggleWishlist,
 } from "../../../services/firestore";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const Cars = [
   {
@@ -139,7 +140,10 @@ const Home = () => {
   const handleToggleWishlist = async (carId: string) => {
     const user = FIREBASE_AUTH.currentUser;
 
-    if (!user) return;
+    if (!user) {
+      console.log("User not found");
+      return;
+    }
 
     const isWishlisted = wishlist.includes(carId);
 
@@ -191,7 +195,7 @@ const Home = () => {
   }, [cars, search, active]);
 
   return (
-    <View className="flex-1 bg-white px-4">
+    <SafeAreaView className="flex-1 bg-white px-4">
       <FlatList
         data={filteredCars}
         keyExtractor={(item) => item.id.toString()}
@@ -283,7 +287,7 @@ const Home = () => {
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
