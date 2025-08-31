@@ -38,12 +38,6 @@ const UserListing = () => {
     }
   }, [user?.uid]);
 
-  // HandlePullToRefresh
-  // const handlePullToRefresh = useCallback(async () => {
-  //   setIsRefetching(true);
-  //   await fetchCars();
-  //   setIsRefetching(false);
-  // }, []);
   const handlePullToRefresh = useCallback(async () => {
     setIsRefetching(true);
     try {
@@ -55,13 +49,6 @@ const UserListing = () => {
     }
   }, [fetchCars]);
 
-  // useEffect(() => {
-  //   const load = async () => {
-  //     await fetchCars();
-  //     setLoading(false);
-  //   };
-  //   load();
-  // }, []);
   useEffect(() => {
     const loadInitialData = async () => {
       if (!user?.uid) {

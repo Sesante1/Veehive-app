@@ -8,6 +8,7 @@ import {
 } from "@expo/vector-icons";
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
+import { router } from "expo-router";
 
 type CarProps = {
   id: string;
@@ -39,10 +40,12 @@ const CarCard: React.FC<CarProps> = ({
   return (
     <Pressable
       className="flex-col mt-5 mb-2 bg-secondary-400 p-3 rounded-[10px]"
-      onPress={() => {
-        // TODO: Navigate to car details screen
-        //        console.log(`Car selected: ${id}`);
-      }}
+      onPress={() =>
+        router.push({
+          pathname: "/car-details/[id]",
+          params: { id },
+        })
+      }
     >
       <View className="w-full">
         {imageUrl ? (
