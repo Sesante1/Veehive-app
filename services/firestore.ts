@@ -145,13 +145,13 @@ export const getCarWithOwner = async (carId: string) => {
     const carSnap = await getDoc(carRef);
 
     if (!carSnap.exists()) {
-      console.log("No such car!");
+      console.warn("No such car:", carId);
       return null;
     }
 
     const data = carSnap.data();
 
-    let ownerData = null;
+    let ownerData: any = null;
     if (data.ownerId) {
       const ownerRef = doc(db, "users", data.ownerId);
       const ownerSnap = await getDoc(ownerRef);
@@ -159,12 +159,13 @@ export const getCarWithOwner = async (carId: string) => {
         const ownerInfo = ownerSnap.data();
         ownerData = {
           id: ownerSnap.id,
-          firstName: ownerInfo.name || ownerInfo.firstName ||"Unknown",
-          lastName: ownerInfo.lastName || "Unkown",
-          email: ownerInfo.email || "",
-          phone: ownerInfo.phone || "",
-          profileImage: ownerInfo.profileImage || "",
+          // Spread first so our normalized fields win over raw data when present
           ...ownerInfo,
+          firstName: ownerInfo.firstName ?? ownerInfo.name ?? "Unknown",
+          lastName: ownerInfo.lastName ?? "Unknown",
+          email: ownerInfo.email ?? "",
+          phone: ownerInfo.phone ?? "",
+          profileImage: ownerInfo.profileImage ?? "",
         };
       }
     }
@@ -179,15 +180,14 @@ export const getCarWithOwner = async (carId: string) => {
       year: data.year,
       fuel: data.fuel || "Gasoline",
       description: data.description,
-      images:
-        Array.isArray(data.images) && data.images.length > 0
-          ? data.images.map(
-              (img: { id?: string; url: string }, index: number) => ({
-                id: img.id || `img-${index}`, 
-                url: img.url,
-              })
-            )
-          : [],
+      images: Array.isArray(data.images)
+        ? data.images
+            .filter((img: any) => img?.url)
+            .map((img: { id?: string; url: string }, index: number) => ({
+              id: img.id ?? `img-${index}`,
+              url: img.url,
+            }))
+        : [],
       location: data.location || null,
       status: data.status,
       ownerId: data.ownerId,
