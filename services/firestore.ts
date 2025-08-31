@@ -4,9 +4,9 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   setDoc,
   where,
-  query,
 } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
 
@@ -126,7 +126,7 @@ export const fetchCarsByOwner = async (ownerId: string) => {
             ? data.images[0].url
             : null,
         status: data.status,
-        ownerId: data.ownerId, 
+        ownerId: data.ownerId,
         available: data.isActive,
       };
     });
@@ -134,6 +134,67 @@ export const fetchCarsByOwner = async (ownerId: string) => {
     return cars;
   } catch (error) {
     console.error("Error fetching cars by owner:", error);
+    throw error;
+  }
+};
+
+// Get car details with owner Id
+export const getCarWithOwner = async (carId: string) => {
+  try {
+    const carRef = doc(db, "cars", carId);
+    const carSnap = await getDoc(carRef);
+
+    if (!carSnap.exists()) {
+      console.log("No such car!");
+      return null;
+    }
+
+    const data = carSnap.data();
+
+    let ownerData = null;
+    if (data.ownerId) {
+      const ownerRef = doc(db, "users", data.ownerId);
+      const ownerSnap = await getDoc(ownerRef);
+      if (ownerSnap.exists()) {
+        const ownerInfo = ownerSnap.data();
+        ownerData = {
+          id: ownerSnap.id,
+          firstName: ownerInfo.name || ownerInfo.firstName ||"Unknown",
+          lastName: ownerInfo.lastName || "Unkown",
+          email: ownerInfo.email || "",
+          phone: ownerInfo.phone || "",
+          profileImage: ownerInfo.profileImage || "",
+          ...ownerInfo,
+        };
+      }
+    }
+
+    return {
+      id: carSnap.id,
+      name: `${data.make} ${data.model}`,
+      type: data.carType,
+      pricePerHour: data.dailyRate,
+      seats: data.seats,
+      transmission: data.transmission || "Automatic",
+      year: data.year,
+      fuel: data.fuel || "Gasoline",
+      description: data.description,
+      images:
+        Array.isArray(data.images) && data.images.length > 0
+          ? data.images.map(
+              (img: { id?: string; url: string }, index: number) => ({
+                id: img.id || `img-${index}`, 
+                url: img.url,
+              })
+            )
+          : [],
+      location: data.location || null,
+      status: data.status,
+      ownerId: data.ownerId,
+      owner: ownerData,
+    };
+  } catch (error) {
+    console.error("Error fetching car with owner:", error);
     throw error;
   }
 };
