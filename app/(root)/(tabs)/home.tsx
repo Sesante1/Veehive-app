@@ -128,13 +128,10 @@ const Home = () => {
     }
   };
 
-  useEffect(() => {
-    const loadWishlist = async () => {
-      if (!currentUser) return;
-      const data = await fetchUserWishlist(currentUser.uid);
-      setWishlist(data);
-    };
-    loadWishlist();
+  const loadWishlist = useCallback(async () => {
+    if (!currentUser) return;
+    const data = await fetchUserWishlist(currentUser.uid);
+    setWishlist(data);
   }, [currentUser]);
 
   const handleToggleWishlist = async (carId: string) => {
@@ -158,16 +155,18 @@ const Home = () => {
   const handlePullToRefresh = useCallback(async () => {
     setIsRefetching(true);
     await fetchCars();
+    await loadWishlist();
     setIsRefetching(false);
   }, []);
 
   useEffect(() => {
     const load = async () => {
       await fetchCars();
+      await loadWishlist();
       setLoading(false);
     };
     load();
-  }, []);
+  }, [currentUser]);
 
   const filteredCars = useMemo(() => {
     let filtered = cars;

@@ -1,4 +1,4 @@
-import { images } from "@/constants";
+import { icons } from "@/constants";
 import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import { useAuth } from "@/hooks/useUser";
 import {
@@ -6,8 +6,8 @@ import {
   fetchWishlistCars,
   toggleWishlist,
 } from "@/services/firestore";
-import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import LottieView from "lottie-react-native";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -99,6 +99,19 @@ const Favorites = () => {
   };
   return (
     <SafeAreaView className="flex-1 bg-white px-4">
+      <View className="flex bg-gray items-center py-4">
+        <Pressable
+          className="bg-white rounded-full p-1 absolute left-0 top-2"
+          onPress={() => {
+            router.back();
+          }}
+        >
+          <Image source={icons.backArrow} style={{ width: 30, height: 30 }} />
+        </Pressable>
+
+        <Text className="text-2xl font-JakartaSemiBold">Favorites</Text>
+      </View>
+
       <FlatList
         data={wishlistCars}
         keyExtractor={(item) => item.id.toString()}
@@ -115,13 +128,13 @@ const Favorites = () => {
           <View className="flex flex-col items-center justify-center">
             {!loading ? (
               <>
-                <Image
-                  source={images.noResult}
-                  className="w-40 h-40"
-                  alt="No cars found"
-                  resizeMode="contain"
+                <LottieView
+                  source={require("../../assets/animations/EmptySearch.json")}
+                  loop={true}
+                  autoPlay
+                  style={{ width: 400, height: 500 }}
                 />
-                <Text className="text-sm">No cars found</Text>
+                <Text className="text-2xl font-Jakarta">No cars found</Text>
               </>
             ) : (
               <ActivityIndicator size="large" color="#007DFC" />
@@ -130,22 +143,6 @@ const Favorites = () => {
         )}
         ListHeaderComponent={
           <>
-            <View className="flex bg-gray items-center py-4">
-              <MaterialIcons
-                className="absolute left-0 top-5"
-                name="arrow-back-ios-new"
-                size={20}
-                color="#00000"
-                onPress={() => router.back()}
-                hitSlop={8}
-              />
-
-              <Text className="text-2xl font-JakartaSemiBold">Favorites</Text>
-              {/* <Text className="text-sm text-gray-500">
-                {wishlist.length} cars found
-              </Text> */}
-            </View>
-
             <ScrollView
               className="my-6"
               horizontal

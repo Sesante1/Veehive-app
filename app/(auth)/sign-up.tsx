@@ -60,9 +60,10 @@ export default function SignUp() {
         email,
         password
       );
+      
       const user = userCredential.user;
       const defaultImageURL =
-        "https://firebasestorage.googleapis.com/v0/b/car-rental-1e1a1.firebasestorage.app/o/carrots.png?alt=media&token=84647180-bcfd-4f2d-a842-4de43ec97b49";
+        "https://firebasestorage.googleapis.com/v0/b/car-rental-1e1a1.firebasestorage.app/o/defaultProfile.png?alt=media&token=89b36550-c43e-432c-a91e-a0288d6f06b4";
 
       await updateProfile(user, {
         displayName: `${firstName} ${lastName}`,
@@ -84,11 +85,6 @@ export default function SignUp() {
       await sendEmailVerification(user);
 
       await signOut(FIREBASE_AUTH);
-
-      // Alert.alert(
-      //   "Verify Email",
-      //   "A verification email has been sent to your inbox. Please verify your email before logging in."
-      // );
 
       setShowSuccessModal(true);
       // router.push("/sign-in");

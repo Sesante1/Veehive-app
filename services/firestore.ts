@@ -159,7 +159,6 @@ export const getCarWithOwner = async (carId: string) => {
         const ownerInfo = ownerSnap.data();
         ownerData = {
           id: ownerSnap.id,
-          // Spread first so our normalized fields win over raw data when present
           ...ownerInfo,
           firstName: ownerInfo.firstName ?? ownerInfo.name ?? "Unknown",
           lastName: ownerInfo.lastName ?? "Unknown",
@@ -172,7 +171,8 @@ export const getCarWithOwner = async (carId: string) => {
 
     return {
       id: carSnap.id,
-      name: `${data.make} ${data.model}`,
+      make: data.make,
+      model: data.model,
       type: data.carType,
       pricePerHour: data.dailyRate,
       seats: data.seats,
@@ -188,7 +188,13 @@ export const getCarWithOwner = async (carId: string) => {
               url: img.url,
             }))
         : [],
-      location: data.location || null,
+      location: data.location
+        ? {
+            latitude: data.location.coordinates?.latitude,
+            longitude: data.location.coordinates?.longitude,
+            address: data.location.address,
+          }
+        : null,
       status: data.status,
       ownerId: data.ownerId,
       owner: ownerData,
