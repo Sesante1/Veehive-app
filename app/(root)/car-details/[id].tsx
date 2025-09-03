@@ -2,7 +2,13 @@ import CarDetailsSkeleton from "@/components/CarDetailsSkeleton";
 import CarLocationMap from "@/components/CarLocationMap";
 import CustomButton from "@/components/CustomButton";
 import { icons } from "@/constants";
+import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import { useAuth } from "@/hooks/useUser";
+import {
+  createConversation,
+  getUser,
+  sendInitialMessage,
+} from "@/services/chatService";
 import {
   fetchUserWishlist,
   getCarWithOwner,
@@ -220,10 +226,6 @@ const CarDetails = () => {
       try {
         setLoading(true);
         const data = await getCarWithOwner(id);
-        if (data) {
-          // console.log("Car images:", data.images);
-          // console.log("Number of images:", data.images?.length);
-        }
         setCar(data);
       } catch (e) {
         console.log("Error fetching car:", e);
@@ -259,6 +261,39 @@ const CarDetails = () => {
     setWishlist((prev) =>
       isWishlisted ? prev.filter((id) => id !== carId) : [...prev, carId]
     );
+  };
+
+  const startConversation = async (otherUserId: string) => {
+    try {
+      const currentUserId = FIREBASE_AUTH.currentUser?.uid;
+
+      if (!currentUserId) {
+        console.warn("User not logged in");
+        return;
+      }
+
+      const currentUser = await getUser(currentUserId);
+      const otherUser = await getUser(otherUserId);
+
+      if (!currentUser || !otherUser) {
+        console.warn("User data missing");
+        return;
+      }
+
+      const conversationId = await createConversation(
+        currentUserId,
+        otherUserId,
+        currentUser,
+        otherUser
+      );
+
+      console.log("Conversation ID:", conversationId);
+
+      await sendInitialMessage(conversationId, currentUserId, "Is this car available?");
+      console.log("Initial message sent!");
+    } catch (err) {
+      console.error("Error starting conversation:", err);
+    }
   };
 
   if (loading) return <CarDetailsSkeleton />;
@@ -417,6 +452,7 @@ const CarDetails = () => {
                 ) : (
                   <View className="flex-1 items-center justify-center">
                     <AntDesign name="user" size={24} color="#9ca3af" />
+                    <Text>HIasfdasdf</Text>
                   </View>
                 )}
               </View>
@@ -431,7 +467,15 @@ const CarDetails = () => {
               )}
             </View>
 
-            <Pressable>
+            <Pressable
+              onPress={() => {
+                if (car?.owner?.id) {
+                  startConversation(car.owner.id);
+                } else {
+                  console.warn("Owner ID not found");
+                }
+              }}
+            >
               <Ionicons
                 name="chatbubble-ellipses-sharp"
                 size={32}

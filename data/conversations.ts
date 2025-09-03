@@ -12,7 +12,6 @@ export type ConversationType = {
     name: string;
     username: string;
     avatar: string;
-    verified: boolean;
   };
   lastMessage: string;
   time: string;
@@ -28,7 +27,6 @@ export const CONVERSATIONS: ConversationType[] = [
       username: "boysipit",
       avatar:
         "https://i.pinimg.com/736x/e3/86/23/e38623cb61d5499381052b2a75a7f60a.jpg",
-      verified: false,
     },
     lastMessage: "Thanks for sharing that article! Really helpful insights.",
     time: "2h",
@@ -64,7 +62,6 @@ export const CONVERSATIONS: ConversationType[] = [
       username: "boykneegrow",
       avatar:
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ7mPoWIcV-V4FlEoHOWZwOGrAdTKpjocR5RVSRm86OHXcksxOr",
-      verified: false,
     },
     lastMessage: "See you at the meetup tomorrow! Don't forget to bring your laptop.",
     time: "2d",
@@ -100,7 +97,6 @@ export const CONVERSATIONS: ConversationType[] = [
       username: "frankdoe",
       avatar:
         "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcT-IFX17ACaINJ2rOU_HmAWymlHLiL84OJFY8XGczPQqoWRROcJ",
-      verified: false,
     },
     lastMessage: "Great collaboration on the project. The demo was impressive!",
     time: "3d",
@@ -136,7 +132,6 @@ export const CONVERSATIONS: ConversationType[] = [
       username: "TungtungSahur",
       avatar:
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQFM5YJpen28exFqfXJ5AZlpdHQihC3HHosse_Ht6wF8PFG9ayg",
-      verified: true,
     },
     lastMessage: "The new designs look fantastic. When can we schedule a review?",
     time: "1w",
