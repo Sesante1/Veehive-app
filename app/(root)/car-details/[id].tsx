@@ -4,6 +4,11 @@ import CustomButton from "@/components/CustomButton";
 import { icons } from "@/constants";
 import { useAuth } from "@/hooks/useUser";
 import {
+  createConversation,
+  getUser,
+  sendInitialMessage,
+} from "@/services/chatService";
+import {
   fetchUserWishlist,
   getCarWithOwner,
   toggleWishlist,
@@ -220,10 +225,6 @@ const CarDetails = () => {
       try {
         setLoading(true);
         const data = await getCarWithOwner(id);
-        if (data) {
-          // console.log("Car images:", data.images);
-          // console.log("Number of images:", data.images?.length);
-        }
         setCar(data);
       } catch (e) {
         console.log("Error fetching car:", e);
@@ -259,6 +260,57 @@ const CarDetails = () => {
     setWishlist((prev) =>
       isWishlisted ? prev.filter((id) => id !== carId) : [...prev, carId]
     );
+  };
+
+  const startConversation = async (otherUserId: string) => {
+    try {
+      const currentUserId = user?.uid;
+
+      if (!currentUserId) {
+        console.warn("User not logged in");
+        return;
+      }
+
+      if (currentUserId === otherUserId) {
+        console.warn("Cannot start a conversation with yourself");
+        return;
+      }
+
+      const currentUser = await getUser(currentUserId);
+      const otherUser = await getUser(otherUserId);
+
+      if (!currentUser || !otherUser) {
+        console.warn("User data missing");
+        return;
+      }
+
+      // Create conversation (update createConversation to return { id, created })
+      const { id: conversationId, created } = await createConversation(
+        currentUserId,
+        otherUserId,
+        currentUser,
+        otherUser
+      );
+
+      console.log(
+        "Conversation ID:",
+        conversationId,
+        "Newly created:",
+        created
+      );
+
+      // Send initial message ONLY if conversation is newly created
+      if (created) {
+        await sendInitialMessage(
+          conversationId,
+          currentUserId,
+          "Is this car available?"
+        );
+        console.log("Initial message sent!");
+      }
+    } catch (err) {
+      console.error("Error starting conversation:", err);
+    }
   };
 
   if (loading) return <CarDetailsSkeleton />;
@@ -431,7 +483,15 @@ const CarDetails = () => {
               )}
             </View>
 
-            <Pressable>
+            <Pressable
+              onPress={() => {
+                if (car?.owner?.id) {
+                  startConversation(car.owner.id);
+                } else {
+                  console.warn("Owner ID not found");
+                }
+              }}
+            >
               <Ionicons
                 name="chatbubble-ellipses-sharp"
                 size={32}
