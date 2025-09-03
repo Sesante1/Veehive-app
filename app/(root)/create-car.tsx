@@ -11,6 +11,7 @@ import InputField from "@/components/InputField";
 import TextAreaField from "@/components/TextAreaField";
 import { icons } from "@/constants";
 import { uploadCarListing } from "@/services/carService";
+import { Image } from "expo-image";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -18,6 +19,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   View,
@@ -185,14 +187,27 @@ const CreateCar = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white px-8">
+      <View className="flex bg-gray items-center py-2 mb-2">
+        <Pressable
+          className="bg-white rounded-full p-1 absolute left-0 top-1"
+          onPress={() => {
+            router.back();
+          }}
+        >
+          <Image source={icons.backArrow} style={{ width: 30, height: 30 }} />
+        </Pressable>
+
+        <Text className="text-2xl font-JakartaSemiBold">Create Listing</Text>
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 45 }}
           showsVerticalScrollIndicator={false}
         >
-          <Text className="text-2xl font-JakartaBold mb-5">
+          <Text className="text-2xl font-JakartaBold my-5">
             Basic Information
           </Text>
 
@@ -295,9 +310,7 @@ const CreateCar = () => {
               { label: "Electric", value: "Electric" },
             ]}
             placeholder="Select Fuel Type"
-            onChangeValue={(value) =>
-              setForm({ ...form, fuel: value ?? "" })
-            }
+            onChangeValue={(value) => setForm({ ...form, fuel: value ?? "" })}
             value={form.fuel}
           />
 

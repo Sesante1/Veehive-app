@@ -1,4 +1,3 @@
-import CustomButton from "@/components/CustomButton";
 import { useAuth } from "@/hooks/useUser";
 import {
   AntDesign,
@@ -6,9 +5,9 @@ import {
   MaterialCommunityIcons,
   MaterialIcons,
 } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
-import { router } from "expo-router";
 
 type CarProps = {
   id: string;

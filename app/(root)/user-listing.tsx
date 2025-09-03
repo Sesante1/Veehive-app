@@ -1,14 +1,14 @@
 import CarManagementCard from "@/components/CarManagementCard";
-import { images } from "@/constants";
+import { icons, images } from "@/constants";
 import { useAuth } from "@/hooks/useUser";
 import { fetchCarsByOwner } from "@/services/firestore";
-import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
+  Pressable,
   RefreshControl,
   Text,
   View,
@@ -71,6 +71,21 @@ const UserListing = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white px-4">
+      <View className="flex bg-gray items-center py-4">
+        <Pressable
+          className="bg-white rounded-full p-1 absolute left-0 top-4"
+          onPress={() => {
+            router.back();
+          }}
+        >
+          <Image source={icons.backArrow} style={{ width: 30, height: 30 }} />
+        </Pressable>
+
+        <Text className="text-2xl font-JakartaSemiBold">Your listing</Text>
+        <Text className="text-sm text-gray-500">
+          {userCars.length} cars found
+        </Text>
+      </View>
       <FlatList
         data={userCars}
         keyExtractor={(item) => item.id}
@@ -102,27 +117,7 @@ const UserListing = () => {
             colors={["#007DFC"]}
           />
         }
-        ListHeaderComponent={
-          <>
-            <View className="flex bg-gray items-center py-4">
-              <MaterialIcons
-                className="absolute left-0 top-5"
-                name="arrow-back-ios-new"
-                size={20}
-                color="#00000"
-                onPress={() => router.back()}
-                hitSlop={8}
-              />
-
-              <Text className="text-2xl font-JakartaSemiBold">
-                Your listing
-              </Text>
-              <Text className="text-sm text-gray-500">
-                {userCars.length} cars found
-              </Text>
-            </View>
-          </>
-        }
+        ListHeaderComponent={<></>}
       />
     </SafeAreaView>
   );

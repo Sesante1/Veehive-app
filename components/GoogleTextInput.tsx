@@ -79,26 +79,10 @@ const GoogleTextInput = ({
           handlePress(location);
         }
       } else {
-        // Fallback without coordinates
-        // if (handlePress) {
-        //   handlePress({
-        //     latitude: 0,
-        //     longitude: 0,
-        //     address: description,
-        //   });
-        // }
         console.warn("No geometry in Place Details response");
       }
     } catch (error) {
       console.error("Error fetching place details:", error);
-      // Fallback without coordinates
-      // if (handlePress) {
-      //   handlePress({
-      //     latitude: 0,
-      //     longitude: 0,
-      //     address: description,
-      //   });
-      // }
     }
   };
 
@@ -118,16 +102,6 @@ const GoogleTextInput = ({
     }
   };
 
-  // const handleTextChange = (text: string) => {
-  //   setSearchText(text);
-
-  //   // Debounce the API call
-  //   const timeoutId = setTimeout(() => {
-  //     searchPlaces(text);
-  //   }, 300);
-
-  //   return () => clearTimeout(timeoutId);
-  // };
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleTextChange = (text: string) => {

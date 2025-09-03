@@ -128,13 +128,17 @@ const Home = () => {
     }
   };
 
-  useEffect(() => {
-    const loadWishlist = async () => {
-      if (!currentUser) return;
+  const loadWishlist = useCallback(async () => {
+    if (!currentUser) {
+      setWishlist([]);
+      return;
+    }
+    try {
       const data = await fetchUserWishlist(currentUser.uid);
       setWishlist(data);
-    };
-    loadWishlist();
+    } catch (e) {
+      console.error("Failed to load wishlist", e);
+    }
   }, [currentUser]);
 
   const handleToggleWishlist = async (carId: string) => {
@@ -157,17 +161,22 @@ const Home = () => {
   // HandlePullToRefresh
   const handlePullToRefresh = useCallback(async () => {
     setIsRefetching(true);
-    await fetchCars();
-    setIsRefetching(false);
-  }, []);
+    try {
+      await fetchCars();
+      await loadWishlist();
+    } finally {
+      setIsRefetching(false);
+    }
+  }, [fetchCars, loadWishlist]);
 
   useEffect(() => {
     const load = async () => {
       await fetchCars();
+      await loadWishlist();
       setLoading(false);
     };
     load();
-  }, []);
+  }, [currentUser]);
 
   const filteredCars = useMemo(() => {
     let filtered = cars;
