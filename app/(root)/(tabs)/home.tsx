@@ -129,9 +129,16 @@ const Home = () => {
   };
 
   const loadWishlist = useCallback(async () => {
-    if (!currentUser) return;
-    const data = await fetchUserWishlist(currentUser.uid);
-    setWishlist(data);
+    if (!currentUser) {
+      setWishlist([]);
+      return;
+    }
+    try {
+      const data = await fetchUserWishlist(currentUser.uid);
+      setWishlist(data);
+    } catch (e) {
+      console.error("Failed to load wishlist", e);
+    }
   }, [currentUser]);
 
   const handleToggleWishlist = async (carId: string) => {
@@ -154,10 +161,13 @@ const Home = () => {
   // HandlePullToRefresh
   const handlePullToRefresh = useCallback(async () => {
     setIsRefetching(true);
-    await fetchCars();
-    await loadWishlist();
-    setIsRefetching(false);
-  }, []);
+    try {
+      await fetchCars();
+      await loadWishlist();
+    } finally {
+      setIsRefetching(false);
+    }
+  }, [fetchCars, loadWishlist]);
 
   useEffect(() => {
     const load = async () => {

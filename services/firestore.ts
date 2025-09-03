@@ -188,13 +188,16 @@ export const getCarWithOwner = async (carId: string) => {
               url: img.url,
             }))
         : [],
-      location: data.location
-        ? {
-            latitude: data.location.coordinates?.latitude,
-            longitude: data.location.coordinates?.longitude,
-            address: data.location.address,
-          }
-        : null,
+      location:
+        data.location &&
+        typeof data.location.coordinates?.latitude === "number" &&
+        typeof data.location.coordinates?.longitude === "number"
+          ? {
+              latitude: data.location.coordinates.latitude,
+              longitude: data.location.coordinates.longitude,
+              address: data.location.address ?? "",
+            }
+          : null,
       status: data.status,
       ownerId: data.ownerId,
       owner: ownerData,

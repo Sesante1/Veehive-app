@@ -3,7 +3,11 @@ import CarLocationMap from "@/components/CarLocationMap";
 import CustomButton from "@/components/CustomButton";
 import { icons } from "@/constants";
 import { useAuth } from "@/hooks/useUser";
-import { getCarWithOwner, fetchUserWishlist, toggleWishlist } from "@/services/firestore";
+import {
+  fetchUserWishlist,
+  getCarWithOwner,
+  toggleWishlist,
+} from "@/services/firestore";
 import {
   AntDesign,
   FontAwesome,
@@ -156,7 +160,7 @@ const ReviewCard = ({ item }: { item: Review }) => (
     style={{ width: CARD_WIDTH }}
     className="bg-white py-5 border-r border-gray-200 mr-5"
   >
-     <View className="flex-row items-center mb-4">
+    <View className="flex-row items-center mb-4">
       {Array.from({ length: 5 }).map((_, index) => (
         <AntDesign
           key={index}
@@ -209,7 +213,6 @@ const CarDetails = () => {
 
   const [showMap, setShowMap] = useState(false);
 
-  
   useEffect(() => {
     if (!id) return;
 
@@ -233,30 +236,30 @@ const CarDetails = () => {
   }, [id]);
 
   useEffect(() => {
-      const loadWishlist = async () => {
-        if (!user) return;
-        const data = await fetchUserWishlist(user.uid);
-        setWishlist(data);
-      };
-      loadWishlist();
-    }, [user]);
-  
-    const handleToggleWishlist = async (carId: string) => {
-      // const user = FIREBASE_AUTH.currentUser;
-  
-      if (!user) {
-        console.log("User not found");
-        return;
-      }
-  
-      const isWishlisted = wishlist.includes(carId);
-  
-      await toggleWishlist(user.uid, carId, isWishlisted);
-  
-      setWishlist((prev) =>
-        isWishlisted ? prev.filter((id) => id !== carId) : [...prev, carId]
-      );
+    const loadWishlist = async () => {
+      if (!user) return;
+      const data = await fetchUserWishlist(user.uid);
+      setWishlist(data);
     };
+    loadWishlist();
+  }, [user]);
+
+  const handleToggleWishlist = async (carId: string) => {
+    // const user = FIREBASE_AUTH.currentUser;
+
+    if (!user) {
+      console.log("User not found");
+      return;
+    }
+
+    const isWishlisted = wishlist.includes(carId);
+
+    await toggleWishlist(user.uid, carId, isWishlisted);
+
+    setWishlist((prev) =>
+      isWishlisted ? prev.filter((id) => id !== carId) : [...prev, carId]
+    );
+  };
 
   if (loading) return <CarDetailsSkeleton />;
 
@@ -405,11 +408,17 @@ const CarDetails = () => {
           <Text className="font-JakartaSemiBold">Rent Partner</Text>
           <View className="flex-row items-center justify-between mt-3">
             <View className="flex-row items-center py-2 gap-2">
-              <View className="h-[60px] w-[60px] rounded-full">
-                <Image
-                  source={{ uri: car.owner?.profileImage }}
-                  style={{ width: "100%", height: "100%", borderRadius: 5 }}
-                />
+              <View className="h-[60px] w-[60px] rounded-full overflow-hidden bg-gray-100">
+                {car.owner?.profileImage ? (
+                  <Image
+                    source={{ uri: car.owner.profileImage }}
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                ) : (
+                  <View className="flex-1 items-center justify-center">
+                    <AntDesign name="user" size={24} color="#9ca3af" />
+                  </View>
+                )}
               </View>
 
               {car.owner && (
@@ -461,32 +470,36 @@ const CarDetails = () => {
             <Text className="font-Jakarta">{car?.location?.address}</Text>
           </View>
 
-          {/* Map */}
-          <Pressable onPress={() => setShowMap(true)}>
-            <Image
-              source={{
-                uri: `https://maps.geoapify.com/v1/staticmap?style=osm-bright&width=600&height=400&center=lonlat:${car.location!.longitude},${car.location!.latitude}&zoom=14&apiKey=${process.env.EXPO_PUBLIC_GEOAPIFY_API_KEY}`,
-              }}
-              style={{ width: "100%", height: 300, borderRadius: 10 }}
-            />
-          </Pressable>
+          {/* Car location map */}
+          {car.location && (
+            <>
+              <Pressable onPress={() => setShowMap(true)}>
+                <Image
+                  source={{
+                    uri: `https://maps.geoapify.com/v1/staticmap?style=osm-bright&width=600&height=400&center=lonlat:${car.location.longitude},${car.location.latitude}&zoom=14&apiKey=${process.env.EXPO_PUBLIC_GEOAPIFY_API_KEY}`,
+                  }}
+                  style={{ width: "100%", height: 300, borderRadius: 10 }}
+                />
+              </Pressable>
 
-          <Modal visible={showMap} animationType="slide">
-            <CarLocationMap
-              carLocation={{
-                latitude: car.location!.latitude,
-                longitude: car.location!.longitude,
-                address: car.location!.address,
-              }}
-              carDetails={{
-                make: car.make,
-                model: car.model,
-                year: car.year,
-                dailyRate: car.pricePerHour,
-              }}
-              onClose={() => setShowMap(false)}
-            />
-          </Modal>
+              <Modal visible={showMap} animationType="slide">
+                <CarLocationMap
+                  carLocation={{
+                    latitude: car.location.latitude,
+                    longitude: car.location.longitude,
+                    address: car.location.address,
+                  }}
+                  carDetails={{
+                    make: car.make,
+                    model: car.model,
+                    year: car.year,
+                    dailyRate: car.pricePerHour,
+                  }}
+                  onClose={() => setShowMap(false)}
+                />
+              </Modal>
+            </>
+          )}
 
           {/* Reviews container */}
           <View className="mt-12">
@@ -502,9 +515,9 @@ const CarDetails = () => {
               keyExtractor={(item) => item.id.toString()}
               horizontal
               showsHorizontalScrollIndicator={false}
-              snapToInterval={CARD_WIDTH + CARD_SPACING} 
-              decelerationRate="fast" 
-              pagingEnabled={false} 
+              snapToInterval={CARD_WIDTH + CARD_SPACING}
+              decelerationRate="fast"
+              pagingEnabled={false}
             />
           </View>
 
