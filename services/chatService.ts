@@ -48,26 +48,25 @@ export const getUser = async (userId: string) => {
 
 // Create a new conversation
 export const createConversation = async (
-  currentUserId: string,
+  currentUserId: string, 
   otherUserId: string,
   currentUserData: any,
   otherUserData: any
-): Promise<string> => {
+): Promise<{ id: string; created: boolean }> => {
   try {
     // Check if conversation already exists
-    const conversationsRef = collection(db, "conversations");
+    const conversationsRef = collection(db, 'conversations');
     const q = query(
       conversationsRef,
-      where("participants", "array-contains", currentUserId)
+      where('participants', 'array-contains', currentUserId)
     );
-
+    
     const querySnapshot = await getDocs(q);
-
-    // Find existing conversation
+    
     for (const doc of querySnapshot.docs) {
       const data = doc.data();
       if (data.participants && data.participants.includes(otherUserId)) {
-        return doc.id; // Return immediately if found
+        return { id: doc.id, created: false }; // existing conversation
       }
     }
 
@@ -84,28 +83,22 @@ export const createConversation = async (
           name: `${otherUserData.firstName} ${otherUserData.lastName}`,
           username: otherUserData.email,
           avatar: otherUserData.profileImage,
-        },
+        }
       },
-      // added typing indicator
-      typing: {
-        [currentUserId]: false,
-        [otherUserId]: false,
-      },
-      lastMessage: "",
+      lastMessage: '',
       lastMessageTime: serverTimestamp(),
-      createdAt: serverTimestamp(),
+      createdAt: serverTimestamp()
     };
 
-    const docRef = await addDoc(
-      collection(db, "conversations"),
-      conversationData
-    );
-    return docRef.id;
+    const docRef = await addDoc(collection(db, 'conversations'), conversationData);
+    return { id: docRef.id, created: true }; // new conversation
   } catch (error) {
-    console.error("Error creating conversation:", error);
+    console.error('Error creating conversation:', error);
     throw error;
   }
 };
+
+
 // Send initial message to start convo
 export const sendInitialMessage = async (
   conversationId: string,

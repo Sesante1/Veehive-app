@@ -2,7 +2,6 @@ import CarDetailsSkeleton from "@/components/CarDetailsSkeleton";
 import CarLocationMap from "@/components/CarLocationMap";
 import CustomButton from "@/components/CustomButton";
 import { icons } from "@/constants";
-import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import { useAuth } from "@/hooks/useUser";
 import {
   createConversation,
@@ -265,10 +264,15 @@ const CarDetails = () => {
 
   const startConversation = async (otherUserId: string) => {
     try {
-      const currentUserId = FIREBASE_AUTH.currentUser?.uid;
+      const currentUserId = user?.uid;
 
       if (!currentUserId) {
         console.warn("User not logged in");
+        return;
+      }
+
+      if (currentUserId === otherUserId) {
+        console.warn("Cannot start a conversation with yourself");
         return;
       }
 
@@ -280,17 +284,30 @@ const CarDetails = () => {
         return;
       }
 
-      const conversationId = await createConversation(
+      // Create conversation (update createConversation to return { id, created })
+      const { id: conversationId, created } = await createConversation(
         currentUserId,
         otherUserId,
         currentUser,
         otherUser
       );
 
-      console.log("Conversation ID:", conversationId);
+      console.log(
+        "Conversation ID:",
+        conversationId,
+        "Newly created:",
+        created
+      );
 
-      await sendInitialMessage(conversationId, currentUserId, "Is this car available?");
-      console.log("Initial message sent!");
+      // Send initial message ONLY if conversation is newly created
+      if (created) {
+        await sendInitialMessage(
+          conversationId,
+          currentUserId,
+          "Is this car available?"
+        );
+        console.log("Initial message sent!");
+      }
     } catch (err) {
       console.error("Error starting conversation:", err);
     }
@@ -452,7 +469,6 @@ const CarDetails = () => {
                 ) : (
                   <View className="flex-1 items-center justify-center">
                     <AntDesign name="user" size={24} color="#9ca3af" />
-                    <Text>HIasfdasdf</Text>
                   </View>
                 )}
               </View>

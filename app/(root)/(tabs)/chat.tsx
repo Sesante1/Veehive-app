@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Image,
@@ -16,6 +16,7 @@ import {
 } from "react-native-safe-area-context";
 
 // Firebase imports
+import { useAuth } from "@/hooks/useUser";
 import {
   addDoc,
   collection,
@@ -29,8 +30,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { db, FIREBASE_AUTH } from "../../../FirebaseConfig";
-
+import { db } from "../../../FirebaseConfig";
 // Types
 export type MessageType = {
   id: string;
@@ -77,10 +77,14 @@ const Chat = () => {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTypingRef = useRef(false);
 
-  const currentUserId = FIREBASE_AUTH.currentUser?.uid;
+  const { user } = useAuth();
+  const currentUserId = user?.uid;
 
   // Fetch conversations
   useEffect(() => {
+    // Added prevent query if undefined
+    if (!currentUserId) return;
+
     const conversationsRef = collection(db, "conversations");
     const q = query(
       conversationsRef,
@@ -158,7 +162,7 @@ const Chat = () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
-      // Clear typing indicator when leaving conversation
+      
       if (selectedConversation && currentUserId) {
         updateDoc(doc(db, "conversations", selectedConversation.id), {
           [`typing.${currentUserId}`]: false,
@@ -268,7 +272,7 @@ const Chat = () => {
         await updateDoc(conversationRef, {
           lastMessage: newMessage.trim(),
           lastMessageTime: serverTimestamp(),
-          [`typing.${currentUserId}`]: false, // Clear typing when message is sent
+          [`typing.${currentUserId}`]: false, 
         });
 
         setNewMessage("");
@@ -536,7 +540,8 @@ const Chat = () => {
                     otherParticipantId &&
                     selectedConversation?.typing?.[otherParticipantId]
                   ) {
-                    const otherParticipant = getOtherParticipant(selectedConversation);
+                    const otherParticipant =
+                      getOtherParticipant(selectedConversation);
                     return (
                       <View className="flex-row items-center mb-3">
                         {otherParticipant && (
