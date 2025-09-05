@@ -9,6 +9,7 @@ export default function Layout() {
       <Stack.Screen name="favorites" options={{ headerShown: false }} />
       <Stack.Screen name="user-listing" options={{ headerShown: false }} />
       <Stack.Screen name="car-details/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="book-car" options={{ headerShown: false }} />
     </Stack>
   );
 }
