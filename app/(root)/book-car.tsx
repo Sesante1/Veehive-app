@@ -1,8 +1,9 @@
-import CustomButton from "@/components/CustomButton";
 import DateRangePicker from "@/components/DateRangePicker";
+import Payment from "@/components/Payment";
 import TimePickerModal from "@/components/TimePickerModal";
 import { icons } from "@/constants";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { StripeProvider } from "@stripe/stripe-react-native";
 import { decode as atob } from "base-64";
 import dayjs from "dayjs";
 import { Image } from "expo-image";
@@ -10,8 +11,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { StripeProvider } from "@stripe/stripe-react-native";
-import Payment from "@/components/Payment";
 
 const PickerBox = ({
   label,
@@ -79,7 +78,10 @@ const BookCar = () => {
 
   const formatDate = (date: string) => dayjs(date).format("ddd, DD MMM");
   const formatTime = (time: Date) => dayjs(time).format("h:mm A");
-  const rentalDays = dayjs(returnDate).diff(dayjs(pickupDate), "day");
+  const rentalDays = Math.max(
+    dayjs(returnDate).diff(dayjs(pickupDate), "day"),
+    1
+  );
 
   return (
     <>
@@ -247,14 +249,14 @@ const BookCar = () => {
           pickupDate={pickupDate}
           returnDate={returnDate}
           onApply={(pickup, ret) => {
-            // Normalize both dates to start of day
-            const normalizedPickup = dayjs(pickup)
-              .startOf("day")
-              .format("YYYY-MM-DD");
-            const normalizedReturn = dayjs(ret)
-              .startOf("day")
-              .format("YYYY-MM-DD");
-
+            // Normalize, auto-correct reversed/equal ranges, and enforce >= 1 day
+            const p = dayjs(pickup).startOf("day");
+            const r = dayjs(ret).startOf("day");
+            const [start, end] = r.isBefore(p) ? [r, p] : [p, r];
+            const normalizedPickup = start.format("YYYY-MM-DD");
+            const normalizedReturn = (
+              end.isSame(start) ? end.add(1, "day") : end
+            ).format("YYYY-MM-DD");
             setPickupDate(normalizedPickup);
             setReturnDate(normalizedReturn);
           }}

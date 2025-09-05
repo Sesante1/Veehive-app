@@ -2,7 +2,7 @@ import { useStripe } from "@stripe/stripe-react-native";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Image, Text, View } from "react-native";
-import { ReactNativeModal } from "react-native-modal";
+import Modal from "react-native-modal";
 
 import CustomButton from "@/components/CustomButton";
 import { images } from "@/constants";
@@ -11,12 +11,12 @@ const Payment = () => {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [success, setSuccess] = useState(false);
 
-  const initializePaymentSheet = async () => {
+  const initializePaymentSheet = async (): Promise<boolean> => {
     const { error } = await initPaymentSheet({
       merchantDisplayName: "Example, Inc.",
       intentConfiguration: {
         mode: {
-          amount: 1099, // $10.99 
+          amount: 1099, // $10.99
           currencyCode: "usd",
         },
         confirmHandler: async (_, __, intentCreationCallback) => {
@@ -31,7 +31,9 @@ const Payment = () => {
 
     if (error) {
       Alert.alert("Init Error", error.message);
+      return false;
     }
+    return true;
   };
 
   const openPaymentSheet = async () => {
@@ -50,10 +52,7 @@ const Payment = () => {
     <>
       <CustomButton title="Confirm Booking" onPress={openPaymentSheet} />
 
-      <ReactNativeModal
-        isVisible={success}
-        onBackdropPress={() => setSuccess(false)}
-      >
+      <Modal isVisible={success} onBackdropPress={() => setSuccess(false)}>
         <View className="flex flex-col items-center justify-center bg-white p-7 rounded-2xl">
           <Image source={images.check} className="w-28 h-28 mt-5" />
 
@@ -70,7 +69,7 @@ const Payment = () => {
             className="mt-5"
           />
         </View>
-      </ReactNativeModal>
+      </Modal>
     </>
   );
 };
