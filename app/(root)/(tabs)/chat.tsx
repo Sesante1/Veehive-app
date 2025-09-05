@@ -16,6 +16,7 @@ import {
 } from "react-native-safe-area-context";
 
 // Firebase imports
+import { images } from "@/constants";
 import { useAuth } from "@/hooks/useUser";
 import {
   addDoc,
@@ -74,7 +75,7 @@ const Chat = () => {
   const [loading, setLoading] = useState(true);
 
   // Refs for typing indicator
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTypingRef = useRef(false);
 
   const { user } = useAuth();
@@ -162,7 +163,7 @@ const Chat = () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
-      
+
       if (selectedConversation && currentUserId) {
         updateDoc(doc(db, "conversations", selectedConversation.id), {
           [`typing.${currentUserId}`]: false,
@@ -272,7 +273,7 @@ const Chat = () => {
         await updateDoc(conversationRef, {
           lastMessage: newMessage.trim(),
           lastMessageTime: serverTimestamp(),
-          [`typing.${currentUserId}`]: false, 
+          [`typing.${currentUserId}`]: false,
         });
 
         setNewMessage("");
@@ -408,13 +409,18 @@ const Chat = () => {
         })}
 
         {conversationsList.length === 0 && (
-          <View className="flex-1 justify-center items-center py-20">
-            <Feather name="message-circle" size={64} color="#E5E7EB" />
-            <Text className="text-gray-500 mt-4 text-center">
-              No conversations yet
+          <View className="flex-1 h-full justify-center items-center">
+            <Image
+              source={images.message}
+              accessibilityLabel="Message illustration"
+              className="w-full h-40"
+              resizeMode="contain"
+            />
+            <Text className="text-3xl font-JakartaBold mt-3">
+              No Messages, yet!
             </Text>
-            <Text className="text-gray-400 text-sm text-center mt-1">
-              Start a new conversation to see it here
+            <Text className="text-base mt-2 font-Jakarta text-center px-7">
+              No messages in your inbox, yet!
             </Text>
           </View>
         )}

@@ -34,7 +34,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { encode as btoa } from "base-64";
 
 const reviews = [
   {
@@ -214,6 +215,7 @@ const CarDetails = () => {
   const [wishlist, setWishlist] = useState<string[]>([]);
   const { user } = useAuth();
 
+  const insets = useSafeAreaInsets();
   const [expanded, setExpanded] = useState(false);
 
   const [showMap, setShowMap] = useState(false);
@@ -590,8 +592,9 @@ const CarDetails = () => {
 
       {/* Book now container */}
       <View
-        className="w-full bg-white h-[100px] flex-row justify-between absolute bottom-0 boder-t border-t-gray-300 px-4 py-3 rounded-t-[15px]"
+        className="w-full bg-white flex-row justify-between absolute bottom-0 boder-t border-t-gray-300 px-4 py-3 rounded-t-[15px]"
         style={{
+          paddingBottom: insets.bottom,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.1,
@@ -611,7 +614,24 @@ const CarDetails = () => {
         </View>
 
         <View className="w-[180px] ">
-          <CustomButton title="Book Now" onPress={() => {}} />
+          <CustomButton
+            title="Book Now"
+            onPress={() => {
+              const bookingData = {
+                carId: car.id,
+                carType: car.type,
+                carImage: btoa(car.images[0]?.url || ""),
+                carMake: car.make,
+                carModel: car.model,
+                pricePerHour: car.pricePerHour,
+              };
+
+              router.push({
+                pathname: "/(root)/book-car",
+                params: bookingData,
+              });
+            }}
+          />
         </View>
       </View>
     </>

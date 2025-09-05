@@ -155,7 +155,7 @@ export default function Profile() {
               onPress={() => {}}
             >
               <AntDesign name="questioncircleo" size={20} color="#00000" />
-              <Text className="text-lg font-Jakarta">Get help</Text>
+              <Text className="text-lg font-Jakarta">Privacy Policy</Text>
               <MaterialIcons
                 className="absolute right-0"
                 name="navigate-next"
