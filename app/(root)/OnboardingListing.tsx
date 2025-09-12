@@ -127,7 +127,9 @@ export default function OnboardingListing() {
   // Validation functions for each step
   const validateStep1 = () => {
     const required = ["make", "model", "year", "carType"];
-    const missing = required.filter((field) => !form[field as keyof FormFields]);
+    const missing = required.filter(
+      (field) => !form[field as keyof FormFields]
+    );
 
     if (missing.length > 0) {
       Alert.alert(
@@ -136,26 +138,55 @@ export default function OnboardingListing() {
       );
       return false;
     }
-    return true;
-  };
 
-  const validateStep2 = () => {
-    if (!form.dailyRate || !form.location) {
+    const yearNum = parseInt(form.year, 10);
+    const current = new Date().getFullYear() + 1;
+    if (
+      Number.isNaN(yearNum) ||
+      form.year.length !== 4 ||
+      yearNum < 1980 ||
+      yearNum > current
+    ) {
       Alert.alert(
-        "Missing Information",
-        "Please fill in daily rate and location"
+        "Invalid Year",
+        `Year must be a 4-digit number between 1980 and ${current}.`
       );
       return false;
     }
     return true;
   };
 
+  const validateStep2 = () => {
+    const rate = parseFloat(String(form.dailyRate).trim());
+    const hasAddress = !!form.location?.trim();
+    const hasCoords =
+      typeof form.latitude === "number" &&
+      typeof form.longitude === "number" &&
+      Math.abs(form.latitude) <= 90 &&
+      Math.abs(form.longitude) <= 180;
+
+    if (!hasAddress || !hasCoords) {
+      Alert.alert("Missing Location", "Please select a valid pickup location.");
+      return false;
+    }
+    if (Number.isNaN(rate) || rate <= 0) {
+      Alert.alert("Invalid Price", "Daily rate must be a positive number.");
+      return false;
+    }
+    return true;
+  };
+
   const validateStep3 = () => {
+    const seats = parseInt(String(form.seats).trim(), 10);
     if (!form.transmission || !form.fuel || !form.seats) {
       Alert.alert(
         "Missing Information",
         "Please fill in transmission, fuel type, and seats"
       );
+      return false;
+    }
+    if (Number.isNaN(seats) || seats <= 0 || seats > 15) {
+      Alert.alert("Invalid Seats", "Seats must be a positive integer (1–15).");
       return false;
     }
     return true;
@@ -347,10 +378,7 @@ export default function OnboardingListing() {
       />
       <View className="mb-4">
         <Text className="text-lg font-JakartaSemiBold mb-3">Location</Text>
-        <GoogleTextInput
-          icon={icons.pin}
-          handlePress={handleLocationPress}
-        />
+        <GoogleTextInput icon={icons.pin} handlePress={handleLocationPress} />
       </View>
     </StepWrapper>,
 
@@ -384,8 +412,10 @@ export default function OnboardingListing() {
         label="Fuel Type"
         items={[
           { label: "Gasoline", value: "Gasoline" },
+          { label: "Petrol", value: "Petrol" },
           { label: "Diesel", value: "Diesel" },
           { label: "Electric", value: "Electric" },
+          { label: "Hybrid", value: "Hybrid" },
         ]}
         placeholder="Select Fuel Type"
         value={form.fuel}
@@ -425,9 +455,7 @@ export default function OnboardingListing() {
       <Text className="text-base text-gray-600 mb-2">
         Transmission: {form.transmission}
       </Text>
-      <Text className="text-base text-gray-600 mb-2">
-        Seats: {form.seats}
-      </Text>
+      <Text className="text-base text-gray-600 mb-2">Seats: {form.seats}</Text>
       <Text className="text-base text-gray-600 mb-2">
         Fuel Type: {form.fuel}
       </Text>
@@ -438,7 +466,8 @@ export default function OnboardingListing() {
         Official Receipt: {receipt.length > 0 ? "Uploaded" : "Not uploaded"}
       </Text>
       <Text className="text-base text-gray-600 mb-2">
-        Certificate of Registration: {certificateRegistration.length > 0 ? "Uploaded" : "Not uploaded"}
+        Certificate of Registration:{" "}
+        {certificateRegistration.length > 0 ? "Uploaded" : "Not uploaded"}
       </Text>
     </StepWrapper>,
   ];
