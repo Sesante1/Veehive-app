@@ -1,3 +1,4 @@
+import { icons } from "@/constants";
 import { useSignOut } from "@/hooks/useSignOut";
 import {
   AntDesign,
@@ -7,6 +8,7 @@ import {
   SimpleLineIcons,
 } from "@expo/vector-icons";
 import { router } from "expo-router";
+import LottieView from "lottie-react-native";
 import React from "react";
 import {
   Image,
@@ -55,13 +57,12 @@ export default function Profile() {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView
-        className="px-4"
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-        <Text className="text-2xl font-JakartaBold mt-6">Account</Text>
+        <Text className="text-2xl font-JakartaBold mt-6 px-4">Account</Text>
 
-        <View className="flex items-center justify-center my-5 mb-20">
+        <View className="flex items-center justify-center my-5 mb-10">
           <Image
             source={{
               uri: userData.profileImage,
@@ -77,9 +78,28 @@ export default function Profile() {
         </View>
 
         <View className="flex-1">
+          <Pressable className="px-6" onPress={() => router.push("/(root)/OnboardingListing")}>
+            <View className="bg-white h-[110px] mb-8 rounded-lg flex-row items-center justify-center gap-2 shadow-md shadow-black-400">
+              <LottieView
+                source={require("../../../assets/animations/host-animation.json")}
+                loop={true}
+                autoPlay
+                style={{ width: 80, height: 80 }}
+              />
+              <View className="flex-col gap-1 ">
+                <Text className="text-lg font-JakartaSemiBold">
+                  Become a host
+                </Text>
+                <Text className="text-sm font-Jakarta">
+                  It's easy to start hosting and earn extra income
+                </Text>
+              </View>
+            </View>
+          </Pressable>
+
           <View className="border-b border-gray-200 mb-4 pb-4">
             <Pressable
-              className="flex flex-row items-center gap-4 p-4 rounded-lg"
+              className="flex flex-row items-center gap-4 py-4 px-6 rounded-lg"
               onPress={() => {}}
             >
               <Feather name="calendar" size={20} color="#00000" />
@@ -92,8 +112,8 @@ export default function Profile() {
               />
             </Pressable>
 
-            <Pressable
-              className="flex flex-row items-center gap-4 p-4 rounded-lg"
+            {/* <Pressable
+              className="flex flex-row items-center gap-4 py-4 px-6 rounded-lg"
               onPress={() => router.push("/create-car")}
             >
               <FontAwesome6 name="add" size={20} color="#00000" />
@@ -104,10 +124,10 @@ export default function Profile() {
                 size={30}
                 color="#00000"
               />
-            </Pressable>
+            </Pressable> */}
 
-            <Pressable
-              className="flex flex-row items-center gap-3 p-4"
+            {/* <Pressable
+              className="flex flex-row items-center gap-3 py-4 px-6"
               onPress={() => router.push("/user-listing")}
             >
               <Feather name="list" size={20} color="black" />
@@ -118,10 +138,10 @@ export default function Profile() {
                 size={30}
                 color="#00000"
               />
-            </Pressable>
+            </Pressable> */}
 
-            <Pressable
-              className="flex flex-row items-center gap-3 p-4"
+            {/* <Pressable
+              className="flex flex-row items-center gap-3 py-4 px-6"
               onPress={() => {}}
             >
               <Feather name="check" size={20} color="#00000" />
@@ -132,10 +152,10 @@ export default function Profile() {
                 size={30}
                 color="#00000"
               />
-            </Pressable>
+            </Pressable> */}
 
             <Pressable
-              className="flex flex-row items-center gap-3 p-4"
+              className="flex flex-row items-center gap-3 py-4 px-6"
               onPress={() => router.push("/favorites")}
             >
               <Feather name="heart" size={20} color="#00000" />
@@ -151,7 +171,7 @@ export default function Profile() {
 
           <View>
             <Pressable
-              className="flex flex-row items-center gap-3 p-4"
+              className="flex flex-row items-center gap-3 py-4 px-6"
               onPress={() => {}}
             >
               <AntDesign name="questioncircleo" size={20} color="#00000" />
@@ -165,7 +185,7 @@ export default function Profile() {
             </Pressable>
 
             <Pressable
-              className="flex flex-row items-center gap-3 p-4"
+              className="flex flex-row items-center gap-3 py-4 px-6"
               onPress={() => {}}
             >
               <Feather name="user" size={20} color="#00000" />
@@ -179,7 +199,7 @@ export default function Profile() {
             </Pressable>
 
             <Pressable
-              className="flex flex-row items-center gap-3 p-4"
+              className="flex flex-row items-center gap-3 py-4 px-6"
               onPress={() => setVisible(true)}
             >
               <SignOutModal />
@@ -195,6 +215,10 @@ export default function Profile() {
           </View>
         </View>
       </ScrollView>
+      <Pressable className="flex-row justify-center gap-2 items-center absolute bottom-40 left-1/2 -translate-x-1/2 bg-black/70 rounded-full px-4 py-3">
+        <Image source={icons.arrow} style={{ width: 15, height: 15 }} />
+        <Text className="color-white">Switch to hosting</Text>
+      </Pressable>
     </SafeAreaView>
   );
 }

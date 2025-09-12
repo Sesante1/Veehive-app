@@ -49,12 +49,9 @@ const SignIn = () => {
         return;
       }
 
-      Alert.alert("Success", "Login successful!");
-
       router.push("/(root)/(tabs)/home");
     } catch (error) {
       console.error("Login Error", error);
-      // Alert.alert("Login Failed", String(error.message || error));
       Alert.alert("Login Failed", String(error || error));
     } finally {
       setIsLoading(false);
