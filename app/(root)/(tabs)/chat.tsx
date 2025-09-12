@@ -360,8 +360,22 @@ const Chat = () => {
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* HEADER */}
-      <View className="flex-row items-center justify-between px-4 pb-3 mt-6 border-b border-gray-100">
+      <View className="flex-row items-center justify-between px-4 pb-3 mt-6">
         <Text className="text-2xl font-JakartaBold">Messages</Text>
+      </View>
+
+      {/* Search Bar */}
+      <View className="px-4 py-3 border-b border-gray-100">
+        <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-2">
+          <Feather name="search" size={20} color="#657786" />
+          <TextInput
+            placeholder="Search for people"
+            className="flex-1 ml-3 text-base"
+            placeholderTextColor="#657786"
+            value={searchText}
+            onChangeText={setSearchText}
+          />
+        </View>
       </View>
 
       {/* CONVERSATIONS LIST */}
@@ -383,7 +397,7 @@ const Chat = () => {
             >
               <Image
                 source={{ uri: otherParticipant.avatar }}
-                className="size-12 rounded-full mr-3"
+                className="size-16 rounded-full mr-3"
               />
 
               <View className="flex-1">
@@ -507,11 +521,11 @@ const Chat = () => {
                       {!message.fromUser && otherParticipant && (
                         <Image
                           source={{ uri: otherParticipant.avatar }}
-                          className="size-8 rounded-full mr-2"
+                          className="size-10 rounded-full mr-2"
                         />
                       )}
                       <View
-                        className={`flex-1 ${message.fromUser ? "items-end" : ""}`}
+                        className={`flex ${message.fromUser ? "items-end" : ""}`}
                       >
                         <View
                           className={`rounded-2xl px-4 py-3 max-w-xs ${

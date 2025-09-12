@@ -5,6 +5,7 @@ import {
   Image,
   Pressable,
   RefreshControl,
+  ScrollView,
   Text,
   View,
 } from "react-native";
@@ -272,7 +273,16 @@ const Home = () => {
               Select by transmission
             </Text>
 
-            <View className="flex-row items-center my-6 gap-5">
+            <ScrollView
+              className="my-6"
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 20,
+              }}
+            >
               {options.map((option) => (
                 <Pressable
                   key={option}
@@ -290,7 +300,7 @@ const Home = () => {
                   </Text>
                 </Pressable>
               ))}
-            </View>
+            </ScrollView>
 
             <Text className="font-JakartaMedium mt-6">Car Recommendation</Text>
           </View>
