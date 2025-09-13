@@ -3,15 +3,25 @@ import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import ReactNativeModal from "react-native-modal";
 import { FIREBASE_AUTH } from "../FirebaseConfig";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import { useRole } from "../context/RoleContext";
 
 export const useSignOut = () => {
   const [visible, setVisible] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const { setRole } = useRole();
 
   const handleSignOut = async () => {
     try {
       setSigningOut(true);
       await signOut(FIREBASE_AUTH);
+
+      await AsyncStorage.removeItem("userRole");
+      setRole("renter");
+
+      router.push("/(root)/(tabs)/home")
+      
       console.log("User signed out");
       setVisible(false);
     } catch (error) {

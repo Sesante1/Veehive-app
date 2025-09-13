@@ -6,6 +6,7 @@ import checkmark from "@/assets/icons/check.png";
 import close from "@/assets/icons/close.png";
 import dollar from "@/assets/icons/dollar.png";
 import arrow from "@/assets/icons/switch.png";
+import checklist from "@/assets/icons/checklist.png"
 import email from "@/assets/icons/email.png";
 import eyecross from "@/assets/icons/eyecross.png";
 import google from "@/assets/icons/google.png";
@@ -52,6 +53,7 @@ export const icons = {
   backArrow,
   arrow,
   chat,
+  checklist,
   checkmark,
   close,
   dollar,

@@ -5,16 +5,13 @@ export default function Layout() {
   return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(host)" options={{ headerShown: false }} />
       <Stack.Screen
         name="create-car"
         options={{ headerShown: false, animation: "slide_from_right" }}
       />
       <Stack.Screen
         name="favorites"
-        options={{ headerShown: false, animation: "slide_from_right" }}
-      />
-      <Stack.Screen
-        name="user-listing"
         options={{ headerShown: false, animation: "slide_from_right" }}
       />
       <Stack.Screen
