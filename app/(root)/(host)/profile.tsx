@@ -3,11 +3,11 @@ import { useSignOut } from "@/hooks/useSignOut";
 import {
   AntDesign,
   Feather,
+  FontAwesome6,
   MaterialIcons,
   SimpleLineIcons,
 } from "@expo/vector-icons";
 import { router } from "expo-router";
-import LottieView from "lottie-react-native";
 import React from "react";
 import {
   Image,
@@ -75,7 +75,7 @@ export default function Profile() {
       >
         <Text className="text-2xl font-JakartaBold mt-6 px-4">Account</Text>
 
-        <View className="flex items-center justify-center my-5 mb-10">
+        <View className="flex items-center justify-center my-5 mb-32">
           <Image
             source={{
               uri: userData.profileImage,
@@ -87,48 +87,12 @@ export default function Profile() {
           <Text className="mt-5 font-JakartaSemiBold">
             {userData.firstName + " " + userData.lastName}
           </Text>
-          <Text className="font-Jakarta">Guest</Text>
+          <Text className="font-Jakarta">Hoster</Text>
         </View>
 
         <View className="flex-1">
-          <Pressable
-            className="px-6"
-            onPress={() => router.push("/(root)/OnboardingListing")}
-          >
-            <View className="bg-white h-[110px] mb-8 rounded-lg flex-row items-center justify-center gap-2 shadow-md shadow-black-400">
-              <LottieView
-                source={require("../../../assets/animations/host-animation.json")}
-                loop={true}
-                autoPlay
-                style={{ width: 80, height: 80 }}
-              />
-              <View className="flex-col gap-1 ">
-                <Text className="text-lg font-JakartaSemiBold">
-                  Become a host
-                </Text>
-                <Text className="text-sm font-Jakarta">
-                  It's easy to start hosting and earn extra income
-                </Text>
-              </View>
-            </View>
-          </Pressable>
-
           <View className="border-b border-gray-200 mb-4 pb-4">
             <Pressable
-              className="flex flex-row items-center gap-4 py-4 px-6 rounded-lg"
-              onPress={() => {}}
-            >
-              <Feather name="calendar" size={20} color="#00000" />
-              <Text className="text-lg font-Jakarta">My Booking</Text>
-              <MaterialIcons
-                className="absolute right-0"
-                name="navigate-next"
-                size={30}
-                color="#00000"
-              />
-            </Pressable>
-
-            {/* <Pressable
               className="flex flex-row items-center gap-4 py-4 px-6 rounded-lg"
               onPress={() => router.push("/create-car")}
             >
@@ -140,42 +104,14 @@ export default function Profile() {
                 size={30}
                 color="#00000"
               />
-            </Pressable> */}
+            </Pressable>
 
-            {/* <Pressable
-              className="flex flex-row items-center gap-3 py-4 px-6"
-              onPress={() => router.push("/user-listing")}
-            >
-              <Feather name="list" size={20} color="black" />
-              <Text className="text-lg font-Jakarta">Your listing</Text>
-              <MaterialIcons
-                className="absolute right-0"
-                name="navigate-next"
-                size={30}
-                color="#00000"
-              />
-            </Pressable> */}
-
-            {/* <Pressable
+            <Pressable
               className="flex flex-row items-center gap-3 py-4 px-6"
               onPress={() => {}}
             >
               <Feather name="check" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">Booking Recieved</Text>
-              <MaterialIcons
-                className="absolute right-0"
-                name="navigate-next"
-                size={30}
-                color="#00000"
-              />
-            </Pressable> */}
-
-            <Pressable
-              className="flex flex-row items-center gap-3 py-4 px-6"
-              onPress={() => router.push("/favorites")}
-            >
-              <Feather name="heart" size={20} color="#00000" />
-              <Text className="text-lg font-Jakarta">Wishlists</Text>
               <MaterialIcons
                 className="absolute right-0"
                 name="navigate-next"

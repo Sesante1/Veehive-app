@@ -71,7 +71,7 @@ const UserListing = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white px-4">
-      <View className="flex bg-gray items-center py-4">
+      {/* <View className="flex bg-gray items-center py-4">
         <Pressable
           className="bg-white rounded-full p-1 absolute left-0 top-4"
           onPress={() => {
@@ -85,7 +85,8 @@ const UserListing = () => {
         <Text className="text-sm text-gray-500">
           {userCars.length} cars found
         </Text>
-      </View>
+      </View> */}
+      <Text className="text-2xl font-JakartaBold mt-6 ">Your listing</Text>
       <FlatList
         data={userCars}
         keyExtractor={(item) => item.id}
