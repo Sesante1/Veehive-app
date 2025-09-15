@@ -38,7 +38,7 @@ export default function Layout() {
 
   return (
     <Tabs
-      initialRouteName="home"
+      initialRouteName="listing"
       screenOptions={{
         tabBarActiveTintColor: "white",
         tabBarInactiveTintColor: "white",
@@ -60,12 +60,12 @@ export default function Layout() {
       }}
     >
       <Tabs.Screen
-        name="home"
+        name="listing"
         options={{
-          title: "Home",
+          title: "Listing",
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabIcon source={icons.home} focused={focused} />
+            <TabIcon source={icons.checklist} focused={focused} />
           ),
         }}
       />
