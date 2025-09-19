@@ -1,14 +1,14 @@
 import CarManagementCard from "@/components/CarManagementCard";
+import DropdownField from "@/components/CarStatusDropdown";
+import SearchListingInput from "@/components/SearchListingInput";
 import { icons, images } from "@/constants";
 import { useAuth } from "@/hooks/useUser";
 import { fetchCarsByOwner } from "@/services/firestore";
-import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
-  Pressable,
   RefreshControl,
   Text,
   View,
@@ -21,6 +21,8 @@ const UserListing = () => {
   const [userCars, setCars] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
+
+  const [status, setStatus] = useState<string | null>(null);
 
   const fetchCars = React.useCallback(async () => {
     if (!user?.uid) {
@@ -86,7 +88,34 @@ const UserListing = () => {
           {userCars.length} cars found
         </Text>
       </View> */}
-      <Text className="text-2xl font-JakartaBold mt-6 ">Your listing</Text>
+      <View className="h-20">
+        <Text className="text-2xl font-JakartaSemiBold mt-6 ">Your listing</Text>
+      </View>
+
+      <>
+        <SearchListingInput
+          label=""
+          icon={icons.search}
+          containerStyle="bg-white"
+        />
+
+        <DropdownField
+          items={[
+            { label: "Listed", value: "active" },
+            { label: "Pending", value: "pending" },
+            { label: "On a trip", value: "on a trip" },
+            { label: "Snoozed", value: "snoozed" },
+            { label: "Canceled", value: "canceled" },
+          ]}
+          value={status}
+          onChangeValue={setStatus} 
+        />
+
+        <Text className="text-lg font-JakartaSemiBold my-4">
+          Vehicles ({userCars.length})
+        </Text>
+      </>
+
       <FlatList
         data={userCars}
         keyExtractor={(item) => item.id}
@@ -118,7 +147,7 @@ const UserListing = () => {
             colors={["#007DFC"]}
           />
         }
-        ListHeaderComponent={<></>}
+        contentContainerStyle={{ paddingBottom: 90 }}
       />
     </SafeAreaView>
   );
