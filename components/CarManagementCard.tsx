@@ -1,12 +1,9 @@
-import CustomButton from "@/components/CustomButton";
-import {
-  AntDesign,
-  FontAwesome,
-  MaterialCommunityIcons,
-  MaterialIcons,
-} from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
+
+type CarStatus = "pending" | "snoozed" | "active" | "on a trip";
 
 type CarProps = {
   id: string;
@@ -16,15 +13,23 @@ type CarProps = {
   transmission: string;
   fuel: string;
   seats: number;
-  imageUrl: string | null;
+  images: string | null;
+  year: number;
   available: boolean;
-  status: String;
+  status: CarStatus;
 
   onToggleAvailability?: (
     id: string,
     nextAvailable: boolean
   ) => void | Promise<void>;
   onPress?: (id: string) => void;
+};
+
+const statusConfig: Record<CarStatus, { label: string; color: string }> = {
+  active: { label: "Listed", color: "#22c55e" }, // green-500
+  snoozed: { label: "Snoozed", color: "#f97316" }, // orange-500
+  "on a trip": { label: "On a trip", color: "#3b82f6" }, // blue-500
+  pending: { label: "Pending", color: "#eab308" }, // yellow-500
 };
 
 const CarManagementCard: React.FC<CarProps> = ({
@@ -35,97 +40,84 @@ const CarManagementCard: React.FC<CarProps> = ({
   transmission,
   fuel,
   seats,
-  imageUrl,
+  images,
+  year,
   available,
   status,
   onToggleAvailability,
   onPress,
 }) => {
+  const router = useRouter();
+
+  const { label, color } = statusConfig[status];
+
   return (
     <Pressable
-      className="flex-col mt-5 mb-2 bg-secondary-400 p-3 rounded-[10px]"
+      className="flex-row gap-3 mt-5 mb-2 bg-white rounded-[10px]"
       onPress={() => {
-        // TODO: Navigate to car details screen
-        //        console.log(`Car selected: ${id}`);
+        router.push({
+          pathname: "/carProfile",
+          params: { id },
+        });
       }}
     >
-      <View className="w-full">
-        {imageUrl ? (
+      <View className="w-[190px]">
+        {images ? (
           <Image
-            source={{ uri: imageUrl }}
-            style={{ width: "100%", height: 160, borderRadius: 5 }}
+            source={{ uri: images[0] }}
+            style={{ width: "100%", height: 140, borderRadius: 5 }}
             resizeMode="cover"
           />
         ) : (
           <View className="w-full h-40 bg-gray-200 rounded-md" />
         )}
-        <View className="absolute top-2 flex-row justify-between items-center w-full px-2">
-          <View className="bg-white flex flex-row justify-center items-center gap-2 p-1 px-2 rounded-[5px]">
-            <AntDesign name="star" size={16} color="#FFD700" />
-            {/* <Text className="color-secondary-700">{avgRating ?? "N/A"}</Text> */}
-            {/* TODO: Replace with actual rating once data is available */}
-            <Text className="color-secondary-700">4.7</Text>
+        <View className="absolute left-2 top-2 bg-white py-1 px-2 rounded-[5px] flex-row gap-2 items-center">
+          <View
+            className="h-[15px] w-[15px] rounded-full"
+            style={{ backgroundColor: color }}
+          />
+          <Text className="text-sm">{label}</Text>
+        </View>
+      </View>
+
+      <View className="flex-1">
+        <Text
+          className="text-[18px] font-JakartaBold mb-2"
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {name + " " + year}
+        </Text>
+
+        <Text
+          className="color-secondary-500 font-semibold text-[16px] flex-wrap"
+          style={{ flexShrink: 1 }}
+        >
+          {type}
+        </Text>
+
+        <View className="flex-row justify-between items-center w-full my-2">
+          <View className="bg-white flex flex-row justify-center items-center gap-2">
+            <Text className="color-secondary-700 text-[16px] font-bold">
+              4.97
+            </Text>
+            <AntDesign name="star" size={18} color="#FFD700" />
+            <Text
+              className="color-secondary-700 font-Jakarta flex-wrap"
+              style={{ flexShrink: 1 }}
+            >
+              (99 trips)
+            </Text>
           </View>
         </View>
+
+        <Text
+          className="color-secondary-500 text-lg font-Jakarta flex-wrap"
+          style={{ flexShrink: 1 }}
+        >
+          On a trip: 28 Jun - 6 Jul
+        </Text>
       </View>
-
-      {/* Car type and Price */}
-      <View className="flex-row justify-between items-center mt-3">
-        <View className="bg-white px-3 py-1 rounded-[5px]">
-          <Text className="text-sm color-primary-500">{type}</Text>
-        </View>
-
-        <View className="flex-row items-center gap-1">
-          <Text className="color-primary-500">₱{pricePerHour}</Text>
-          <Text className="color-secondary-700">/hr</Text>
-        </View>
-      </View>
-
-      {/* Car name */}
-      <Text className="text-lg font-JakartaSemiBold mt-3">{name}</Text>
-
-      {/* Transmission / Fuel / Seats */}
-      <View className="flex-row justify-between items-center mt-4 mb-2">
-        <View className="flex-row items-center gap-2">
-          <AntDesign name="setting" size={24} color="#007DFC" />
-          <Text className="color-secondary-500 text-lg">{transmission}</Text>
-        </View>
-
-        <View className="flex-row items-center gap-2">
-          {(fuel === "Gasoline" || fuel === "Diesel") && (
-            <MaterialCommunityIcons
-              name="gas-station"
-              size={24}
-              color="#007DFC"
-            />
-          )}
-          {fuel === "Electric" && (
-            <MaterialIcons name="electric-bolt" size={24} color="#007DFC" />
-          )}
-          <Text className="color-secondary-500 text-lg">{fuel}</Text>
-        </View>
-
-        <View className="flex-row items-center gap-2">
-          <FontAwesome name="user" size={24} color="#007DFC" />
-          <Text className="color-secondary-500 text-lg">{seats} Seats</Text>
-        </View>
-      </View>
-
-      {!available ? (
-        <CustomButton
-          title="Mark as available"
-          className="my-6"
-          bgVariant="outline"
-          textVariant="primary"
-        />
-      ) : (
-        <CustomButton
-          title="Mark as unavailable"
-          className="my-6"
-          bgVariant="danger-outline"
-          textVariant="danger"
-        />
-      )}
     </Pressable>
   );
 };

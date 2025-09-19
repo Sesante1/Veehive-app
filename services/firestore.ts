@@ -121,10 +121,11 @@ export const fetchCarsByOwner = async (ownerId: string) => {
         seats: data.seats,
         transmission: data.transmission || "Automatic",
         fuel: data.fuel || "Gasoline",
-        imageUrl:
+        year: data.year,
+        images:
           Array.isArray(data.images) && data.images.length > 0
-            ? data.images[0].url
-            : null,
+            ? data.images.map((img) => img.url) 
+            : [],
         status: data.status,
         ownerId: data.ownerId,
         available: data.isActive,

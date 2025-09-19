@@ -26,6 +26,10 @@ export default function Layout() {
         name="OnboardingListing"
         options={{ headerShown: false, animation: "slide_from_right" }}
       />
+      <Stack.Screen
+        name="carProfile"
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
     </Stack>
   );
 }
