@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
-import { SharedValue } from 'react-native-reanimated';
+import { SharedValue, useSharedValue } from 'react-native-reanimated';
 import { PhotoCard } from './PhotoCard';
 import { PhotoOverlay } from './PhotoOverlay';
 
@@ -31,8 +31,8 @@ export const CardSpreadContainer: React.FC<CardSpreadContainerProps> = ({
   rightScale,
 }) => {
   // Create a shared value of 0 for center card position (no translation)
-  const centerTranslateX = React.useRef({ value: 0 } as SharedValue<number>);
-  const centerRotation = React.useRef({ value: 0 } as SharedValue<number>);
+  const centerTranslateX = useSharedValue(0);
+  const centerRotation = useSharedValue(0);
 
   return (
     <Pressable onPress={onPress}>
@@ -56,8 +56,8 @@ export const CardSpreadContainer: React.FC<CardSpreadContainerProps> = ({
             imageUrl={images[0].url}
             width="w-[70%]"
             height="h-52"
-            translateX={centerTranslateX.current}
-            rotation={centerRotation.current}
+            translateX={centerTranslateX}
+            rotation={centerRotation}
             scale={centerScale}
             zIndex={3}
             shadowProps={{

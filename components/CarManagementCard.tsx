@@ -13,7 +13,7 @@ type CarProps = {
   transmission: string;
   fuel: string;
   seats: number;
-  images: string | null;
+  images: string[] | null;
   year: number;
   available: boolean;
   status: CarStatus;
