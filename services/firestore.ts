@@ -124,7 +124,7 @@ export const fetchCarsByOwner = async (ownerId: string) => {
         year: data.year,
         images:
           Array.isArray(data.images) && data.images.length > 0
-            ? data.images.map((img) => img.url) 
+            ? data.images.map((img) => img.url)
             : [],
         status: data.status,
         ownerId: data.ownerId,
@@ -172,6 +172,7 @@ export const getCarWithOwner = async (carId: string) => {
 
     return {
       id: carSnap.id,
+      storageFolder: data.carId,
       make: data.make,
       model: data.model,
       type: data.carType,
@@ -184,9 +185,11 @@ export const getCarWithOwner = async (carId: string) => {
       images: Array.isArray(data.images)
         ? data.images
             .filter((img: any) => img?.url)
-            .map((img: { id?: string; url: string }, index: number) => ({
+            .map((img: { id?: string; url: string; filename?: string; uploadedAt?: string }, index: number) => ({
               id: img.id ?? `img-${index}`,
               url: img.url,
+              filename: img.filename ?? img.url.split("/").pop() ?? "",
+              uploadedAt: img.uploadedAt ?? "",
             }))
         : [],
       location:

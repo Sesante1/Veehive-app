@@ -1,13 +1,14 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View, Pressable } from 'react-native';
 import { SharedValue } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { CardSpreadContainer } from './CardSpreadContainer';
 
 interface PhotoTourSectionProps {
   images: { id: string; url: string }[];
   isSpread: boolean;
   onToggleSpread: () => void;
-  onCardPress: () => void; // Generic card press handler
+  onCardPress: () => void; // This will navigate to /managePhotos
   // Animation shared values
   leftTranslateX: SharedValue<number>;
   rightTranslateX: SharedValue<number>;
@@ -44,6 +45,7 @@ export const PhotoTourSection: React.FC<PhotoTourSectionProps> = ({
       <CardSpreadContainer
         images={images}
         onPress={onCardPress}
+        onToggleSpread={onToggleSpread}
         isSpread={isSpread}
         leftTranslateX={leftTranslateX}
         rightTranslateX={rightTranslateX}
@@ -55,8 +57,8 @@ export const PhotoTourSection: React.FC<PhotoTourSectionProps> = ({
       />
 
       {/* Footer */}
-      <Text className="text-sm text-gray-600 text-center mb-4">
-        Tap to manage photos
+      <Text className="text-sm text-gray-600 text-center my-4">
+        Tap cards to manage photos
       </Text>
     </View>
   );
