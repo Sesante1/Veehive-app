@@ -124,7 +124,7 @@ const CarDetails: React.FC = () => {
       <View className="flex flex-row justify-between items-center mt-auto gap-10 border-t border-t-gray-200 pt-6 px-4">
         <Pressable
           onPress={() => {
-            // Handle cancel action
+            router.back();
           }}
         >
           <Text className="text-lg font-JakartaSemiBold">Cancel</Text>

@@ -1,4 +1,4 @@
-import BottomSheetImagePicker from "@/components/BottomSheetImagePicker"; 
+import BottomSheetImagePicker from "@/components/BottomSheetImagePicker";
 import { icons } from "@/constants";
 import { db, storage } from "@/FirebaseConfig";
 import { FontAwesome } from "@expo/vector-icons";

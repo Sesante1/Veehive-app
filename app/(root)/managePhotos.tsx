@@ -1,13 +1,13 @@
+import BottomSheetImagePicker from "@/components/BottomSheetImagePicker";
 import { PhotoManagementContent } from "@/components/PhotoManagementContent";
 import { icons } from "@/constants";
-import { updateDoc, doc } from "firebase/firestore";
 import { db } from "@/FirebaseConfig";
 import { decode as atob } from "base-64";
 import { router, useLocalSearchParams } from "expo-router";
+import { doc, updateDoc } from "firebase/firestore";
 import React, { useState } from "react";
-import { Image, Pressable, Text, View, Alert, ActivityIndicator } from "react-native";
+import { Alert, Image, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import BottomSheetImagePicker from "@/components/BottomSheetImagePicker";
 
 interface Photo {
   id: string;
@@ -23,7 +23,9 @@ const ManagePhotos = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [photos, setPhotos] = useState<Photo[]>(imageArray || []);
   const [showImagePicker, setShowImagePicker] = useState(false);
-  const [pickerAction, setPickerAction] = useState<"camera" | "gallery" | null>(null);
+  const [pickerAction, setPickerAction] = useState<"camera" | "gallery" | null>(
+    null
+  );
 
   // Update Firestore when photos change
   const updateFirebasePhotos = async (updatedPhotos: Photo[]) => {
@@ -114,7 +116,9 @@ const ManagePhotos = () => {
         >
           <Image source={icons.exit} style={{ width: 20, height: 20 }} />
         </Pressable>
-        <Text className="text-lg font-JakartaSemiBold text-gray-900">Manage Photos</Text>
+        <Text className="text-lg font-JakartaSemiBold text-gray-900">
+          Manage Photos
+        </Text>
       </View>
 
       {/* Content */}
@@ -122,7 +126,7 @@ const ManagePhotos = () => {
         <PhotoManagementContent
           images={photos}
           carId={carId as string}
-          onAddPhoto={handleAddPhoto} 
+          onAddPhoto={handleAddPhoto}
           onDeletePhoto={handleDeletePhoto}
           onUploadProgress={handleUploadProgress}
           onShowImagePicker={handleShowImagePicker}

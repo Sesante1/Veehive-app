@@ -2,7 +2,7 @@ import InputField from "@/components/InputField";
 import { icons } from "@/constants";
 import { db } from "@/FirebaseConfig";
 import { router, useLocalSearchParams } from "expo-router";
-import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -17,22 +17,29 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const ManagePricing = () => {
   const { pricePerDay, carDocId } = useLocalSearchParams();
 
-  const safeToNumber = (value: string | string[] | undefined): number => {
+  const normalizePriceParam = (
+    value: string | string[] | undefined
+  ): string => {
+    if (Array.isArray(value)) {
+      return value[0] ?? "";
+    }
     if (typeof value === "string") {
-      return Number(value);
+      return value;
     }
-    if (Array.isArray(value) && value.length > 0) {
-      return Number(value[0]);
-    }
-    return 0; 
+    return "";
   };
-
-  const dailyRateNumber = safeToNumber(pricePerDay);
   const [form, setForm] = useState({
-    pricePerDay: dailyRateNumber || 0,
+    pricePerDay: normalizePriceParam(pricePerDay),
   });
+
   const [isLoading, setIsLoading] = useState(false);
-  const canSave = form.pricePerDay !== 0 && !isLoading;
+  const sanitizedPrice = form.pricePerDay.replace(/[^\d.]/g, "");
+  const parsedRate = Number.parseFloat(sanitizedPrice);
+  const canSave =
+    !isLoading &&
+    sanitizedPrice.length > 0 &&
+    Number.isFinite(parsedRate) &&
+    parsedRate > 0;
 
   const handleSave = async () => {
     if (!carDocId) {
@@ -44,11 +51,19 @@ const ManagePricing = () => {
     }
 
     try {
+      if (!Number.isFinite(parsedRate) || parsedRate <= 0) {
+        Alert.alert(
+          "Invalid price",
+          "Please enter a valid daily rate before saving."
+        );
+        return;
+      }
+
       setIsLoading(true);
       await updateDoc(doc(db, "cars", carDocId as string), {
-        dailyRate: Number(form.pricePerDay),
-        updatedAt: serverTimestamp(),
+        dailyRate: parsedRate,
       });
+
       Alert.alert("Success", "Car pricing updated successfully.");
       router.back();
     } catch (error) {
@@ -80,16 +95,17 @@ const ManagePricing = () => {
         <InputField
           label="Price Per Day (₱)"
           placeholder="e.g. ₱50"
+          keyboardType="numeric"
           icon={icons.email}
-          value={form.pricePerDay.toString()}
-          onChangeText={(value) => setForm({ ...form, pricePerDay: Number(value) })}
+          value={form.pricePerDay}
+          onChangeText={(value) => setForm({ ...form, pricePerDay: value })}
         />
       </View>
 
       <View className="flex flex-row justify-between items-center mt-auto gap-10 border-t border-t-gray-200 pt-6 px-4">
         <Pressable
           onPress={() => {
-            // Handle cancel action
+            router.back();
           }}
         >
           <Text className="text-lg font-JakartaSemiBold">Cancel</Text>
