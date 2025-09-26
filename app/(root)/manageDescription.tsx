@@ -1,21 +1,50 @@
 import TextAreaField from "@/components/TextAreaField";
 import { icons } from "@/constants";
+import { db } from "@/FirebaseConfig";
 import { router, useLocalSearchParams } from "expo-router";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import React, { useState } from "react";
-import { ActivityIndicator, Image, Pressable, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const manageDescription = () => {
-  const { description } = useLocalSearchParams();
+  const { description, carId } = useLocalSearchParams();
 
   const [form, setForm] = useState({
     description: (description as string) || "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const canSave = !isLoading && form.description.trim().length > 0;
-  const handleSave = () => {
-    // Add save logic here
-    console.log("Saving description", form.description);
+
+  const handleSave = async () => {
+    if (!carId) {
+      Alert.alert(
+        "Error",
+        "Missing car ID. Please re-open this screen from the car profile."
+      );
+      return;
+    }
+    try {
+      setIsLoading(true);
+      await updateDoc(doc(db, "cars", carId as string), {
+        description: form.description.trim(),
+        updatedAt: serverTimestamp(),
+      });
+      Alert.alert("Success", "Description updated");
+      router.back();
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Error", "Failed to save description");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

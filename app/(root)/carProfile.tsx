@@ -31,6 +31,18 @@ type Car = {
   seats: number;
   description: string;
   images: { id: string; url: string }[];
+  documents: {
+    officialReceipt: {
+      filename: string;
+      uploadedAt: string;
+      url: string;
+    } | null;
+    certificateOfRegistration: {
+      filename: string;
+      uploadedAt: string;
+      url: string;
+    } | null;
+  };
   owner: {
     id: string;
     firstName: string;
@@ -78,7 +90,7 @@ const CreateCar = () => {
   const fetchCar = async () => {
     try {
       if (!id) return;
-      if (!refreshing) setLoading(true); // show big loader only if not refreshing
+      if (!refreshing) setLoading(true);
 
       const data = await getCarWithOwner(id);
       setCar(data);
@@ -201,6 +213,7 @@ const CreateCar = () => {
                     model: car.model,
                     year: String(car.year),
                     carType: car.type,
+                    carDocId: car.id,
                   },
                 })
               }
@@ -226,7 +239,10 @@ const CreateCar = () => {
               onPress={() =>
                 router.push({
                   pathname: "/managePricing",
-                  params: { pricePerDay: Number(car.pricePerHour) },
+                  params: {
+                    pricePerDay: Number(car.pricePerHour),
+                    carDocId: car.id,
+                  },
                 })
               }
             >
@@ -253,6 +269,7 @@ const CreateCar = () => {
                   pathname: "/manageLocation",
                   params: {
                     location: car.location ? JSON.stringify(car.location) : "",
+                    carDocId: car.id,
                   },
                 })
               }
@@ -281,7 +298,7 @@ const CreateCar = () => {
               onPress={() =>
                 router.push({
                   pathname: "/manageDescription",
-                  params: { description: car.description },
+                  params: { description: car.description, carId: car.id },
                 })
               }
             >
@@ -312,8 +329,12 @@ const CreateCar = () => {
               className="px-5 py-4 bg-white rounded-xl border border-gray-100 flex-row justify-between items-center active:bg-gray-50 shadow-sm"
               onPress={() =>
                 router.push({
-                  pathname: "/manageDescription",
-                  params: { description: car.description },
+                  pathname: "/manageDocuments",
+                  params: {
+                    documents: btoa(JSON.stringify(car.documents)),
+                    carDocId: car.id,
+                    storageFolder: car.storageFolder,
+                  },
                 })
               }
             >

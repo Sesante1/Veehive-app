@@ -2,11 +2,13 @@ import InputField from "@/components/InputField";
 import { icons } from "@/constants";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
-import { ActivityIndicator, Image, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, Text, View, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { updateDoc, doc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/FirebaseConfig";
 
 const CarDetails: React.FC = () => {
-  const { make, model, year, carType } = useLocalSearchParams();
+  const { make, model, year, carType, carDocId } = useLocalSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [form, setForm] = useState({
     make: (make as string) || "",
@@ -15,7 +17,32 @@ const CarDetails: React.FC = () => {
     carType: (carType as string) || "",
   });
 
-  const handleSave = () => {};
+  const handleSave = async () => {
+    if (!carDocId) {
+      Alert.alert(
+        "Error",
+        "Missing car ID. Please re-open this screen from the car profile."
+      );
+      return;
+    }
+    try {
+      setIsLoading(true);
+      await updateDoc(doc(db, "cars", carDocId as string), {
+        make: form.make.trim(),
+        model: form.model.trim(),
+        carType: form.carType.trim(),
+        year: parseInt(form.year, 10),
+        updatedAt: serverTimestamp(),
+      });
+      Alert.alert("Success", "Car details updated");
+      router.back();
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Error", "Failed to save car details");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const currentYear = new Date().getFullYear();
   const yearNum = parseInt(form.year || "", 10);

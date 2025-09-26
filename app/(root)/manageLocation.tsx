@@ -1,12 +1,21 @@
 import GoogleTextInput from "@/components/GoogleTextInput";
 import { icons } from "@/constants";
+import { db } from "@/FirebaseConfig";
 import { router, useLocalSearchParams } from "expo-router";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import React, { useState } from "react";
-import { ActivityIndicator, Image, Pressable, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const ManageLocation = () => {
-  const { location, latitude, longitude } = useLocalSearchParams();
+  const { location, latitude, longitude, carDocId } = useLocalSearchParams();
   const [form, setForm] = useState({
     location: location || "",
     latitude: latitude || 0,
@@ -29,7 +38,36 @@ const ManageLocation = () => {
     });
   };
 
-  const handleSave = () => {};
+  const handleSave = async () => {
+    if (!carDocId) {
+      Alert.alert(
+        "Error",
+        "Missing car ID. Please re-open this screen from the car profile."
+      );
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await updateDoc(doc(db, "cars", carDocId as string), {
+        location: {
+          coordinates: {
+            latitude: form.latitude,
+            longitude: form.longitude,
+          },
+          address: form.location,
+        },
+        updatedAt: serverTimestamp(),
+      });
+      Alert.alert("Success", "Location updated successfully");
+      router.back();
+    } catch (error) {
+      console.error("Error updating location:", error);
+      Alert.alert("Error", "Failed to update location");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-white">

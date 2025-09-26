@@ -1,19 +1,63 @@
 import InputField from "@/components/InputField";
 import { icons } from "@/constants";
+import { db } from "@/FirebaseConfig";
 import { router, useLocalSearchParams } from "expo-router";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import React, { useState } from "react";
-import { Image, Pressable, Text, View, ActivityIndicator } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const ManagePricing = () => {
-  const { pricePerDay } = useLocalSearchParams();
+  const { pricePerDay, carDocId } = useLocalSearchParams();
+
+  const safeToNumber = (value: string | string[] | undefined): number => {
+    if (typeof value === "string") {
+      return Number(value);
+    }
+    if (Array.isArray(value) && value.length > 0) {
+      return Number(value[0]);
+    }
+    return 0; 
+  };
+
+  const dailyRateNumber = safeToNumber(pricePerDay);
   const [form, setForm] = useState({
-    pricePerDay: (pricePerDay as string) || "",
+    pricePerDay: dailyRateNumber || 0,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const canSave = form.pricePerDay.trim() !== "" && !isLoading;
+  const canSave = form.pricePerDay !== 0 && !isLoading;
 
-  const handleSave = () => {};
+  const handleSave = async () => {
+    if (!carDocId) {
+      Alert.alert(
+        "Error",
+        "Missing car ID. Please re-open this screen from the car profile."
+      );
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await updateDoc(doc(db, "cars", carDocId as string), {
+        dailyRate: Number(form.pricePerDay),
+        updatedAt: serverTimestamp(),
+      });
+      Alert.alert("Success", "Car pricing updated successfully.");
+      router.back();
+    } catch (error) {
+      console.error("Error updating car pricing:", error);
+      Alert.alert("Error", "Failed to update car pricing.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -37,8 +81,8 @@ const ManagePricing = () => {
           label="Price Per Day (₱)"
           placeholder="e.g. ₱50"
           icon={icons.email}
-          value={form.pricePerDay}
-          onChangeText={(value) => setForm({ ...form, pricePerDay: value })}
+          value={form.pricePerDay.toString()}
+          onChangeText={(value) => setForm({ ...form, pricePerDay: Number(value) })}
         />
       </View>
 

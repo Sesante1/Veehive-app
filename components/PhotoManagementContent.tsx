@@ -1,4 +1,3 @@
-// components/PhotoManagementContent.tsx
 import { FIREBASE_AUTH, storage } from "@/FirebaseConfig";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -28,7 +27,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 const { width: screenWidth } = Dimensions.get("window");
-const PHOTO_SIZE = (screenWidth - 48) / 2 - 1; // 2 columns with padding
+const PHOTO_SIZE = (screenWidth - 48) / 2 - 1;
 
 const uploadPhotoToFirebase = async (
   imageUri: string,
@@ -86,14 +85,13 @@ const deletePhotoFromFirebase = async (
     await deleteObject(fileRef);
   } catch (error) {
     console.error("Firebase delete error:", error);
-    // Don't throw here - photo might already be deleted
   }
 };
 
 interface Photo {
   id: string;
   url: string;
-  uri?: string; // For newly added photos
+  uri?: string;
   filename?: string; // Firebase storage filename
   uploadedAt?: string;
 }
@@ -101,9 +99,12 @@ interface Photo {
 interface PhotoManagementContentProps {
   images: Photo[] | null;
   carId?: string; // Firebase storage folder ID
-  onAddPhoto: (newPhoto: Photo) => void;
+  onAddPhoto: (newPhotos: Photo | Photo[]) => void;
   onDeletePhoto: (photoId: string, filename?: string) => void;
   onUploadProgress?: (progress: number, message: string) => void;
+  onShowImagePicker: () => void; 
+  pickerAction: "camera" | "gallery" | null; 
+  onActionProcessed: () => void; 
 }
 
 // Individual Photo Item Component
@@ -183,13 +184,13 @@ const PhotoItem: React.FC<{
         {/* Delete button */}
         <Pressable
           onPress={handleDeletePress}
-          className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-full items-center justify-center"
+          className="absolute top-2 right-2 w-6 h-6 bg-black/70 rounded-full items-center justify-center"
           hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
         >
           {isDeleting ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
-            <Ionicons name="close" size={14} color="white" />
+            <Ionicons name="trash" size={16} color="white" />
           )}
         </Pressable>
 
@@ -282,6 +283,9 @@ export const PhotoManagementContent: React.FC<PhotoManagementContentProps> = ({
   onAddPhoto,
   onDeletePhoto,
   onUploadProgress,
+  onShowImagePicker,
+  pickerAction,
+  onActionProcessed,
 }) => {
   const [photos, setPhotos] = useState<Photo[]>(images || []);
   const [isUploading, setIsUploading] = useState(false);
@@ -302,24 +306,18 @@ export const PhotoManagementContent: React.FC<PhotoManagementContentProps> = ({
     })();
   }, []);
 
-  const showImagePickerOptions = () => {
-    Alert.alert("Add Photo", "Choose how you want to add a photo", [
-      {
-        text: "Camera",
-        onPress: openCamera,
-      },
-      {
-        text: "Gallery",
-        onPress: openImageLibrary,
-      },
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-    ]);
-  };
+  // Handle picker actions from parent
+  React.useEffect(() => {
+    if (pickerAction === "camera") {
+      handleTakePhoto();
+      onActionProcessed();
+    } else if (pickerAction === "gallery") {
+      handlePickFromGallery();
+      onActionProcessed();
+    }
+  }, [pickerAction]);
 
-  const openCamera = async () => {
+  const handleTakePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
@@ -341,8 +339,6 @@ export const PhotoManagementContent: React.FC<PhotoManagementContentProps> = ({
     try {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
         quality: 0.8,
       });
 
@@ -373,56 +369,41 @@ export const PhotoManagementContent: React.FC<PhotoManagementContentProps> = ({
       setIsUploading(false);
       setUploadProgress(0);
       setUploadMessage("");
+      onActionProcessed();
     }
   };
 
-  const openImageLibrary = async () => {
-    if (!carId) {
-      Alert.alert("Error", "Car ID is required to upload photos");
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadProgress(0);
-    setUploadMessage("Selecting image...");
-
+  const handlePickFromGallery = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        // allowsEditing: true,
-        // aspect: [4, 3],
-        quality: 0.8,
         allowsMultipleSelection: true,
-        selectionLimit: 0,
+        quality: 0.8,
       });
-
-      if (!result.canceled && result.assets[0]) {
-        const currentIndex = photos.length;
-
-        // Upload to Firebase
-        const uploadedPhoto = await uploadPhotoToFirebase(
-          result.assets[0].uri,
-          carId,
-          currentIndex,
-          (progress, message) => {
-            setUploadProgress(progress);
-            setUploadMessage(message);
-            onUploadProgress?.(progress, message);
-          }
-        );
-
-        setPhotos((prev) => [...prev, uploadedPhoto]);
-        onAddPhoto(uploadedPhoto);
-
-        Alert.alert("Success", "Photo uploaded successfully!");
+      if (!result.canceled && result.assets.length > 0 && carId) {
+        setIsUploading(true);
+        const uploadedPhotos: Photo[] = [];
+        for (let i = 0; i < result.assets.length; i++) {
+          const uploadedPhoto = await uploadPhotoToFirebase(
+            result.assets[i].uri,
+            carId,
+            photos.length + i,
+            (progress, message) => {
+              setUploadProgress(progress);
+              setUploadMessage(message);
+              onUploadProgress?.(progress, message);
+            }
+          );
+          uploadedPhotos.push(uploadedPhoto);
+        }
+        setPhotos((prev) => [...prev, ...uploadedPhotos]);
+        onAddPhoto(uploadedPhotos); 
       }
-    } catch (error) {
-      Alert.alert("Error", "Failed to upload photo. Please try again.");
-      console.error("Image library upload error:", error);
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
       setUploadMessage("");
+      onActionProcessed(); 
     }
   };
 
@@ -445,7 +426,7 @@ export const PhotoManagementContent: React.FC<PhotoManagementContentProps> = ({
   };
 
   const photoCount = photos.length;
-  const maxPhotos = 20; // You can adjust this limit
+  const maxPhotos = 20;
 
   return (
     <View className="flex-1">
@@ -488,7 +469,7 @@ export const PhotoManagementContent: React.FC<PhotoManagementContentProps> = ({
               primary image.
             </Text>
             <AddPhotoButton
-              onPress={showImagePickerOptions}
+              onPress={onShowImagePicker}
               isUploading={isUploading}
               uploadProgress={uploadProgress}
               uploadMessage={uploadMessage}
@@ -506,10 +487,10 @@ export const PhotoManagementContent: React.FC<PhotoManagementContentProps> = ({
               />
             ))}
 
-            {/* Add Photo Button (if under limit) */}
+            {/* Add Photo Button */}
             {photoCount < maxPhotos && (
               <AddPhotoButton
-                onPress={showImagePickerOptions}
+                onPress={onShowImagePicker}
                 isUploading={isUploading}
                 uploadProgress={uploadProgress}
                 uploadMessage={uploadMessage}

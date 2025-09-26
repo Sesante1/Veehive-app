@@ -172,7 +172,7 @@ export const getCarWithOwner = async (carId: string) => {
 
     return {
       id: carSnap.id,
-      storageFolder: data.carId,
+      storageFolder: data.carId || "",
       make: data.make,
       model: data.model,
       type: data.carType,
@@ -185,13 +185,40 @@ export const getCarWithOwner = async (carId: string) => {
       images: Array.isArray(data.images)
         ? data.images
             .filter((img: any) => img?.url)
-            .map((img: { id?: string; url: string; filename?: string; uploadedAt?: string }, index: number) => ({
-              id: img.id ?? `img-${index}`,
-              url: img.url,
-              filename: img.filename ?? img.url.split("/").pop() ?? "",
-              uploadedAt: img.uploadedAt ?? "",
-            }))
+            .map(
+              (
+                img: {
+                  id?: string;
+                  url: string;
+                  filename?: string;
+                  uploadedAt?: string;
+                },
+                index: number
+              ) => ({
+                id: img.id ?? `img-${index}`,
+                url: img.url,
+                filename: img.filename ?? img.url.split("/").pop() ?? "",
+                uploadedAt: img.uploadedAt ?? "",
+              })
+            )
         : [],
+      documents: {
+        officialReceipt: data.documents?.officialReceipt
+          ? {
+              filename: data.documents.officialReceipt.filename,
+              uploadedAt: data.documents.officialReceipt.uploadedAt,
+              url: data.documents.officialReceipt.url,
+            }
+          : null,
+
+        certificateOfRegistration: data.documents?.certificateOfRegistration
+          ? {
+              filename: data.documents.certificateOfRegistration.filename,
+              uploadedAt: data.documents.certificateOfRegistration.uploadedAt,
+              url: data.documents.certificateOfRegistration.url,
+            }
+          : null,
+      },
       location:
         data.location &&
         typeof data.location.coordinates?.latitude === "number" &&
