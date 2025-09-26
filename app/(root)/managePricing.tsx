@@ -2,7 +2,7 @@ import InputField from "@/components/InputField";
 import { icons } from "@/constants";
 import { db } from "@/FirebaseConfig";
 import { router, useLocalSearchParams } from "expo-router";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -62,6 +62,7 @@ const ManagePricing = () => {
       setIsLoading(true);
       await updateDoc(doc(db, "cars", carDocId as string), {
         dailyRate: parsedRate,
+        updatedAt: serverTimestamp(),
       });
 
       Alert.alert("Success", "Car pricing updated successfully.");
