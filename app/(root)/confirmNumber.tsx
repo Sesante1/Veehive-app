@@ -25,11 +25,21 @@ const ConfirmNumber = () => {
     setIsLoading(true);
 
     try {
+      if (
+        typeof id !== "string" ||
+        typeof phoneNumber !== "string" ||
+        typeof sessionInfo !== "string"
+      ) {
+        throw new Error(
+          "Missing verification context. Please request a new code."
+        );
+      }
+
       const result = await confirmVerificationCode(
         code,
-        id as string,
-        phoneNumber as string,
-        sessionInfo as string
+        id,
+        phoneNumber,
+        sessionInfo
       );
 
       setIsLoading(false);

@@ -1,5 +1,10 @@
 import { db, storage } from "@/FirebaseConfig";
-import { deleteField, doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import {
+  deleteField,
+  doc,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
 import {
   deleteObject,
   getDownloadURL,
@@ -15,7 +20,11 @@ export async function updateUserName(
 ) {
   try {
     const userRef = doc(db, "users", id);
-    await updateDoc(userRef, { firstName, lastName, updatedAt: new Date() });
+    await updateDoc(userRef, {
+      firstName,
+      lastName,
+      updatedAt: serverTimestamp(),
+    });
     return { success: true };
   } catch (error: any) {
     console.error("Error updating user name:", error.message);
@@ -36,7 +45,7 @@ export async function updateAddress(
       address: location,
       latitude,
       longitude,
-      updatedAt: new Date(),
+      updatedAt: serverTimestamp(),
     });
     return { success: true };
   } catch (error: any) {
@@ -52,7 +61,7 @@ export async function updatePhoneVerified(id: string, phoneNumber: string) {
     await updateDoc(userRef, {
       phoneNumber,
       phoneVerified: true,
-      updatedAt: new Date(),
+      updatedAt: serverTimestamp(),
     });
     return { success: true };
   } catch (error: any) {
@@ -60,8 +69,6 @@ export async function updatePhoneVerified(id: string, phoneNumber: string) {
     return { success: false, error: error.message };
   }
 }
-
-
 
 // Identity verification process
 export interface IdentityDocument {
@@ -79,9 +86,8 @@ export interface IdentityDocuments {
 
 export type IdentityDocType = "frontId" | "backId" | "selfieWithId";
 
-
 // Upload identity verification document to Firebase Storage and update Firestore
- 
+
 export const uploadIdentityDocument = async (
   imageUri: string,
   docType: IdentityDocType,
@@ -119,7 +125,7 @@ export const uploadIdentityDocument = async (
     [`identityVerification.${docType}`]: {
       url: downloadURL,
       filename,
-      uploadedAt: new Date().toISOString(),
+      uploadedAt: serverTimestamp(),
       path: storagePath,
     },
     updatedAt: serverTimestamp(),
@@ -135,9 +141,8 @@ export const uploadIdentityDocument = async (
   };
 };
 
-
 // Remove identity verification document from Firebase Storage and Firestore
- 
+
 export const removeIdentityDocument = async (
   docType: IdentityDocType,
   userId: string,
@@ -152,7 +157,14 @@ export const removeIdentityDocument = async (
   const storageRef = ref(storage, storagePath);
 
   // Delete from Firebase Storage
-  await deleteObject(storageRef);
+  try {
+    await deleteObject(storageRef);
+  } catch (error: any) {
+    // Ignore if file doesn't exist; proceed to clean up Firestore
+    if (error.code !== "storage/object-not-found") {
+      throw error;
+    }
+  }
 
   // Update Firestore (remove the field)
   const userDocRef = doc(db, "users", userId);

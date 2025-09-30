@@ -28,9 +28,17 @@ const EditAddress = () => {
   const handleSave = async () => {
     if (!canSave) return;
 
+    if (typeof id !== "string" || id.length === 0) {
+      Alert.alert(
+        "Error",
+        "We couldn't determine which profile to update. Please try again."
+      );
+      return;
+    }
+
     setIsLoading(true);
     const result = await updateAddress(
-      id as string,
+      id,
       form.location,
       form.latitude,
       form.longitude
