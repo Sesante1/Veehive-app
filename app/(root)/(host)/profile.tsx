@@ -121,6 +121,20 @@ export default function Profile() {
             </Pressable>
           </View>
 
+          <Pressable
+            className="flex flex-row items-center gap-3 py-4 px-6"
+            onPress={() => router.push("/userProfile")}
+          >
+            <Feather name="user" size={20} color="#00000" />
+            <Text className="text-lg font-Jakarta">Personal Information</Text>
+            <MaterialIcons
+              className="absolute right-0"
+              name="navigate-next"
+              size={30}
+              color="#00000"
+            />
+          </Pressable>
+
           <View>
             <Pressable
               className="flex flex-row items-center gap-3 py-4 px-6"
@@ -128,20 +142,6 @@ export default function Profile() {
             >
               <AntDesign name="questioncircleo" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">Privacy Policy</Text>
-              <MaterialIcons
-                className="absolute right-0"
-                name="navigate-next"
-                size={30}
-                color="#00000"
-              />
-            </Pressable>
-
-            <Pressable
-              className="flex flex-row items-center gap-3 py-4 px-6"
-              onPress={() => {}}
-            >
-              <Feather name="user" size={20} color="#00000" />
-              <Text className="text-lg font-Jakarta">Personal Information</Text>
               <MaterialIcons
                 className="absolute right-0"
                 name="navigate-next"

@@ -177,6 +177,23 @@ const CreateCar = () => {
         }
       >
         <View className="flex-col gap-4">
+          <Pressable
+            className="px-5 py-4 bg-white rounded-xl border border-gray-200 active:bg-gray-50 shadow-sm"
+            onPress={() => router.push("/completeRequiredSteps")}
+          >
+            <View className="flex-row items-center gap-3">
+              <View className="bg-red-500 w-3 h-3 rounded-full items-center justify-center"></View>
+              <Text className="text-lg font-JakartaSemiBold text-gray-900">
+                Complete required steps
+              </Text>
+            </View>
+
+            <Text className="text-sm text-gray-500 font-JakartaMedium mt-4">
+              Finish these final tasks to publish your listing and start getting
+              booked
+            </Text>
+          </Pressable>
+
           {/* Photo Tour Section */}
           <PhotoTourSection
             images={car.images}
