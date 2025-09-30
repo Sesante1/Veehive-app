@@ -212,8 +212,6 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
     return distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`;
   };
 
-  const [showMap, setShowMap] = useState(false);
-
   if (isLoading) {
     return (
       <View className="flex-1 bg-white">
@@ -240,8 +238,8 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
       {/* Map */}
       <MapView
         ref={mapRef}
-        className="flex-1"
-        provider="google"
+        style={{ flex: 1 }}
+        provider={PROVIDER_GOOGLE}
         initialRegion={{
           latitude: carLocation.latitude,
           longitude: carLocation.longitude,
