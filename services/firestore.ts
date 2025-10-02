@@ -155,6 +155,11 @@ export const getCarWithOwner = (
     const unsubscribeCar = onSnapshot(carRef, (carSnap) => {
       if (!carSnap.exists()) {
         console.warn("No such car:", carId);
+        if (unsubscribeOwner) {
+          unsubscribeOwner();
+          unsubscribeOwner = null;
+          currentOwnerId = null;
+        }
         callback(null);
         return;
       }
