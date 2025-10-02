@@ -4,6 +4,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   query,
   setDoc,
   where,
@@ -140,101 +141,145 @@ export const fetchCarsByOwner = async (ownerId: string) => {
 };
 
 // Get car details with owner Id
-export const getCarWithOwner = async (carId: string) => {
+export const getCarWithOwner = (
+  carId: string,
+  callback: (carData: any | null) => void
+) => {
   try {
     const carRef = doc(db, "cars", carId);
-    const carSnap = await getDoc(carRef);
 
-    if (!carSnap.exists()) {
-      console.warn("No such car:", carId);
-      return null;
-    }
+    let unsubscribeOwner: (() => void) | null = null;
+    let currentOwnerId: string | null = null;
 
-    const data = carSnap.data();
-
-    let ownerData: any = null;
-    if (data.ownerId) {
-      const ownerRef = doc(db, "users", data.ownerId);
-      const ownerSnap = await getDoc(ownerRef);
-      if (ownerSnap.exists()) {
-        const ownerInfo = ownerSnap.data();
-        ownerData = {
-          id: ownerSnap.id,
-          ...ownerInfo,
-          firstName: ownerInfo.firstName ?? ownerInfo.name ?? "Unknown",
-          lastName: ownerInfo.lastName ?? "Unknown",
-          email: ownerInfo.email ?? "",
-          phone: ownerInfo.phone ?? "",
-          profileImage: ownerInfo.profileImage ?? "",
-        };
+    // Subscribe to car document
+    const unsubscribeCar = onSnapshot(carRef, (carSnap) => {
+      if (!carSnap.exists()) {
+        console.warn("No such car:", carId);
+        if (unsubscribeOwner) {
+          unsubscribeOwner();
+          unsubscribeOwner = null;
+          currentOwnerId = null;
+        }
+        callback(null);
+        return;
       }
-    }
 
-    return {
-      id: carSnap.id,
-      storageFolder: data.carId || "",
-      make: data.make,
-      model: data.model,
-      type: data.carType,
-      pricePerHour: data.dailyRate,
-      seats: data.seats,
-      transmission: data.transmission || "Automatic",
-      year: data.year,
-      fuel: data.fuel || "Gasoline",
-      description: data.description,
-      images: Array.isArray(data.images)
-        ? data.images
-            .filter((img: any) => img?.url)
-            .map(
-              (
-                img: {
-                  id?: string;
-                  url: string;
-                  filename?: string;
-                  uploadedAt?: string;
-                },
-                index: number
-              ) => ({
-                id: img.id ?? `img-${index}`,
-                url: img.url,
-                filename: img.filename ?? img.url.split("/").pop() ?? "",
-                uploadedAt: img.uploadedAt ?? "",
-              })
-            )
-        : [],
-      documents: {
-        officialReceipt: data.documents?.officialReceipt
-          ? {
-              filename: data.documents.officialReceipt.filename,
-              uploadedAt: data.documents.officialReceipt.uploadedAt,
-              url: data.documents.officialReceipt.url,
-            }
-          : null,
+      const data = carSnap.data();
 
-        certificateOfRegistration: data.documents?.certificateOfRegistration
-          ? {
-              filename: data.documents.certificateOfRegistration.filename,
-              uploadedAt: data.documents.certificateOfRegistration.uploadedAt,
-              url: data.documents.certificateOfRegistration.url,
+      // If owner exists, listen to owner too
+      if (data.ownerId) {
+        if (currentOwnerId !== data.ownerId && unsubscribeOwner) {
+          unsubscribeOwner();
+          unsubscribeOwner = null;
+        }
+        currentOwnerId = data.ownerId;
+        if (!unsubscribeOwner) {
+          const ownerRef = doc(db, "users", data.ownerId);
+          unsubscribeOwner = onSnapshot(ownerRef, (ownerSnap) => {
+            let ownerData: any = null;
+
+            if (ownerSnap.exists()) {
+              const ownerInfo = ownerSnap.data();
+              ownerData = {
+                id: ownerSnap.id,
+                ...ownerInfo,
+                firstName: ownerInfo.firstName ?? ownerInfo.name ?? "Unknown",
+                lastName: ownerInfo.lastName ?? "Unknown",
+                email: ownerInfo.email ?? "",
+                phone: ownerInfo.phone ?? "",
+                profileImage: ownerInfo.profileImage ?? "",
+              };
             }
-          : null,
-      },
-      location:
-        data.location &&
-        typeof data.location.coordinates?.latitude === "number" &&
-        typeof data.location.coordinates?.longitude === "number"
-          ? {
-              latitude: data.location.coordinates.latitude,
-              longitude: data.location.coordinates.longitude,
-              address: data.location.address ?? "",
-            }
-          : null,
-      status: data.status,
-      ownerId: data.ownerId,
-      owner: ownerData,
+
+            callback(formatCarData(carSnap, data, ownerData));
+          });
+        }
+      } else {
+        // if no owner just return car
+        if (unsubscribeOwner) {
+          unsubscribeOwner();
+          unsubscribeOwner = null;
+        }
+        currentOwnerId = null;
+
+        callback(formatCarData(carSnap, data, null));
+      }
+    });
+
+    return () => {
+      unsubscribeCar();
+      if (unsubscribeOwner) {
+        unsubscribeOwner();
+        unsubscribeOwner = null;
+      }
     };
   } catch (error) {
-    console.error("Error fetching car with owner:", error);
+    console.error("Error listening to car with owner:", error);
     throw error;
   }
 };
+
+// Helper to format car + owner
+const formatCarData = (carSnap: any, data: any, ownerData: any) => ({
+  id: carSnap.id,
+  storageFolder: data.carId || "",
+  make: data.make,
+  model: data.model,
+  type: data.carType,
+  pricePerHour: data.dailyRate,
+  seats: data.seats,
+  transmission: data.transmission || "Automatic",
+  year: data.year,
+  fuel: data.fuel || "Gasoline",
+  description: data.description,
+  images: Array.isArray(data.images)
+    ? data.images
+        .filter((img: any) => img?.url)
+        .map(
+          (
+            img: {
+              id?: string;
+              url: string;
+              filename?: string;
+              uploadedAt?: string;
+            },
+            index: number
+          ) => ({
+            id: img.id ?? `img-${index}`,
+            url: img.url,
+            filename: img.filename ?? img.url.split("/").pop() ?? "",
+            uploadedAt: img.uploadedAt ?? "",
+          })
+        )
+    : [],
+  documents: {
+    officialReceipt: data.documents?.officialReceipt
+      ? {
+          filename: data.documents.officialReceipt.filename,
+          uploadedAt: data.documents.officialReceipt.uploadedAt,
+          url: data.documents.officialReceipt.url,
+        }
+      : null,
+
+    certificateOfRegistration: data.documents?.certificateOfRegistration
+      ? {
+          filename: data.documents.certificateOfRegistration.filename,
+          uploadedAt: data.documents.certificateOfRegistration.uploadedAt,
+          url: data.documents.certificateOfRegistration.url,
+        }
+      : null,
+  },
+  location:
+    data.location &&
+    typeof data.location.coordinates?.latitude === "number" &&
+    typeof data.location.coordinates?.longitude === "number"
+      ? {
+          latitude: data.location.coordinates.latitude,
+          longitude: data.location.coordinates.longitude,
+          address: data.location.address ?? "",
+        }
+      : null,
+  status: data.status,
+  ownerId: data.ownerId,
+  owner: ownerData,
+});

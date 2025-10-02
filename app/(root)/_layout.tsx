@@ -63,6 +63,10 @@ export default function Layout() {
         options={{ headerShown: false, animation: "slide_from_right" }}
       />
       <Stack.Screen
+        name="guestProfile"
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
         name="editName"
         options={{ headerShown: false, animation: "slide_from_right" }}
       />
@@ -76,6 +80,10 @@ export default function Layout() {
       />
       <Stack.Screen
         name="identityVerification"
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="driversLicenseVerification"
         options={{ headerShown: false, animation: "slide_from_right" }}
       />
       <Stack.Screen

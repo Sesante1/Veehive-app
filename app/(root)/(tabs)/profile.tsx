@@ -188,10 +188,10 @@ export default function Profile() {
           <View>
             <Pressable
               className="flex flex-row items-center gap-3 py-4 px-6"
-              onPress={() => {}}
+              onPress={() => router.push("/guestProfile")}
             >
-              <AntDesign name="questioncircleo" size={20} color="#00000" />
-              <Text className="text-lg font-Jakarta">Privacy Policy</Text>
+              <Feather name="user" size={20} color="#00000" />
+              <Text className="text-lg font-Jakarta">Personal Information</Text>
               <MaterialIcons
                 className="absolute right-0"
                 name="navigate-next"
@@ -204,8 +204,8 @@ export default function Profile() {
               className="flex flex-row items-center gap-3 py-4 px-6"
               onPress={() => {}}
             >
-              <Feather name="user" size={20} color="#00000" />
-              <Text className="text-lg font-Jakarta">Personal Information</Text>
+              <AntDesign name="questioncircleo" size={20} color="#00000" />
+              <Text className="text-lg font-Jakarta">Privacy Policy</Text>
               <MaterialIcons
                 className="absolute right-0"
                 name="navigate-next"

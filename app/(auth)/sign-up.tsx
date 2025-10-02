@@ -62,7 +62,7 @@ export default function SignUp() {
         email,
         password
       );
-      
+
       const user = userCredential.user;
       const defaultImageURL =
         "https://firebasestorage.googleapis.com/v0/b/car-rental-1e1a1.firebasestorage.app/o/defaultProfile.png?alt=media&token=89b36550-c43e-432c-a91e-a0288d6f06b4";
@@ -83,6 +83,17 @@ export default function SignUp() {
         role,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+
+        driversLicense: {
+          front: null,
+          back: null,
+          selfie: null,
+        },
+        identityVerification: {
+          frontId: null,
+          backId: null,
+          selfieWithId: null,
+        },
       });
 
       await sendEmailVerification(user);
@@ -164,7 +175,11 @@ export default function SignUp() {
             <Text className="text-primary-500 font-Jakarta">Log In</Text>
           </Link>
         </View>
-        <ReactNativeModal isVisible={showSuccessModal} backdropColor="black" backdropOpacity={0.5}>
+        <ReactNativeModal
+          isVisible={showSuccessModal}
+          backdropColor="black"
+          backdropOpacity={0.5}
+        >
           <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px] flex items-center justify-center">
             <LottieView
               source={require("../../assets/animations/Email Sent.json")}

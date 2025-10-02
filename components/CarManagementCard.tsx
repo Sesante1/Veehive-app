@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
 
-type CarStatus = "pending" | "snoozed" | "active" | "on a trip";
+type CarStatus = "pending" | "snoozed" | "active" | "on a trip" | "draft" | "rejected";
 
 type CarProps = {
   id: string;
@@ -29,7 +29,9 @@ const statusConfig: Record<CarStatus, { label: string; color: string }> = {
   active: { label: "Listed", color: "#22c55e" }, // green-500
   snoozed: { label: "Snoozed", color: "#f97316" }, // orange-500
   "on a trip": { label: "On a trip", color: "#3b82f6" }, // blue-500
-  pending: { label: "Pending", color: "#eab308" }, // yellow-500
+  pending: { label: "On review", color: "#eab308" }, // yellow-500
+  draft: { label: "Action required", color: "#e4321aff" },
+  rejected: { label: "Rejected", color: "#e4321aff" },
 };
 
 const CarManagementCard: React.FC<CarProps> = ({

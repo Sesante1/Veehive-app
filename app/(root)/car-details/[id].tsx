@@ -229,8 +229,13 @@ const CarDetails = () => {
     const fetchCar = async () => {
       try {
         setLoading(true);
-        const data = await getCarWithOwner(id);
-        setCar(data);
+        // subscribe to car changes
+        const unsubscribe = getCarWithOwner(id, (carData) => {
+          setCar(carData);
+          setLoading(false);
+        });
+
+        return () => unsubscribe();
       } catch (e) {
         console.log("Error fetching car:", e);
       } finally {
