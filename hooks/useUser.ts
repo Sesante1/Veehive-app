@@ -1,5 +1,5 @@
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot  } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db, FIREBASE_AUTH } from "../FirebaseConfig";
 
@@ -10,14 +10,19 @@ interface IdentityFile {
   url: string;
 }
 
-interface UserData {
+export interface UserData {
   firstName?: string;
   lastName?: string;
   birthDate?: string;
   email?: string;
-  phone?: string;
+  phoneNumber?: string;
   profileImage?: string;
   identityVerification?: {
+    frontId?: IdentityFile;
+    backId?: IdentityFile;
+    selfieWithId?: IdentityFile;
+  };
+  driversLicense?: {
     frontId?: IdentityFile;
     backId?: IdentityFile;
     selfieWithId?: IdentityFile;
@@ -31,26 +36,31 @@ export function useUserData() {
 
   useEffect(() => {
     // Subscribe to Firebase Auth state
-    const unsubscribe = onAuthStateChanged(
+    const unsubscribeAuth = onAuthStateChanged(
       FIREBASE_AUTH,
-      async (currentUser) => {
+      (currentUser) => {
         if (currentUser) {
-          try {
-            const docRef = doc(db, "users", currentUser.uid);
-            const docSnap = await getDoc(docRef);
+          const docRef = doc(db, "users", currentUser.uid);
 
-            if (docSnap.exists()) {
-              // setUserData(docSnap.data());
-              setUserData(docSnap.data() as UserData);
-            } else {
-              console.log("No user document found!");
-              setUserData(null);
+          // Subscribe to Firestore doc in realtime
+          const unsubscribeDoc = onSnapshot(
+            docRef,
+            (docSnap) => {
+              if (docSnap.exists()) {
+                setUserData(docSnap.data() as UserData);
+              } else {
+                setUserData(null);
+              }
+              setLoading(false);
+            },
+            (error) => {
+              console.error("Error fetching user data:", error);
+              setLoading(false);
             }
-          } catch (error) {
-            console.error("Error fetching user data:", error);
-          } finally {
-            setLoading(false);
-          }
+          );
+
+          // Cleanup Firestore subscription when auth changes
+          return unsubscribeDoc;
         } else {
           setUserData(null);
           setLoading(false);
@@ -58,7 +68,7 @@ export function useUserData() {
       }
     );
 
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
 
   return { userData, loading };

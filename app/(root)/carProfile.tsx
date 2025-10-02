@@ -1,7 +1,11 @@
 import { PhotoTourSection } from "@/components/PhotoTourSection";
 import { icons } from "@/constants";
 import { useCardSpreadAnimation } from "@/hooks/useCardSpreadAnimation";
+import type { UserData } from "@/hooks/useUser";
+import { useUserData } from "@/hooks/useUser";
+import { updateCarStatus } from "@/services/carService";
 import { getCarWithOwner } from "@/services/firestore";
+import { checkRequiredSteps } from "@/utils/stepValidator";
 import { Feather, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { encode as btoa } from "base-64";
 import { router, useLocalSearchParams } from "expo-router";
@@ -30,6 +34,7 @@ type Car = {
   fuel: string;
   seats: number;
   description: string;
+  status: string;
   images: { id: string; url: string }[];
   documents: {
     officialReceipt: {
@@ -60,9 +65,13 @@ type Car = {
 
 const CreateCar = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { userData } = useUserData();
   const [car, setCar] = useState<Car | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isloading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { identityCompleted, phoneCompleted, allStepsCompleted } =
+    checkRequiredSteps(userData);
+
   // Use the custom hook for animation logic
   const {
     isSpread,
@@ -77,7 +86,7 @@ const CreateCar = () => {
     rightScale,
   } = useCardSpreadAnimation();
 
-  // Auto-trigger spread animation on mount
+  // trigger spread animation on mount
   React.useEffect(() => {
     if (car) {
       const timer = setTimeout(() => {
@@ -87,13 +96,24 @@ const CreateCar = () => {
     }
   }, [car, spreadCards]);
 
+  useEffect(() => {
+    if (allStepsCompleted && car?.status === "draft") {
+      updateCarStatus(car.id);
+    }
+  }, [allStepsCompleted]);
+
   const fetchCar = async () => {
     try {
       if (!id) return;
       if (!refreshing) setLoading(true);
 
-      const data = await getCarWithOwner(id);
-      setCar(data);
+      // subscribe to car changes
+      const unsubscribe = getCarWithOwner(id, (carData) => {
+        setCar(carData);
+        setLoading(false);
+      });
+
+      return () => unsubscribe();
     } catch (e) {
       console.log("Error fetching car:", e);
       Alert.alert("Error", "Failed to load car details");
@@ -112,7 +132,26 @@ const CreateCar = () => {
     await fetchCar();
   };
 
-  if (loading) {
+  const needsRequiredSteps = (userData: UserData | null) => {
+    if (!userData) {
+      console.log("No userData - showing banner");
+      return true;
+    }
+
+    const hasPhone =
+      !!userData.phoneNumber && userData.phoneNumber.trim() !== "";
+
+    const hasFrontId = !!userData.identityVerification?.frontId?.url;
+    const hasBackId = !!userData.identityVerification?.backId?.url;
+    const hasSelfieWithId = !!userData.identityVerification?.selfieWithId?.url;
+
+    const hasCompleteIdentity = hasFrontId && hasBackId && hasSelfieWithId;
+    const shouldShow = !hasPhone || !hasCompleteIdentity;
+
+    return shouldShow;
+  };
+
+  if (isloading) {
     return (
       <SafeAreaView className="flex-1 bg-white">
         <View className="flex-1 justify-center items-center">
@@ -177,22 +216,24 @@ const CreateCar = () => {
         }
       >
         <View className="flex-col gap-4">
-          <Pressable
-            className="px-5 py-4 bg-white rounded-xl border border-gray-200 active:bg-gray-50 shadow-sm"
-            onPress={() => router.push("/completeRequiredSteps")}
-          >
-            <View className="flex-row items-center gap-3">
-              <View className="bg-red-500 w-3 h-3 rounded-full items-center justify-center"></View>
-              <Text className="text-lg font-JakartaSemiBold text-gray-900">
-                Complete required steps
-              </Text>
-            </View>
+          {needsRequiredSteps(userData) && (
+            <Pressable
+              className="px-5 py-4 bg-white rounded-xl border border-gray-200 active:bg-gray-50 shadow-sm"
+              onPress={() => router.push("/completeRequiredSteps")}
+            >
+              <View className="flex-row items-center gap-3">
+                <View className="bg-red-500 w-3 h-3 rounded-full items-center justify-center"></View>
+                <Text className="text-lg font-JakartaSemiBold text-gray-900">
+                  Complete required steps
+                </Text>
+              </View>
 
-            <Text className="text-sm text-gray-500 font-JakartaMedium mt-4">
-              Finish these final tasks to publish your listing and start getting
-              booked
-            </Text>
-          </Pressable>
+              <Text className="text-sm text-gray-500 font-JakartaMedium mt-4">
+                Finish these steps to submit your car for review. Your listing
+                will only go live after approval.
+              </Text>
+            </Pressable>
+          )}
 
           {/* Photo Tour Section */}
           <PhotoTourSection

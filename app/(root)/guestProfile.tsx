@@ -128,7 +128,7 @@ const UserProfile = () => {
         <View className="border-b border-gray-200 mb-6 pb-6 flex-row items-center justify-between">
           <View className="flex justify-center">
             <Text className="text-base font-JakartaMedium">
-              Identity verification
+              Drivers license
             </Text>
             {!allDocsUploaded && (
               <Text className="text-base font-JakartaRegular text-gray-700 mt-1">
@@ -141,10 +141,10 @@ const UserProfile = () => {
             className="p-2"
             onPress={() =>
               router.push({
-                pathname: "/identityVerification",
+                pathname: "/driversLicenseVerification",
                 params: {
                   documents: btoa(
-                    JSON.stringify(userData?.identityVerification)
+                    JSON.stringify(userData?.driversLicense)
                   ),
                   userId: user?.uid,
                 },

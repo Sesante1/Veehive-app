@@ -1,4 +1,5 @@
 import { icons } from "@/constants";
+import { useAuth, UserData, useUserData } from "@/hooks/useUser";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
@@ -6,6 +7,40 @@ import { Image, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const CompleteRequiredSteps = () => {
+  const { userData } = useUserData();
+  const { user } = useAuth();
+
+  const hasCompleteIdentity = (userData: UserData | null): boolean => {
+    if (!userData) return false;
+
+    const hasFrontId = !!userData.identityVerification?.frontId?.url;
+    const hasBackId = !!userData.identityVerification?.backId?.url;
+    const hasSelfieWithId = !!userData.identityVerification?.selfieWithId?.url;
+
+    return hasFrontId && hasBackId && hasSelfieWithId;
+  };
+
+  const hasPhoneNumber = (userData: UserData | null): boolean => {
+    if (!userData) return false;
+    return !!userData.phoneNumber && userData.phoneNumber.trim() !== "";
+  };
+
+  const StatusBadge = ({ isCompleted }: { isCompleted: boolean }) => {
+    return (
+      <View className="flex-row items-center mt-3 gap-2">
+        <View
+          className={`w-3 h-3 rounded-full ${isCompleted ? "bg-green-500" : "bg-red-500"}`}
+        />
+        <Text className="text-sm font-JakartaMedium">
+          {isCompleted ? "Completed" : "Required"}
+        </Text>
+      </View>
+    );
+  };
+
+  const identityCompleted = hasCompleteIdentity(userData);
+  const phoneCompleted = hasPhoneNumber(userData);
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* Header */}
@@ -25,22 +60,30 @@ const CompleteRequiredSteps = () => {
             Finish up and publish
           </Text>
           <Text className="text-base font-Jakarta text-gray-700">
-            Complete these final steps so you can start getting booked.
+            Complete these steps to make your car eligible for review.
           </Text>
         </View>
 
-        <Pressable className="mb-10 flex-row items-center justify-between" onPress={() => router.push('/identityVerification')}>
-          <View>
+        <Pressable
+          className="mb-10 flex-row items-center justify-between"
+          onPress={() =>
+            router.push({
+              pathname: "/identityVerification",
+              params: {
+                documents: btoa(JSON.stringify(userData?.identityVerification)),
+                userId: user?.uid,
+              },
+            })
+          }
+        >
+          <View className="flex-1">
             <Text className="text-lg font-JakartaBold mb-2">
               Verify your identity
             </Text>
             <Text className="text-base font-Jakarta text-gray-700">
               We'll gather some information to help {"\n"} confirm you're you.
             </Text>
-            <View className="flex-row items-center mt-3 gap-2">
-              <View className="w-3 h-3 bg-red-500 rounded-full"></View>
-              <Text className="text-sm">Required</Text>
-            </View>
+            <StatusBadge isCompleted={identityCompleted} />
           </View>
 
           <View>
@@ -48,18 +91,24 @@ const CompleteRequiredSteps = () => {
           </View>
         </Pressable>
 
-        <Pressable className="mb-10 flex-row items-center justify-between" onPress={() => router.push('/editPhoneNumber')}>
-          <View>
+        <Pressable
+          className="mb-10 flex-row items-center justify-between"
+          onPress={() =>
+            router.push({
+              pathname: "/editPhoneNumber",
+              params: { phoneNumber: userData?.phoneNumber, id: user?.uid },
+            })
+          }
+        >
+          <View className="flex-1">
             <Text className="text-lg font-JakartaBold mb-2">
               Confirm your phone number
             </Text>
             <Text className="text-base font-Jakarta text-gray-700">
-              We'll call or text to confirm your number. Standard {"\n"} messsaging rates apply.
+              We'll call or text to confirm your number. Standard {"\n"}
+              messaging rates apply.
             </Text>
-            <View className="flex-row items-center mt-3 gap-2">
-              <View className="w-3 h-3 bg-red-500 rounded-full"></View>
-              <Text className="text-sm">Required</Text>
-            </View>
+            <StatusBadge isCompleted={phoneCompleted} />
           </View>
 
           <View>
