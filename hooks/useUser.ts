@@ -1,5 +1,5 @@
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, onSnapshot  } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db, FIREBASE_AUTH } from "../FirebaseConfig";
 
@@ -36,39 +36,44 @@ export function useUserData() {
 
   useEffect(() => {
     // Subscribe to Firebase Auth state
-    const unsubscribeAuth = onAuthStateChanged(
-      FIREBASE_AUTH,
-      (currentUser) => {
-        if (currentUser) {
-          const docRef = doc(db, "users", currentUser.uid);
-
-          // Subscribe to Firestore doc in realtime
-          const unsubscribeDoc = onSnapshot(
-            docRef,
-            (docSnap) => {
-              if (docSnap.exists()) {
-                setUserData(docSnap.data() as UserData);
-              } else {
-                setUserData(null);
-              }
-              setLoading(false);
-            },
-            (error) => {
-              console.error("Error fetching user data:", error);
-              setLoading(false);
-            }
-          );
-
-          // Cleanup Firestore subscription when auth changes
-          return unsubscribeDoc;
-        } else {
-          setUserData(null);
-          setLoading(false);
-        }
+    let unsubscribeDoc: (() => void) | undefined;
+    const unsubscribeAuth = onAuthStateChanged(FIREBASE_AUTH, (currentUser) => {
+      if (unsubscribeDoc) {
+        unsubscribeDoc();
+        unsubscribeDoc = undefined;
       }
-    );
 
-    return () => unsubscribeAuth();
+      if (currentUser) {
+        const docRef = doc(db, "users", currentUser.uid);
+
+        // Subscribe to Firestore doc in realtime
+        unsubscribeDoc = onSnapshot(
+          docRef,
+          (docSnap) => {
+            if (docSnap.exists()) {
+              setUserData(docSnap.data() as UserData);
+            } else {
+              setUserData(null);
+            }
+            setLoading(false);
+          },
+          (error) => {
+            console.error("Error fetching user data:", error);
+            setLoading(false);
+          }
+        );
+      } else {
+        setUserData(null);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeDoc) {
+        unsubscribeDoc();
+      }
+    };
   }, []);
 
   return { userData, loading };

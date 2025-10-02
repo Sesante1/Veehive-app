@@ -97,10 +97,10 @@ const CreateCar = () => {
   }, [car, spreadCards]);
 
   useEffect(() => {
-    if (allStepsCompleted && car?.status === "draft") {
+    if (allStepsCompleted && car?.status === "draft" && car?.id) {
       updateCarStatus(car.id);
     }
-  }, [allStepsCompleted]);
+  }, [allStepsCompleted, car?.status, car?.id]);
 
   const fetchCar = async () => {
     try {

@@ -1,4 +1,10 @@
-import { addDoc, collection, serverTimestamp, doc, updateDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { db, FIREBASE_AUTH, storage } from "../FirebaseConfig";
 
@@ -21,7 +27,7 @@ const uploadFile = async (path: string, file: { uri: string }) => {
   const response = await fetch(file.uri);
   const blob = await response.blob();
   const fileRef = ref(storage, path);
-  
+
   await uploadBytes(fileRef, blob, { contentType: "image/jpeg" });
   const downloadURL = await getDownloadURL(fileRef);
   return {
@@ -45,7 +51,7 @@ export const uploadCarListing = async (
     const timestamp = Date.now();
     const carId = `car_${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Upload everything in parallel 
+    // Upload everything in parallel
     const uploadTasks: Promise<any>[] = [];
 
     // Images
@@ -79,7 +85,7 @@ export const uploadCarListing = async (
 
     onProgress?.(90, "Saving listing...");
 
-    const {latitude, longitude, ...rest} = carData;
+    const { latitude, longitude, ...rest } = carData;
 
     const carDocument = {
       ...rest,
@@ -109,13 +115,13 @@ export const uploadCarListing = async (
       status: "draft",
       isActive: false,
       isDeleted: false,
-      remarks: null,  
+      remarks: null,
       reviewedBy: null,
       reviewedAt: null,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
-    
+
     const docRef = await addDoc(collection(db, "cars"), carDocument);
 
     onProgress?.(100, "Upload complete");
@@ -134,17 +140,23 @@ export const uploadCarListing = async (
 };
 
 export const updateCarStatus = async (carId: string) => {
+  if (!carId) {
+    throw new Error("carId is required");
+  }
+
   try {
     const carRef = doc(db, "cars", carId);
 
     // Update status to pending
     await updateDoc(carRef, {
       status: "pending",
-      updatedAt: new Date(),
+      updatedAt: serverTimestamp(),
     });
 
     console.log("Car status updated to pending.");
+    return { success: true };
   } catch (error) {
     console.error("Error updating status:", error);
+    throw error;
   }
 };

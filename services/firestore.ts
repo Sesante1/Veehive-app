@@ -148,6 +148,9 @@ export const getCarWithOwner = (
   try {
     const carRef = doc(db, "cars", carId);
 
+    let unsubscribeOwner: (() => void) | null = null;
+    let currentOwnerId: string | null = null;
+
     // Subscribe to car document
     const unsubscribeCar = onSnapshot(carRef, (carSnap) => {
       if (!carSnap.exists()) {
@@ -160,39 +163,51 @@ export const getCarWithOwner = (
 
       // If owner exists, listen to owner too
       if (data.ownerId) {
-        const ownerRef = doc(db, "users", data.ownerId);
-
-        const unsubscribeOwner = onSnapshot(ownerRef, (ownerSnap) => {
-          let ownerData: any = null;
-
-          if (ownerSnap.exists()) {
-            const ownerInfo = ownerSnap.data();
-            ownerData = {
-              id: ownerSnap.id,
-              ...ownerInfo,
-              firstName: ownerInfo.firstName ?? ownerInfo.name ?? "Unknown",
-              lastName: ownerInfo.lastName ?? "Unknown",
-              email: ownerInfo.email ?? "",
-              phone: ownerInfo.phone ?? "",
-              profileImage: ownerInfo.profileImage ?? "",
-            };
-          }
-
-          callback(formatCarData(carSnap, data, ownerData));
-        });
-
-        // Return both unsubscribes
-        return () => {
-          unsubscribeCar();
+        if (currentOwnerId !== data.ownerId && unsubscribeOwner) {
           unsubscribeOwner();
-        };
+          unsubscribeOwner = null;
+        }
+        currentOwnerId = data.ownerId;
+        if (!unsubscribeOwner) {
+          const ownerRef = doc(db, "users", data.ownerId);
+          unsubscribeOwner = onSnapshot(ownerRef, (ownerSnap) => {
+            let ownerData: any = null;
+
+            if (ownerSnap.exists()) {
+              const ownerInfo = ownerSnap.data();
+              ownerData = {
+                id: ownerSnap.id,
+                ...ownerInfo,
+                firstName: ownerInfo.firstName ?? ownerInfo.name ?? "Unknown",
+                lastName: ownerInfo.lastName ?? "Unknown",
+                email: ownerInfo.email ?? "",
+                phone: ownerInfo.phone ?? "",
+                profileImage: ownerInfo.profileImage ?? "",
+              };
+            }
+
+            callback(formatCarData(carSnap, data, ownerData));
+          });
+        }
       } else {
         // if no owner just return car
+        if (unsubscribeOwner) {
+          unsubscribeOwner();
+          unsubscribeOwner = null;
+        }
+        currentOwnerId = null;
+
         callback(formatCarData(carSnap, data, null));
       }
     });
 
-    return unsubscribeCar;
+    return () => {
+      unsubscribeCar();
+      if (unsubscribeOwner) {
+        unsubscribeOwner();
+        unsubscribeOwner = null;
+      }
+    };
   } catch (error) {
     console.error("Error listening to car with owner:", error);
     throw error;
