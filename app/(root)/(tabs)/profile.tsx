@@ -116,7 +116,7 @@ export default function Profile() {
           <View className="border-b border-gray-200 mb-4 pb-4">
             <Pressable
               className="flex flex-row items-center gap-4 py-4 px-6 rounded-lg"
-              onPress={() => {}}
+              onPress={() => router.push("/myBooking")}
             >
               <Feather name="calendar" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">My Booking</Text>
@@ -127,48 +127,6 @@ export default function Profile() {
                 color="#00000"
               />
             </Pressable>
-
-            {/* <Pressable
-              className="flex flex-row items-center gap-4 py-4 px-6 rounded-lg"
-              onPress={() => router.push("/create-car")}
-            >
-              <FontAwesome6 name="add" size={20} color="#00000" />
-              <Text className="text-lg font-Jakarta">Create listing</Text>
-              <MaterialIcons
-                className="absolute right-0"
-                name="navigate-next"
-                size={30}
-                color="#00000"
-              />
-            </Pressable> */}
-
-            {/* <Pressable
-              className="flex flex-row items-center gap-3 py-4 px-6"
-              onPress={() => router.push("/user-listing")}
-            >
-              <Feather name="list" size={20} color="black" />
-              <Text className="text-lg font-Jakarta">Your listing</Text>
-              <MaterialIcons
-                className="absolute right-0"
-                name="navigate-next"
-                size={30}
-                color="#00000"
-              />
-            </Pressable> */}
-
-            {/* <Pressable
-              className="flex flex-row items-center gap-3 py-4 px-6"
-              onPress={() => {}}
-            >
-              <Feather name="check" size={20} color="#00000" />
-              <Text className="text-lg font-Jakarta">Booking Recieved</Text>
-              <MaterialIcons
-                className="absolute right-0"
-                name="navigate-next"
-                size={30}
-                color="#00000"
-              />
-            </Pressable> */}
 
             <Pressable
               className="flex flex-row items-center gap-3 py-4 px-6"

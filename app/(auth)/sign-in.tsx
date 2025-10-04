@@ -1,19 +1,13 @@
 import CustomButton from "@/components/CustomButton";
 import InputField from "@/components/InputField";
 import OAuth from "@/components/OAuth";
-import React from "react";
 import { icons } from "@/constants";
+import { signIn } from "@/services/authService";
 import { Link, router } from "expo-router";
-import { useState } from "react";
+import React, { useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, Text, View } from "react-native";
 
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { FIREBASE_AUTH } from "../../FirebaseConfig";
-// import { getAuth } from "firebase/auth";
-
 const SignIn = () => {
-  // const { signIn, setActive, isLoaded } = useSignIn();
-
   const [isLoading, setIsLoading] = useState(false);
 
   const [form, setForm] = useState({
@@ -23,36 +17,17 @@ const SignIn = () => {
 
   const onSignInPress = async () => {
     const { email, password } = form;
-
     if (!email || !password) {
       Alert.alert("Error", "Email and password are required.");
       return;
     }
 
     setIsLoading(true);
-
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        FIREBASE_AUTH,
-        email,
-        password
-      );
-
-      const user = userCredential.user;
-
-      if (!user.emailVerified) {
-        await signOut(FIREBASE_AUTH); // force logout
-        Alert.alert(
-          "Email Not Verified",
-          "Please verify your email before logging in."
-        );
-        return;
-      }
-
+      await signIn(email, password);
       router.push("/(root)/(tabs)/home");
-    } catch (error) {
-      console.error("Login Error", error);
-      Alert.alert("Login Failed", String(error || error));
+    } catch (error: any) {
+      Alert.alert("Login Failed", error.message);
     } finally {
       setIsLoading(false);
     }
