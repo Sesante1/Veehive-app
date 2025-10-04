@@ -1,26 +1,23 @@
-import { Link } from "expo-router";
-import React, { useState } from "react";
-import { ScrollView, Text, View } from "react-native";
-
 import CustomButton from "@/components/CustomButton";
 import InputField from "@/components/InputField";
 import OAuth from "@/components/OAuth";
 import { icons } from "@/constants";
+import { signUp } from "@/services/authService";
 import { Ionicons } from "@expo/vector-icons";
+import { Link } from "expo-router";
 import LottieView from "lottie-react-native";
-import { ActivityIndicator, Alert, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import ReactNativeModal from "react-native-modal";
 
-import {
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-  signOut,
-  updateProfile,
-} from "firebase/auth";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { db, FIREBASE_AUTH } from "../../FirebaseConfig";
-
-export default function SignUp() {
+const SignUp = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,74 +34,17 @@ export default function SignUp() {
   });
 
   const onSignUpPress = async () => {
-    const {
-      firstName,
-      lastName,
-      email,
-      password,
-      phoneNumber,
-      address,
-      birthDate,
-      profileImage,
-      role,
-    } = form;
-
-    if (!firstName || !lastName || !email || !password) {
+    if (!form.firstName || !form.lastName || !form.email || !form.password) {
       Alert.alert("Error", "All fields are required.");
       return;
     }
 
     setIsLoading(true);
-
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        FIREBASE_AUTH,
-        email,
-        password
-      );
-
-      const user = userCredential.user;
-      const defaultImageURL =
-        "https://firebasestorage.googleapis.com/v0/b/car-rental-1e1a1.firebasestorage.app/o/defaultProfile.png?alt=media&token=89b36550-c43e-432c-a91e-a0288d6f06b4";
-
-      await updateProfile(user, {
-        displayName: `${firstName} ${lastName}`,
-        photoURL: defaultImageURL || null,
-      });
-
-      await setDoc(doc(db, "users", user.uid), {
-        firstName,
-        lastName,
-        email,
-        phoneNumber,
-        address,
-        birthDate,
-        profileImage: defaultImageURL,
-        role,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-
-        driversLicense: {
-          front: null,
-          back: null,
-          selfie: null,
-        },
-        identityVerification: {
-          frontId: null,
-          backId: null,
-          selfieWithId: null,
-        },
-      });
-
-      await sendEmailVerification(user);
-
-      await signOut(FIREBASE_AUTH);
-
+      await signUp(form);
       setShowSuccessModal(true);
-      // router.push("/sign-in");
-    } catch (error) {
-      // console.error("Sign Up Error", error);
-      Alert.alert("Sign Up Failed", String(error));
+    } catch (error: any) {
+      Alert.alert("Sign Up Failed", error.message);
     } finally {
       setIsLoading(false);
     }
@@ -206,4 +146,5 @@ export default function SignUp() {
     </ScrollView>
   );
 }
-// export default SignUp;
+
+export default SignUp;

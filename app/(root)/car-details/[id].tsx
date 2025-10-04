@@ -631,7 +631,6 @@ const CarDetails = () => {
                 carImage: btoa(car.images[0]?.url || ""),
                 carMake: car.make,
                 carModel: car.model,
-                pricePerHour: car.pricePerHour,
               };
 
               router.push({

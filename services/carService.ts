@@ -2,8 +2,12 @@ import {
   addDoc,
   collection,
   doc,
+  onSnapshot,
   serverTimestamp,
   updateDoc,
+  where,
+  query,
+  getDocs,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { db, FIREBASE_AUTH, storage } from "../FirebaseConfig";
@@ -157,6 +161,72 @@ export const updateCarStatus = async (carId: string) => {
     return { success: true };
   } catch (error) {
     console.error("Error updating status:", error);
+    throw error;
+  }
+};
+
+export const listenToCar = (
+  carId: string,
+  callback: (car: any | null) => void
+) => {
+  const carRef = doc(db, "cars", carId);
+
+  const unsubscribe = onSnapshot(carRef, (snap) => {
+    if (!snap.exists()) {
+      callback(null);
+      return;
+    }
+
+    const data = snap.data();
+
+    const car = {
+      id: snap.id,
+      ...data,
+    };
+
+    callback(car);
+  });
+
+  return unsubscribe;
+};
+
+export const isCarAvailable = async (
+  carId: string,
+  pickupDate: string,
+  returnDate: string
+): Promise<boolean> => {
+  try {
+    const bookingsRef = collection(db, "bookings");
+
+    const q = query(
+      bookingsRef,
+      where("carId", "==", carId),
+      where("bookingStatus", "in", ["pending", "confirmed"])
+    );
+
+    const snapshot = await getDocs(q);
+
+    for (const docSnap of snapshot.docs) {
+      const data = docSnap.data();
+      const existingPickup = new Date(data.pickupDate);
+      const existingReturn = new Date(data.returnDate);
+
+      const requestedPickup = new Date(pickupDate);
+      const requestedReturn = new Date(returnDate);
+
+      // Check overlap
+      const overlaps =
+        requestedPickup <= existingReturn &&
+        requestedReturn >= existingPickup;
+
+      if (overlaps) {
+        return false; 
+      }
+    }
+
+    return true; 
+  } catch (error) {
+    console.error("Error checking car availability:", error);
     throw error;
   }
 };
