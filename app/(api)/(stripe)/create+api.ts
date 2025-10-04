@@ -38,9 +38,15 @@ export async function POST(request: Request) {
     );
 
     // Create payment intent
+    const amountNumber = Number(amount);
+    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+      return new Response(JSON.stringify({ error: "Invalid amount" }), {
+        status: 400,
+      });
+    }
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: parseInt(amount) * 100, // Convert to cents
-      currency: "php", // Philippine Peso
+      amount: Math.round(amountNumber * 100),
+      currency: "php",
       customer: customer.id,
       automatic_payment_methods: {
         enabled: true,
