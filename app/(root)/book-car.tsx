@@ -333,6 +333,7 @@ const BookCar = () => {
             pickupTime={pickupTime}
             returnTime={returnTime}
             rentalDays={rentalDays}
+            ownerId={car?.ownerId}
             userId={user?.uid || ""}
             carDetails={{
               make: carMake || "Toyota",

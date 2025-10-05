@@ -5,6 +5,7 @@ import {
   addDoc,
   collection,
   doc,
+  getDoc,
   serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
@@ -15,13 +16,17 @@ import Modal from "react-native-modal";
 import CustomButton from "@/components/CustomButton";
 import { images } from "@/constants";
 import { fetchAPI } from "@/lib/fetch";
+import {
+  notifyBookingConfirmed,
+  notifyPaymentReceived,
+} from "@/services/notificationService";
 
 interface PaymentProps {
   fullName: string;
   email: string;
   amount: string;
-  subtotal: string; // NEW
-  platformFee: string; // NEW
+  subtotal: string;
+  platformFee: string;
   carId: string;
   pickupDate: string;
   returnDate: string;
@@ -29,6 +34,7 @@ interface PaymentProps {
   returnTime: Date;
   rentalDays: number;
   userId: string;
+  ownerId: string;
   carDetails?: {
     make: string;
     model: string;
@@ -52,6 +58,7 @@ const Payment = ({
   returnTime,
   rentalDays,
   userId,
+  ownerId,
   carDetails,
   disabled,
 }: PaymentProps) => {
@@ -105,6 +112,36 @@ const Payment = ({
         });
       }
 
+      console.log("=== Sending notifications to owner ===");
+
+      try {
+        const ownerDoc = await getDoc(doc(db, "users", ownerId));
+        const ownerData = ownerDoc.data();
+
+        if (ownerData?.role?.Hoster === true && carDetails) {
+          // Notify about the booking
+          await notifyBookingConfirmed(
+            ownerId,
+            bookingRef.id,
+            fullName || email.split("@")[0],
+            { make: carDetails.make, model: carDetails.model },
+            pickupDate,
+            amount
+          );
+
+          // Notify about the payment
+          await notifyPaymentReceived(ownerId, bookingRef.id, amount, {
+            make: carDetails.make,
+            model: carDetails.model,
+          });
+
+          console.log("✅ Notifications sent successfully");
+        }
+      } catch (notificationError) {
+        // Don't fail the booking if notification fails
+        console.error("⚠️ Failed to send notifications:", notificationError);
+      }
+
       return bookingRef.id;
     } catch (error) {
       console.error("Error creating booking:", error);
@@ -143,15 +180,11 @@ const Payment = ({
                 }),
               });
 
-              // console.log("Create response:", createResponse);
-
               if (!createResponse.paymentIntent?.client_secret) {
                 throw new Error("Failed to create payment intent");
               }
 
               const { paymentIntent, customer } = createResponse;
-
-              // console.log("=== Step 2: Confirming payment ===");
 
               // Step 2: Confirm the payment
               const payResponse = await fetchAPI("/(api)/(stripe)/pay", {
@@ -167,17 +200,13 @@ const Payment = ({
                 }),
               });
 
-              // console.log("Pay response:", payResponse);
-
               if (!payResponse.result?.client_secret) {
                 throw new Error("Payment confirmation failed");
               }
 
               const { result } = payResponse;
 
-              // console.log("=== Step 3: Creating booking (client-side) ===");
-
-              // Step 3: Create booking directly in Firestore
+              // Step 3: Create booking directly in Firestore (with notifications)
               const bookingId = await createBooking(paymentIntent.id);
 
               console.log("=== All steps completed successfully ===");
@@ -264,7 +293,7 @@ const Payment = ({
               : "Confirm Booking"
         }
         onPress={openPaymentSheet}
-        disabled={disabled || loading} // 🔥 disable if car not available
+        disabled={disabled || loading}
       />
 
       <Modal isVisible={success} onBackdropPress={() => setSuccess(false)}>

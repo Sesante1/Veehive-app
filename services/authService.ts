@@ -47,7 +47,10 @@ export async function signUp(form: {
   address: string;
   birthDate: string;
   profileImage?: string;
-  role: string;
+  role: {
+    Guest: boolean;
+    Hoster: boolean;
+  };
 }) {
   const {
     firstName,
