@@ -30,7 +30,10 @@ const SignUp = () => {
     address: "",
     birthDate: "",
     profileImage: "",
-    role: "user",
+    role: {
+      Guest: true,
+      Hoster: true,
+    },
   });
 
   const onSignUpPress = async () => {
@@ -145,6 +148,6 @@ const SignUp = () => {
       </View>
     </ScrollView>
   );
-}
+};
 
 export default SignUp;
