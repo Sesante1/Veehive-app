@@ -38,6 +38,7 @@ export const useNotifications = (
     // Build query with role filter if provided
     const constraints = [
       where("userId", "==", userId),
+      orderBy("createdAt", "desc"),
       limit(50)
     ];
     
