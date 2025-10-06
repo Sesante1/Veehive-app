@@ -1,4 +1,4 @@
-import GuestBookingCard from "@/components/GuestBookingCard";
+import BookingCard from "@/components/BookingCard";
 import { db } from "@/FirebaseConfig";
 import { useAuth } from "@/hooks/useUser";
 import { Booking } from "@/types/booking.types";
@@ -13,7 +13,13 @@ import {
   where,
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, ListRenderItem, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  ListRenderItem,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function UpcomingScreen() {
@@ -27,8 +33,8 @@ export default function UpcomingScreen() {
 
     const q = query(
       collection(db, "bookings"),
-      where("userId", "==", user.uid),
-      where("bookingStatus", "in", ["pending", "confirmed"]),
+      where("hostId", "==", user.uid),
+      where("bookingStatus", "in", ["pending", "confirmed"]), 
       orderBy("createdAt", "desc")
     );
 
@@ -70,7 +76,7 @@ export default function UpcomingScreen() {
   };
 
   const renderItem: ListRenderItem<Booking> = ({ item }) => (
-    <GuestBookingCard
+    <BookingCard
       booking={item}
       onContactGuest={handleContactGuest}
       onManageTrip={handleManageTrip}

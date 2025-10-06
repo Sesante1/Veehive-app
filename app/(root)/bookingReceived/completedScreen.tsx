@@ -1,22 +1,13 @@
-import GuestBookingCard from "@/components/GuestBookingCard";
-import { db } from "@/FirebaseConfig";
-import { useAuth } from "@/hooks/useUser";
-import { Booking } from "@/types/booking.types";
-import { router } from "expo-router";
-import {
-  collection,
-  DocumentData,
-  onSnapshot,
-  orderBy,
-  query,
-  QuerySnapshot,
-  where,
-} from "firebase/firestore";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, ListRenderItem, Text, View } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, FlatList, ActivityIndicator, ListRenderItem } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { collection, query, where, onSnapshot, orderBy, QuerySnapshot, DocumentData } from 'firebase/firestore';
+import { db } from '@/FirebaseConfig';
+import { useAuth } from '@/hooks/useUser';
+import BookingCard from '@/components/BookingCard';
+import { Booking } from '@/types/booking.types';
 
-export default function UpcomingScreen() {
+export default function CompletedScreen() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -26,25 +17,24 @@ export default function UpcomingScreen() {
     if (!user?.uid) return;
 
     const q = query(
-      collection(db, "bookings"),
-      where("userId", "==", user.uid),
-      where("bookingStatus", "in", ["pending", "confirmed"]),
-      orderBy("createdAt", "desc")
+      collection(db, 'bookings'),
+      where('hostId', '==', user.uid),
+      where('bookingStatus', '==', 'completed'),
+      orderBy('createdAt', 'desc')
     );
 
-    const unsubscribe = onSnapshot(
-      q,
+    const unsubscribe = onSnapshot(q, 
       (snapshot: QuerySnapshot<DocumentData>) => {
-        const bookingData = snapshot.docs.map((doc) => ({
+        const bookingData = snapshot.docs.map(doc => ({
           id: doc.id,
-          ...doc.data(),
+          ...doc.data()
         })) as Booking[];
         setBookings(bookingData);
         setLoading(false);
         setRefreshing(false);
       },
       (error) => {
-        console.error("Error fetching bookings:", error);
+        console.error('Error fetching completed bookings:', error);
         setLoading(false);
         setRefreshing(false);
       }
@@ -58,39 +48,28 @@ export default function UpcomingScreen() {
     setTimeout(() => setRefreshing(false), 1000);
   };
 
-  const handleContactGuest = (booking: Booking): void => {
-    console.log("Contact guest:", booking);
-  };
-
-  const handleManageTrip = (booking: Booking): void => {
-    router.push({
-      pathname: "/hostManageBooking",
-      params: { booking: JSON.stringify(booking) },
-    });
+  const handleViewDetails = (booking: Booking): void => {
+    console.log('View completed trip details:', booking);
   };
 
   const renderItem: ListRenderItem<Booking> = ({ item }) => (
-    <GuestBookingCard
+    <BookingCard
       booking={item}
-      onContactGuest={handleContactGuest}
-      onManageTrip={handleManageTrip}
+      onContactGuest={() => {}}
+      onManageTrip={handleViewDetails}
     />
   );
 
   const renderHeader = () => (
     <Text className="text-lg font-bold text-gray-900 mb-3 mt-2">
-      Pending Requests ({bookings.length})
+      Completed Trips ({bookings.length})
     </Text>
   );
 
   const renderEmpty = () => (
     <View className="items-center justify-center py-20">
-      <Text className="text-gray-400 text-lg font-medium">
-        No pending bookings
-      </Text>
-      <Text className="text-gray-400 text-sm mt-2">
-        New requests will appear here
-      </Text>
+      <Text className="text-gray-400 text-lg font-medium">No completed trips</Text>
+      <Text className="text-gray-400 text-sm mt-2">Completed rentals will appear here</Text>
     </View>
   );
 
@@ -98,13 +77,13 @@ export default function UpcomingScreen() {
     return (
       <SafeAreaView className="bg-gray-50 flex-1 justify-center items-center">
         <ActivityIndicator size="large" color="#0066FF" />
-        <Text className="mt-2 text-gray-500">Loading bookings...</Text>
+        <Text className="mt-2 text-gray-500">Loading completed trips...</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <View className="bg-white flex-1">
+    <SafeAreaView className="bg-white flex-1">
       <FlatList
         data={bookings}
         renderItem={renderItem}
@@ -115,6 +94,6 @@ export default function UpcomingScreen() {
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
-    </View>
+    </SafeAreaView>
   );
 }

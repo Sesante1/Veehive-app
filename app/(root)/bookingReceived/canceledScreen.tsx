@@ -1,0 +1,105 @@
+// screens/CanceledScreen.tsx
+import React, { useState, useEffect } from "react";
+import { View, Text, FlatList, ActivityIndicator, ListRenderItem, RefreshControl } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { collection, query, where, onSnapshot, orderBy, QuerySnapshot, DocumentData } from 'firebase/firestore';
+import { db } from '@/FirebaseConfig';
+import { useAuth } from '@/hooks/useUser';
+import BookingCard from '@/components/BookingCard';
+import { Booking } from '@/types/booking.types';
+
+export default function CanceledScreen() {
+  const { user } = useAuth();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const q = query(
+      collection(db, 'bookings'),
+      where('hostId', '==', user.uid),
+      where('bookingStatus', '==', 'cancelled'),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, 
+      (snapshot: QuerySnapshot<DocumentData>) => {
+        const bookingData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Booking[];
+        setBookings(bookingData);
+        setLoading(false);
+        setRefreshing(false);
+      },
+      (error) => {
+        console.error('Error fetching cancelled bookings:', error);
+        setLoading(false);
+        setRefreshing(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  const onRefresh = (): void => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1000);
+  };
+
+  const handleViewDetails = (booking: Booking): void => {
+    console.log('View cancelled trip details:', booking);
+  };
+
+  const renderItem: ListRenderItem<Booking> = ({ item }) => (
+    <BookingCard
+      booking={item}
+      onContactGuest={() => {}}
+      onManageTrip={handleViewDetails}
+    />
+  );
+
+  const renderHeader = () => (
+    <Text className="text-lg font-bold text-gray-900 mb-3 mt-2">
+      Cancelled Trips ({bookings.length})
+    </Text>
+  );
+
+  const renderEmpty = () => (
+    <View className="items-center justify-center py-20">
+      <Text className="text-gray-400 text-lg font-medium">No cancelled trips</Text>
+      <Text className="text-gray-400 text-sm mt-2">Cancelled bookings will appear here</Text>
+    </View>
+  );
+
+  if (loading) {
+    return (
+      <SafeAreaView className="bg-gray-50 flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#0066FF" />
+        <Text className="mt-2 text-gray-500">Loading cancelled trips...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView className="bg-white flex-1">
+      <FlatList
+        data={bookings}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        contentContainerClassName="px-4 pt-2"
+        ListHeaderComponent={bookings.length > 0 ? renderHeader : null}
+        ListEmptyComponent={renderEmpty}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+            colors={['#0066FF']}
+          />
+        }
+      />
+    </SafeAreaView>
+  );
+}

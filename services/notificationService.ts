@@ -2,7 +2,7 @@
 import { db } from "@/FirebaseConfig";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
-export type NotificationType = 
+export type NotificationType =
   | "booking_confirmed"
   | "booking_cancelled"
   | "payment_received"
@@ -13,27 +13,27 @@ export type NotificationType =
 
 export interface NotificationData {
   userId: string; // Who receives the notification
-  recipientRole: "guest" | "hoster"; // 👈 Which role should see this
+  recipientRole: "guest" | "hoster";
   type: NotificationType;
   title: string;
   message: string;
-  
+
   // Optional metadata for flexibility
-  relatedId?: string; // e.g., bookingId, carId, messageId
+  relatedId?: string;
   relatedType?: "booking" | "car" | "user" | "message" | "review";
-  actionUrl?: string; // Deep link or navigation path
-  imageUrl?: string; // Optional image for rich notifications
-  
+  actionUrl?: string;
+  imageUrl?: string;
+
   // Additional flexible data
-  data?: Record<string, any>; // For any extra info you might need
-  
+  data?: Record<string, any>;
+
   // Status tracking
   read: boolean;
   readAt?: Date | null;
-  
+
   // Metadata
-  createdAt: any; // serverTimestamp
-  expiresAt?: Date | null; // Optional expiration
+  createdAt: any;
+  expiresAt?: Date | null;
 }
 
 export const createNotification = async (
@@ -77,7 +77,7 @@ export const notifyBookingConfirmed = async (
     message: `${renterName} has booked your ${carDetails.make} ${carDetails.model} for ${pickupDate}`,
     relatedId: bookingId,
     relatedType: "booking",
-    actionUrl: "/(root)/bookings/" + bookingId,
+    actionUrl: "/bookingsReceived?tab=upcoming",
     data: {
       renterName,
       carMake: carDetails.make,

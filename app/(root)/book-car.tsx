@@ -1,4 +1,5 @@
 import DateRangePicker from "@/components/DateRangePicker";
+import GoogleTextInput from "@/components/GoogleTextInput";
 import Payment from "@/components/Payment";
 import TimePickerModal from "@/components/TimePickerModal";
 import { icons } from "@/constants";
@@ -103,26 +104,25 @@ const BookCar = () => {
   const [carNotAvailable, setCarNotAvailable] = useState(false);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
+  const [showLocationSnackbar, setShowLocationSnackbar] = useState(false);
 
   // Function to check car availability
   const checkCarAvailability = async (pickup: string, returnDt: string) => {
     if (!carId) return;
-    
+
     setCheckingAvailability(true);
     try {
       const available = await isCarAvailable(carId, pickup, returnDt);
       setCarNotAvailable(!available);
-      
-      // Show snackbar if not available
+
       if (!available) {
         setShowSnackbar(true);
       } else {
-        // Auto-hide snackbar if car becomes available
         setShowSnackbar(false);
       }
     } catch (error) {
       console.error("Error checking availability:", error);
-      setCarNotAvailable(false); // Default to available on error
+      setCarNotAvailable(false);
       setShowSnackbar(false);
     } finally {
       setCheckingAvailability(false);
@@ -155,6 +155,29 @@ const BookCar = () => {
   const subtotal = parseFloat(dailyRate) * rentalDays;
   const platformFee = subtotal * PLATFORM_FEE_PERCENTAGE;
   const totalAmount = (subtotal + platformFee).toFixed(2);
+
+  const [location, setLocation] = useState<{
+    address: string;
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  const handlePress = (loc: {
+    address: string;
+    latitude: number;
+    longitude: number;
+  }) => {
+    setLocation(loc);
+    setShowLocationSnackbar(false);
+  };
+
+  useEffect(() => {
+    if (!location) {
+      setShowLocationSnackbar(true);
+    } else {
+      setShowLocationSnackbar(false);
+    }
+  }, [location]);
 
   return (
     <>
@@ -257,6 +280,13 @@ const BookCar = () => {
                 />
               </View>
 
+              <View className="mb-4" style={{ zIndex: 1000 }}>
+                <Text className="text-[16px] font-JakartaMedium my-6">
+                  Pickup & Return location
+                </Text>
+                <GoogleTextInput icon={icons.pin} handlePress={handlePress} />
+              </View>
+
               {/* Availability Status Indicator */}
               {checkingAvailability && (
                 <View className="mt-4 p-3 bg-blue-50 rounded-lg flex-row items-center">
@@ -270,7 +300,8 @@ const BookCar = () => {
               {!checkingAvailability && carNotAvailable && (
                 <View className="mt-4 p-3 bg-red-50 rounded-lg">
                   <Text className="font-JakartaMedium color-red-600">
-                    <FontAwesome name="warning" size={18} color={"#FFCC00"}/> This vehicle is not available for the selected dates
+                    <FontAwesome name="warning" size={18} color={"#FFCC00"} />{" "}
+                    This vehicle is not available for the selected dates
                   </Text>
                 </View>
               )}
@@ -278,7 +309,12 @@ const BookCar = () => {
               {!checkingAvailability && !carNotAvailable && (
                 <View className="mt-4 p-3 bg-green-50 rounded-lg">
                   <Text className="font-JakartaMedium color-green-600">
-                    <FontAwesome name="check-circle" size={18} color={"#008000"}/> This vehicle is available for your selected dates
+                    <FontAwesome
+                      name="check-circle"
+                      size={18}
+                      color={"#008000"}
+                    />{" "}
+                    This vehicle is available for your selected dates
                   </Text>
                 </View>
               )}
@@ -342,6 +378,7 @@ const BookCar = () => {
               year: year,
               dailyRate: dailyRate,
             }}
+            location={location}
             disabled={carNotAvailable || checkingAvailability}
           />
         </View>
@@ -360,7 +397,7 @@ const BookCar = () => {
             const normalizedReturn = (
               end.isSame(start) ? end.add(1, "day") : end
             ).format("YYYY-MM-DD");
-            
+
             // Update dates - useEffect will handle availability check
             setPickupDate(normalizedPickup);
             setReturnDate(normalizedReturn);

@@ -106,6 +106,26 @@ export default function Layout() {
         name="bookingScreens/canceledScreen"
         options={{ headerShown: false, animation: "slide_from_right" }}
       />
+      <Stack.Screen
+        name="bookingsReceived"
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="bookingReceived/upcomingScreen"
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="bookingReceived/completedScreen"
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="bookingReceived/canceledScreen"
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="hostManageBooking"
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
     </Stack>
   );
 }
