@@ -1,13 +1,10 @@
 import CarDetailsSkeleton from "@/components/CarDetailsSkeleton";
 import CarLocationMap from "@/components/CarLocationMap";
 import CustomButton from "@/components/CustomButton";
+import { StaticCarLocationMap } from "@/components/MapComponents";
 import { icons } from "@/constants";
+import { useDirectConversation } from "@/hooks/useDirectConversation";
 import { useAuth } from "@/hooks/useUser";
-import {
-  createConversation,
-  getUser,
-  sendInitialMessage,
-} from "@/services/chatService";
 import {
   fetchUserWishlist,
   getCarWithOwner,
@@ -26,6 +23,7 @@ import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Dimensions,
   FlatList,
   Modal,
@@ -222,6 +220,7 @@ const CarDetails = () => {
   const [expanded, setExpanded] = useState(false);
 
   const [showMap, setShowMap] = useState(false);
+  const { openDirectConversation } = useDirectConversation();
 
   useEffect(() => {
     if (!id) return;
@@ -272,54 +271,11 @@ const CarDetails = () => {
     );
   };
 
-  const startConversation = async (otherUserId: string) => {
-    try {
-      const currentUserId = user?.uid;
-
-      if (!currentUserId) {
-        console.warn("User not logged in");
-        return;
-      }
-
-      if (currentUserId === otherUserId) {
-        console.warn("Cannot start a conversation with yourself");
-        return;
-      }
-
-      const currentUser = await getUser(currentUserId);
-      const otherUser = await getUser(otherUserId);
-
-      if (!currentUser || !otherUser) {
-        console.warn("User data missing");
-        return;
-      }
-
-      // Create conversation (update createConversation to return { id, created })
-      const { id: conversationId, created } = await createConversation(
-        currentUserId,
-        otherUserId,
-        currentUser,
-        otherUser
-      );
-
-      console.log(
-        "Conversation ID:",
-        conversationId,
-        "Newly created:",
-        created
-      );
-
-      // Send initial message ONLY if conversation is newly created
-      if (created) {
-        await sendInitialMessage(
-          conversationId,
-          currentUserId,
-          "Is this car available?"
-        );
-        console.log("Initial message sent!");
-      }
-    } catch (err) {
-      console.error("Error starting conversation:", err);
+  const handleChatPress = () => {
+    if (car?.owner?.id) {
+      openDirectConversation(car.owner.id, `${car.make} ${car.model}`);
+    } else {
+      Alert.alert("Error", "Owner information not available");
     }
   };
 
@@ -494,13 +450,13 @@ const CarDetails = () => {
             </View>
 
             <Pressable
-              onPress={() => {
-                if (car?.owner?.id) {
-                  startConversation(car.owner.id);
-                } else {
-                  console.warn("Owner ID not found");
-                }
-              }}
+              // onPress={() => {
+              //   if (car?.owner?.id) {
+              //     console.log(car?.owner?.id)
+              //     openChatModal(car.owner.id);
+              //   }
+              // }}
+              onPress={handleChatPress}
             >
               <Ionicons
                 name="chatbubble-ellipses-sharp"
@@ -544,11 +500,15 @@ const CarDetails = () => {
           {car.location && (
             <>
               <Pressable onPress={() => setShowMap(true)}>
-                <Image
+                {/* <Image
                   source={{
                     uri: `https://maps.geoapify.com/v1/staticmap?style=osm-bright&width=600&height=400&center=lonlat:${car.location.longitude},${car.location.latitude}&zoom=14&apiKey=${process.env.EXPO_PUBLIC_GEOAPIFY_API_KEY}`,
                   }}
                   style={{ width: "100%", height: 300, borderRadius: 10 }}
+                /> */}
+                <StaticCarLocationMap
+                  carLocation={car?.location}
+                  height={400}
                 />
               </Pressable>
 

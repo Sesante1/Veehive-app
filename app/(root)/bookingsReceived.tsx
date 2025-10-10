@@ -5,9 +5,9 @@ import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import CanceledScreen from "./bookingScreens/canceledScreen";
-import CompletedScreen from "./bookingScreens/completedScreen";
-import UpcomingScreen from "./bookingScreens/upcomingScreen";
+import CanceledScreen from "./bookingReceived/canceledScreen";
+import CompletedScreen from "./bookingReceived/completedScreen";
+import UpcomingScreen from "./bookingReceived/upcomingScreen";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -20,8 +20,8 @@ const MyBooking = () => {
     tabKey === "completed"
       ? "Completed"
       : tabKey === "canceled"
-        ? "Canceled"
-        : "Upcoming";
+      ? "Canceled"
+      : "Upcoming";
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -35,7 +35,7 @@ const MyBooking = () => {
         </Pressable>
 
         <Text className="text-lg font-JakartaSemiBold text-gray-900 text-center">
-          My booking
+          Booking Received
         </Text>
       </View>
 

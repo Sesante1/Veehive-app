@@ -48,6 +48,7 @@ export async function POST(request: Request) {
       amount: Math.round(amountNumber * 100),
       currency: "php",
       customer: customer.id,
+      capture_method: "manual",
       automatic_payment_methods: {
         enabled: true,
         allow_redirects: "never",

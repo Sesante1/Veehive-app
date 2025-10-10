@@ -108,7 +108,7 @@ export default function Profile() {
 
             <Pressable
               className="flex flex-row items-center gap-3 py-4 px-6"
-              onPress={() => {}}
+              onPress={() => router.push("/bookingsReceived")}
             >
               <Feather name="check" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">Booking Recieved</Text>

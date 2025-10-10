@@ -3,7 +3,6 @@ import { icons } from "@/constants";
 import { useCardSpreadAnimation } from "@/hooks/useCardSpreadAnimation";
 import type { UserData } from "@/hooks/useUser";
 import { useUserData } from "@/hooks/useUser";
-import { updateCarStatus } from "@/services/carService";
 import { getCarWithOwner } from "@/services/firestore";
 import { checkRequiredSteps } from "@/utils/stepValidator";
 import { Feather, Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -95,12 +94,6 @@ const CreateCar = () => {
       return () => clearTimeout(timer);
     }
   }, [car, spreadCards]);
-
-  useEffect(() => {
-    if (allStepsCompleted && car?.status === "draft" && car?.id) {
-      updateCarStatus(car.id);
-    }
-  }, [allStepsCompleted, car?.status, car?.id]);
 
   const fetchCar = async () => {
     try {

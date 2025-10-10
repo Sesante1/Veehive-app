@@ -1,4 +1,4 @@
-import GuestBookingCard from "@/components/GuestBookingCard";
+import BookingCard from "@/components/BookingCard";
 import { db } from "@/FirebaseConfig";
 import { useAuth } from "@/hooks/useUser";
 import { Booking } from "@/types/booking.types";
@@ -22,7 +22,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function CanceledScreen() {
+export default function UpcomingScreen() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -33,8 +33,8 @@ export default function CanceledScreen() {
 
     const q = query(
       collection(db, "bookings"),
-      where("userId", "==", user.uid),
-      where("bookingStatus", "in", ["cancelled", "declined"]),
+      where("hostId", "==", user.uid),
+      where("bookingStatus", "in", ["pending", "confirmed"]), 
       orderBy("createdAt", "desc")
     );
 
@@ -70,13 +70,13 @@ export default function CanceledScreen() {
 
   const handleManageTrip = (booking: Booking): void => {
     router.push({
-      pathname: "/guestManageBooking",
+      pathname: "/hostManageBooking",
       params: { booking: JSON.stringify(booking) },
     });
   };
 
   const renderItem: ListRenderItem<Booking> = ({ item }) => (
-    <GuestBookingCard
+    <BookingCard
       booking={item}
       onContactGuest={handleContactGuest}
       onManageTrip={handleManageTrip}
@@ -92,7 +92,7 @@ export default function CanceledScreen() {
   const renderEmpty = () => (
     <View className="items-center justify-center py-20">
       <Text className="text-gray-400 text-lg font-medium">
-        No canceled bookings
+        No pending bookings
       </Text>
       <Text className="text-gray-400 text-sm mt-2">
         New requests will appear here

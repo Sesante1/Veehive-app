@@ -123,7 +123,7 @@ const GoogleTextInput = ({
       <View className="relative">
         {/* Search Input */}
         <View
-          className={"flex-row items-center bg-general-500 rounded-full px-4 "}
+          className={"flex-row items-center bg-general-500 rounded-lg px-4 "}
         >
           <View className="mr-3">
             <Image
