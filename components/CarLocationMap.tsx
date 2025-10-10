@@ -7,8 +7,9 @@ import {
   Linking,
   Platform,
   Image,
+  ActivityIndicator,
 } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { icons } from '@/constants';
 
@@ -32,6 +33,11 @@ interface LocationCoords {
   longitude: number;
 }
 
+interface RoutePoint {
+  latitude: number;
+  longitude: number;
+}
+
 const CarLocationMap: React.FC<CarLocationMapProps> = ({
   carLocation,
   carDetails,
@@ -40,13 +46,16 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
   const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [routeCoordinates, setRouteCoordinates] = useState<RoutePoint[]>([]);
+  const [routeDistance, setRouteDistance] = useState<string>('');
+  const [routeDuration, setRouteDuration] = useState<string>('');
+  const [loadingRoute, setLoadingRoute] = useState<boolean>(false);
   const mapRef = useRef<MapView>(null);
 
   // Request location permission and get current location
   useEffect(() => {
     const requestLocationPermission = async () => {
       try {
-        // Request permission
         const { status } = await Location.requestForegroundPermissionsAsync();
         
         if (status !== 'granted') {
@@ -62,22 +71,23 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
 
         setLocationPermission(true);
 
-        // Get current location
         const location = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.High,
         });
 
-        setUserLocation({
+        const userLoc = {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
-        });
+        };
 
+        setUserLocation(userLoc);
         setIsLoading(false);
 
-        // Fit both markers in view after getting location
+        // Fetch route after getting user location
         setTimeout(() => {
-          fitMarkersInView();
-        }, 1000);
+          fetchRoute(userLoc);
+          fitMarkersInView(userLoc);
+        }, 500);
 
       } catch (error) {
         console.error('Error getting location:', error);
@@ -93,52 +103,121 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
     requestLocationPermission();
   }, []);
 
-  // Fit both user and car markers in view
-  const fitMarkersInView = () => {
-    if (mapRef.current && userLocation) {
-      const coordinates = [
-        userLocation,
-        carLocation,
-      ];
+  // Fetch route from Google Directions API
+  const fetchRoute = async (userLoc: LocationCoords) => {
+    setLoadingRoute(true);
+    try {
+      const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+      
+      if (!googleMapsApiKey) {
+        console.error('Google Maps API key not found');
+        setLoadingRoute(false);
+        return;
+      }
 
-      mapRef.current.fitToCoordinates(coordinates, {
-        edgePadding: {
-          top: 100,
-          right: 100,
-          bottom: 100,
-          left: 100,
-        },
-        animated: true,
-      });
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/directions/json?origin=${userLoc.latitude},${userLoc.longitude}&destination=${carLocation.latitude},${carLocation.longitude}&mode=driving&key=${googleMapsApiKey}`
+      );
+
+      const data = await response.json();
+
+      if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        
+        // Decode polyline
+        const points = decodePolyline(route.overview_polyline.points);
+        setRouteCoordinates(points);
+
+        // Get distance and duration
+        const leg = route.legs[0];
+        setRouteDistance(leg.distance.text);
+        setRouteDuration(leg.duration.text);
+      }
+    } catch (error) {
+      console.error('Error fetching route:', error);
+    } finally {
+      setLoadingRoute(false);
     }
   };
 
-  // Navigate to car location
+  // Decode polyline from Google Maps API
+  const decodePolyline = (encoded: string): RoutePoint[] => {
+    const poly: RoutePoint[] = [];
+    let index = 0;
+    let lat = 0;
+    let lng = 0;
+
+    while (index < encoded.length) {
+      let result = 0;
+      let shift = 0;
+      let b;
+
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+
+      const dlat = result & 1 ? ~(result >> 1) : result >> 1;
+      lat += dlat;
+
+      result = 0;
+      shift = 0;
+
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+
+      const dlng = result & 1 ? ~(result >> 1) : result >> 1;
+      lng += dlng;
+
+      poly.push({
+        latitude: lat / 1e5,
+        longitude: lng / 1e5,
+      });
+    }
+
+    return poly;
+  };
+
+  // Fit both user and car markers in view
+  const fitMarkersInView = (userLoc?: LocationCoords) => {
+    if (mapRef.current) {
+      const loc = userLoc || userLocation;
+      if (loc) {
+        const coordinates = [loc, carLocation];
+
+        mapRef.current.fitToCoordinates(coordinates, {
+          edgePadding: {
+            top: 100,
+            right: 100,
+            bottom: 100,
+            left: 100,
+          },
+          animated: true,
+        });
+      }
+    }
+  };
+
+  // Wrapper for fitMarkersInView to use as onPress callback
+  const handleCenterMap = () => {
+    fitMarkersInView();
+  };
+
+  // Navigate to car location - auto-detect device
   const navigateToCarLocation = () => {
     const { latitude, longitude } = carLocation;
     
-    Alert.alert(
-      'Navigate to Car',
-      'Choose your preferred navigation app:',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Google Maps',
-          onPress: () => openGoogleMaps(latitude, longitude),
-        },
-        {
-          text: 'Apple Maps',
-          onPress: () => openAppleMaps(latitude, longitude),
-        },
-        {
-          text: 'Waze',
-          onPress: () => openWaze(latitude, longitude),
-        },
-      ]
-    );
+    if (Platform.OS === 'ios') {
+      // Use Apple Maps on iOS
+      openAppleMaps(latitude, longitude);
+    } else {
+      // Use Google Maps on Android
+      openGoogleMaps(latitude, longitude);
+    }
   };
 
   // Open Google Maps
@@ -197,21 +276,6 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
       .catch(() => Linking.openURL(fallbackUrl));
   };
 
-  // Calculate distance between two points (rough estimate)
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): string => {
-    const R = 6371; // Earth's radius in kilometers
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const distance = R * c;
-    
-    return distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`;
-  };
-
   if (isLoading) {
     return (
       <View className="flex-1 bg-white">
@@ -254,6 +318,16 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
           }, 500);
         }}
       >
+        {/* Route Polyline */}
+        {routeCoordinates.length > 0 && (
+          <Polyline
+            coordinates={routeCoordinates}
+            strokeColor="#007DFC"
+            strokeWidth={4}
+            geodesic={true}
+          />
+        )}
+
         {/* Car Location Marker */}
         <Marker
           coordinate={{
@@ -264,7 +338,7 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
           description={carLocation.address}
           pinColor="red"
         >
-          <View className="bg-red-500 p-2 rounded-full border-2 border-white shadow-lg">
+          <View className="bg-red-500 p-1 rounded-full border-2 border-white shadow-lg">
             <Image source={icons.selectedMarker} className="w-6 h-6" style={{ tintColor: '#fff' }} />
           </View>
         </Marker>
@@ -299,20 +373,25 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
           </View>
         )}
         
-        <Text className="text-sm text-gray-500 mb-1 leading-5" numberOfLines={2}>
+        <Text className="text-sm text-gray-500 mb-2 leading-5" numberOfLines={2}>
           📍 {carLocation.address}
         </Text>
-        
-        {userLocation && (
-          <Text className="text-sm text-blue-500 font-medium">
-            📏 Distance: {calculateDistance(
-              userLocation.latitude,
-              userLocation.longitude,
-              carLocation.latitude,
-              carLocation.longitude
-            )}
-          </Text>
-        )}
+
+        {loadingRoute ? (
+          <View className="flex-row items-center">
+            <ActivityIndicator size="small" color="#3B82F6" />
+            <Text className="text-sm text-gray-500 ml-2">Loading route...</Text>
+          </View>
+        ) : routeDistance ? (
+          <View>
+            <Text className="text-sm text-blue-500 font-medium">
+              📏 {routeDistance}
+            </Text>
+            <Text className="text-sm text-blue-500 font-medium">
+              ⏱️ {routeDuration}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       {/* Navigation Buttons */}
@@ -328,7 +407,7 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
         {userLocation && (
           <TouchableOpacity
             className="bg-white flex-row items-center justify-center py-3.5 px-4 rounded-lg border border-gray-300 shadow-sm"
-            onPress={fitMarkersInView}
+            onPress={handleCenterMap}
           >
             <Image source={icons.target} className="w-5 h-5 mr-1.5" style={{ tintColor: '#6b7280' }} />
             <Text className="text-gray-500 text-sm font-medium">Center Map</Text>

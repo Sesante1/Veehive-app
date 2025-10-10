@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { StaticCarLocationMap } from "./MapComponents";
 
 interface BookingCardProps {
   booking: Booking;
@@ -166,13 +167,18 @@ const BookingCard: React.FC<BookingCardProps> = ({
             Navigate
           </Text>
         </View>
-        <Image
+        {/* <Image
           source={{
             uri: `https://maps.geoapify.com/v1/staticmap?style=osm-bright&width=600&height=400&center=lonlat:${carData?.location?.coordinates?.longitude},${carData?.location?.coordinates?.latitude}&zoom=14&apiKey=${process.env.EXPO_PUBLIC_GEOAPIFY_API_KEY}`,
           }}
           style={{ width: "100%", height: 200, borderRadius: 10 }}
-        />
-
+        /> */}
+        {carData?.location?.coordinates && (
+          <StaticCarLocationMap
+            carLocation={carData.location.coordinates}
+            height={250}
+          />
+        )}
       </View>
 
       {/* Actions */}

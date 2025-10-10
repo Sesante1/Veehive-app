@@ -64,7 +64,7 @@ export default function UpcomingScreen() {
 
   const handleManageTrip = (booking: Booking): void => {
     router.push({
-      pathname: "/hostManageBooking",
+      pathname: "/guestManageBooking",
       params: { booking: JSON.stringify(booking) },
     });
   };

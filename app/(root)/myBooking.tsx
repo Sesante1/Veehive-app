@@ -1,6 +1,6 @@
 import { icons } from "@/constants";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,6 +12,17 @@ import UpcomingScreen from "./bookingScreens/upcomingScreen";
 const Tab = createMaterialTopTabNavigator();
 
 const MyBooking = () => {
+  const { tab } = useLocalSearchParams<{ tab?: string }>();
+
+  const tabKey = (tab || "").toLowerCase();
+
+  const initialTab =
+    tabKey === "completed"
+      ? "Completed"
+      : tabKey === "canceled"
+        ? "Canceled"
+        : "Upcoming";
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* Header */}
@@ -42,6 +53,7 @@ const MyBooking = () => {
           tabBarIndicatorStyle: { backgroundColor: "#007DFC" },
           tabBarPressColor: "transparent",
         }}
+        initialRouteName={initialTab}
       >
         <Tab.Screen name="Upcoming" component={UpcomingScreen} />
         <Tab.Screen name="Completed" component={CompletedScreen} />

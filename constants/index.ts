@@ -35,6 +35,7 @@ import onboarding1 from "@/assets/images/onboarding1.png";
 import onboarding2 from "@/assets/images/onboarding2.png";
 import onboarding3 from "@/assets/images/onboarding3.png";
 import signUpCar from "@/assets/images/signup-car.png";
+import complete from "@/assets/images/complete.png";
 
 
 export const images = {
@@ -78,6 +79,7 @@ export const icons = {
   target,
   to,
   notification,
+  complete
 };
 
 export const onboarding = [

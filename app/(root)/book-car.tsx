@@ -134,7 +134,7 @@ const BookCar = () => {
     if (carId && pickupDate && returnDate) {
       checkCarAvailability(pickupDate, returnDate);
     }
-  }, [carId]); // Only run once when carId is available
+  }, [carId]); 
 
   // Check availability whenever dates change
   useEffect(() => {

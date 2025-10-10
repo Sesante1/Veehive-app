@@ -2,15 +2,17 @@ import {
   addDoc,
   collection,
   doc,
+  getDoc,
+  getDocs,
   onSnapshot,
+  query,
   serverTimestamp,
   updateDoc,
   where,
-  query,
-  getDocs,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { db, FIREBASE_AUTH, storage } from "../FirebaseConfig";
+import { checkRequiredSteps } from "@/utils/stepValidator";
 
 interface CarData {
   make: string;
@@ -42,7 +44,7 @@ const uploadFile = async (path: string, file: { uri: string }) => {
 };
 
 export const uploadCarListing = async (
-  carData: CarData,
+  carData: any,
   carImages: any[],
   receipt: any[],
   certificateRegistration: any[],
@@ -55,10 +57,10 @@ export const uploadCarListing = async (
     const timestamp = Date.now();
     const carId = `car_${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Upload everything in parallel
+    // Upload all files in parallel
     const uploadTasks: Promise<any>[] = [];
 
-    // Images
+    // Car images
     carImages.forEach((image, i) => {
       const imagePath = `cars/${carId}/images/image_${i + 1}_${timestamp}.jpg`;
       uploadTasks.push(uploadFile(imagePath, image));
@@ -76,18 +78,24 @@ export const uploadCarListing = async (
       uploadTasks.push(uploadFile(certPath, certificateRegistration[0]));
     }
 
-    // Run all uploads together
     onProgress?.(10, "Uploading files...");
     const results = await Promise.all(uploadTasks);
 
-    // Separate uploaded file results
     const carImageUrls = results.filter((r) => r.filename.startsWith("image"));
-    const receiptUrl =
-      results.find((r) => r.filename.startsWith("receipt")) || null;
-    const crUrl =
-      results.find((r) => r.filename.startsWith("certificate")) || null;
+    const receiptUrl = results.find((r) => r.filename.startsWith("receipt")) || null;
+    const crUrl = results.find((r) => r.filename.startsWith("certificate")) || null;
 
-    onProgress?.(90, "Saving listing...");
+    onProgress?.(70, "Checking verification status...");
+
+    // Check if the owner has completed verification
+    const userRef = doc(db, "users", currentUser.uid);
+    const userSnap = await getDoc(userRef);
+    const userData = userSnap.data();
+
+    const { allStepsCompleted } = userData ? checkRequiredSteps(userData) : { allStepsCompleted: false };
+
+    // If user is verified, car → pending; otherwise → draft
+    const carStatus = allStepsCompleted ? "pending" : "draft";
 
     const { latitude, longitude, ...rest } = carData;
 
@@ -98,8 +106,8 @@ export const uploadCarListing = async (
       location: {
         address: carData.location,
         coordinates: {
-          latitude: carData.latitude,
-          longitude: carData.longitude,
+          latitude,
+          longitude,
         },
       },
       seats: parseInt(String(carData.seats)),
@@ -116,7 +124,7 @@ export const uploadCarListing = async (
         displayName: currentUser.displayName || null,
         photoURL: currentUser.photoURL || null,
       },
-      status: "draft",
+      status: carStatus, 
       isActive: false,
       isDeleted: false,
       remarks: null,
@@ -126,11 +134,11 @@ export const uploadCarListing = async (
       updatedAt: serverTimestamp(),
     };
 
+    onProgress?.(90, "Saving car listing...");
     const docRef = await addDoc(collection(db, "cars"), carDocument);
 
     onProgress?.(100, "Upload complete");
 
-    // return { success: true, carId: docRef.id, data: carDocument };
     return {
       success: true,
       docId: docRef.id,
@@ -143,7 +151,7 @@ export const uploadCarListing = async (
   }
 };
 
-export const updateCarStatus = async (carId: string) => {
+export const updateCarStatus = async (carId: string, newStatus: string) => {
   if (!carId) {
     throw new Error("carId is required");
   }
@@ -151,13 +159,12 @@ export const updateCarStatus = async (carId: string) => {
   try {
     const carRef = doc(db, "cars", carId);
 
-    // Update status to pending
     await updateDoc(carRef, {
-      status: "pending",
+      status: newStatus,
       updatedAt: serverTimestamp(),
     });
 
-    console.log("Car status updated to pending.");
+    console.log(`Car status updated to ${newStatus}.`);
     return { success: true };
   } catch (error) {
     console.error("Error updating status:", error);
@@ -216,15 +223,14 @@ export const isCarAvailable = async (
 
       // Check overlap
       const overlaps =
-        requestedPickup <= existingReturn &&
-        requestedReturn >= existingPickup;
+        requestedPickup <= existingReturn && requestedReturn >= existingPickup;
 
       if (overlaps) {
-        return false; 
+        return false;
       }
     }
 
-    return true; 
+    return true;
   } catch (error) {
     console.error("Error checking car availability:", error);
     throw error;

@@ -1,16 +1,18 @@
+import ConfirmationModal from "@/components/ConfirmationModal";
 import { icons } from "@/constants";
 import { db } from "@/FirebaseConfig";
 import { UserData } from "@/hooks/useUser";
 import { fetchAPI } from "@/lib/fetch";
 import {
-  notifyBookingCancelled,
+  notifyGuestBookingCancelled,
+  notifyGuestBookingdeclined,
   notifyGuestBookingSuccess,
 } from "@/services/notificationService";
 import { CarData } from "@/types/booking.types";
 import { formatDate, formatTime } from "@/utils/dateUtils";
 import { getTripEndCountdown, getTripStartCountdown } from "@/utils/tripUtils";
 import { MaterialIcons, Octicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
@@ -33,6 +35,20 @@ const MyBooking = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [actionLoading, setActionLoading] = useState<boolean>(false);
   const [ownerData, setOwnerData] = useState<UserData | null>(null);
+  const router = useRouter();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    title: string;
+    message: string;
+    confirmText: string;
+    confirmColor?: string;
+    onConfirm: () => void;
+  }>({
+    title: "",
+    message: "",
+    confirmText: "",
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,179 +80,198 @@ const MyBooking = () => {
     fetchData();
   }, [bookingData.userId, bookingData.carId, bookingData.hostId]);
 
-  const handleAccept = async () => {
-    Alert.alert(
-      "Accept Booking",
-      "Are you sure you want to accept this booking? The guest will be charged.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Accept",
-          style: "default",
-          onPress: async () => {
-            setActionLoading(true);
-            try {
-              console.log("=== Starting booking acceptance ===");
-              console.log("Payment Intent ID:", bookingData.paymentIntentId);
-              console.log("Booking ID:", bookingData.id);
-
-              // FIXED: Changed from /accept to /capture
-              const response = await fetchAPI("/(api)/(stripe)/accepts", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  payment_intent_id: bookingData.paymentIntentId,
-                  booking_id: bookingData.id,
-                }),
-              });
-
-              console.log("Stripe response:", response);
-
-              if (!response.success) {
-                throw new Error(response.error || "Failed to capture payment");
-              }
-
-              // Update booking status in Firestore
-              await updateDoc(doc(db, "bookings", bookingData.id), {
-                bookingStatus: "confirmed",
-                paymentStatus: "paid",
-                updatedAt: serverTimestamp(),
-              });
-
-              if (bookingData.carId) {
-                const carRef = doc(db, "cars", bookingData.carId);
-                await updateDoc(carRef, {
-                  status: "on a trip",
-                  lastBookedAt: serverTimestamp(),
-                });
-              }
-
-              console.log("=== Booking updated in Firestore ===");
-
-              // Send notification to guest
-              try {
-                const ownerName = ownerData
-                  ? `${ownerData.firstName} ${ownerData.lastName}`
-                  : "The owner";
-
-                await notifyGuestBookingSuccess(
-                  bookingData.userId,
-                  bookingData.id,
-                  {
-                    make: carData?.make || "",
-                    model: carData?.model || "",
-                  },
-                  formatDate(bookingData.pickupDate)
-                );
-
-                console.log("✅ Guest notified of booking acceptance");
-              } catch (notificationError) {
-                console.error(
-                  "⚠️ Failed to send notification:",
-                  notificationError
-                );
-              }
-
-              Alert.alert("Success", "Booking accepted and payment captured!", [
-                { text: "OK", onPress: () => router.back() },
-              ]);
-            } catch (error) {
-              console.error("Error accepting booking:", error);
-              Alert.alert(
-                "Error",
-                error instanceof Error
-                  ? error.message
-                  : "Failed to accept booking. Please try again."
-              );
-            } finally {
-              setActionLoading(false);
-            }
-          },
-        },
-      ]
-    );
+  const handleAccept = () => {
+    setModalConfig({
+      title: "Accept Booking",
+      message:
+        "Are you sure you want to accept this booking? The guest will be charged.",
+      confirmText: "Accept",
+      confirmColor: "#007bff",
+      onConfirm: handleAcceptConfirm,
+    });
+    setModalVisible(true);
   };
 
-  const handleDecline = async () => {
-    Alert.alert(
-      "Decline Booking",
-      "Are you sure you want to decline this booking? The payment hold will be released.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Decline",
-          style: "destructive",
-          onPress: async () => {
-            setActionLoading(true);
-            try {
-              console.log("=== Starting booking decline ===");
+  const handleAcceptConfirm = async () => {
+    setModalVisible(false);
+    setActionLoading(true);
+    try {
+      console.log("=== Starting booking acceptance ===");
 
-              // Cancel the payment intent via Stripe API
-              const response = await fetchAPI("/(api)/(stripe)/decline", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  payment_intent_id: bookingData.paymentIntentId,
-                  booking_id: bookingData.id,
-                  reason: "requested_by_customer",
-                }),
-              });
+      const response = await fetchAPI("/(api)/(stripe)/accepts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          payment_intent_id: bookingData.paymentIntentId,
+          booking_id: bookingData.id,
+        }),
+      });
 
-              if (!response.success) {
-                throw new Error(response.error || "Failed to cancel payment");
-              }
+      if (!response.success)
+        throw new Error(response.error || "Failed to capture payment");
 
-              // Update booking status in Firestore
-              await updateDoc(doc(db, "bookings", bookingData.id), {
-                bookingStatus: "declined",
-                paymentStatus: "cancelled",
-                updatedAt: serverTimestamp(),
-              });
+      // Update booking
+      await updateDoc(doc(db, "bookings", bookingData.id), {
+        bookingStatus: "confirmed",
+        paymentStatus: "paid",
+        updatedAt: serverTimestamp(),
+      });
 
-              // Send notification to guest
-              try {
-                const ownerName = ownerData
-                  ? `${ownerData.firstName} ${ownerData.lastName}`
-                  : "The owner";
+      if (bookingData.carId) {
+        await updateDoc(doc(db, "cars", bookingData.carId), {
+          status: "on a trip",
+          lastBookedAt: serverTimestamp(),
+        });
+      }
 
-                await notifyBookingCancelled(
-                  bookingData.userId,
-                  bookingData.id,
-                  ownerName,
-                  {
-                    make: carData?.make || "",
-                    model: carData?.model || "",
-                  }
-                );
+      // Notify guest
+      await notifyGuestBookingSuccess(
+        bookingData.userId,
+        bookingData.id,
+        { make: carData?.make || "", model: carData?.model || "" },
+        bookingData.pickupDate
+      );
 
-                console.log("✅ Guest notified of booking decline");
-              } catch (notificationError) {
-                console.error(
-                  "⚠️ Failed to send notification:",
-                  notificationError
-                );
-              }
+      Alert.alert("Success", "Booking accepted and payment captured!", [
+        { text: "OK", onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      console.error("Error accepting booking:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to accept booking. Please try again.";
 
-              Alert.alert(
-                "Success",
-                "Booking declined and payment hold released!",
-                [{ text: "OK", onPress: () => router.back() }]
-              );
-            } catch (error) {
-              console.error("Error declining booking:", error);
-              Alert.alert(
-                "Error",
-                error instanceof Error
-                  ? error.message
-                  : "Failed to decline booking. Please try again."
-              );
-            } finally {
-              setActionLoading(false);
-            }
-          },
-        },
-      ]
-    );
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDecline = () => {
+    const isPending = bookingData.bookingStatus === "pending";
+    const title = isPending ? "Decline Booking Request" : "Cancel Booking";
+    const message = isPending
+      ? "Are you sure you want to decline this booking request? The renter will not be charged and the payment authorization will be released."
+      : "Are you sure you want to cancel this booking? The renter will be fully refunded.";
+
+    setModalConfig({
+      title,
+      message,
+      confirmText: isPending ? "Decline" : "Yes, Cancel",
+      confirmColor: "#dc2626",
+      onConfirm: () => handleDeclineConfirm(isPending),
+    });
+    setModalVisible(true);
+  };
+
+  const handleDeclineConfirm = async (isPending: boolean) => {
+    setModalVisible(false);
+    setActionLoading(true);
+    try {
+      console.log("=== Starting booking decline/cancel ===");
+
+      if (isPending && bookingData.paymentStatus === "authorized") {
+        const response = await fetchAPI("/(api)/(stripe)/decline", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            payment_intent_id: bookingData.paymentIntentId,
+            booking_id: bookingData.id,
+            reason: "requested_by_customer",
+          }),
+        });
+
+        if (!response.success) throw new Error("Failed to cancel payment");
+
+        await updateDoc(doc(db, "bookings", bookingData.id), {
+          bookingStatus: "cancelled",
+          paymentStatus: "cancelled",
+          cancelledBy: "host",
+          cancelledAt: serverTimestamp(),
+          cancellationReason: "Host declined booking request",
+          updatedAt: serverTimestamp(),
+        });
+
+        // Notify guest
+        const ownerName = ownerData
+          ? `${ownerData.firstName} ${ownerData.lastName}`
+          : "The owner";
+
+        await notifyGuestBookingdeclined(
+          bookingData.userId,
+          bookingData.id,
+          ownerName,
+          { make: carData?.make || "", model: carData?.model || "" }
+        );
+
+        Alert.alert("Booking Declined", "The guest was not charged.", [
+          { text: "OK", onPress: () => router.back() },
+        ]);
+      } else if (bookingData.bookingStatus === "confirmed") {
+        const totalAmount = bookingData.totalAmount / 100;
+
+        const refundResponse = await fetchAPI("/(api)/(stripe)/refund", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            payment_intent_id: bookingData.paymentIntentId,
+            amount: totalAmount,
+            reason: "requested_by_customer",
+          }),
+        });
+
+        if (!refundResponse.success)
+          throw new Error("Failed to process refund");
+
+        await updateDoc(doc(db, "bookings", bookingData.id), {
+          bookingStatus: "cancelled",
+          cancelledBy: "host",
+          cancelledAt: serverTimestamp(),
+          cancellationReason: "Host cancelled - Full refund issued",
+          refundStatus: refundResponse.refund.status,
+          refundAmount: refundResponse.refund.amount / 100,
+          refundPercentage: 100,
+          refundId: refundResponse.refund.id,
+          refundProcessedAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+
+        if (bookingData.carId) {
+          await updateDoc(doc(db, "cars", bookingData.carId), {
+            status: "active",
+            updatedAt: serverTimestamp(),
+          });
+        }
+
+        const ownerName = ownerData
+          ? `${ownerData.firstName} ${ownerData.lastName}`
+          : "The owner";
+
+        await notifyGuestBookingCancelled(
+          bookingData.userId,
+          bookingData.id,
+          ownerName,
+          { make: carData?.make || "", model: carData?.model || "" }
+        );
+
+        Alert.alert(
+          "Booking Cancelled",
+          `₱${totalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })} refunded to the guest.`,
+          [{ text: "OK", onPress: () => router.back() }]
+        );
+      }
+    } catch (error) {
+      console.error("Error accepting booking:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to accept booking. Please try again.";
+
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   if (loading) {
@@ -248,7 +283,10 @@ const MyBooking = () => {
   }
 
   const isPending = bookingData.bookingStatus === "pending";
-  const isAccepted = bookingData.bookingStatus === "confirmed";
+  const isConfirmed = bookingData.bookingStatus === "confirmed";
+  const isCancelled =
+    bookingData.bookingStatus === "cancelled" ||
+    bookingData.bookingStatus === "declined";
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -341,16 +379,23 @@ const MyBooking = () => {
               )}
             </TouchableOpacity>
             <TouchableOpacity
-              className="w-full border border-gray-300 rounded-lg py-4 items-center"
+              className="w-full border border-red-500 rounded-lg py-4 items-center"
               onPress={handleDecline}
               disabled={actionLoading}
             >
-              <Text className="font-JakartaSemiBold text-lg">Decline</Text>
+              {actionLoading ? (
+                <ActivityIndicator color="#EF4444" />
+              ) : (
+                <Text className="font-JakartaSemiBold text-lg text-red-500">
+                  Decline
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         )}
 
-        {isAccepted && (
+        {/* Trip Management - Only show if confirmed */}
+        {isConfirmed && (
           <View className="mt-10 p-4 border border-gray-300 rounded-lg">
             <Text className="mb-6 font-JakartaSemiBold text-secondary-700">
               {new Date() >= new Date(bookingData.pickupDate)
@@ -363,9 +408,7 @@ const MyBooking = () => {
               onPress={() => {}}
               disabled={actionLoading}
             >
-              <Text className="font-JakartaSemiBold text-lg">
-               Car received
-              </Text>
+              <Text className="font-JakartaSemiBold text-lg">Car Received</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -374,8 +417,22 @@ const MyBooking = () => {
               disabled={actionLoading}
             >
               <Text className="font-JakartaSemiBold text-lg">
-                Report damage
+                Report Damage
               </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="w-full border border-red-500 rounded-lg py-4 items-center mt-6"
+              onPress={handleDecline}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <ActivityIndicator color="#EF4444" />
+              ) : (
+                <Text className="font-JakartaSemiBold text-lg text-red-500">
+                  Cancel Booking
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         )}
@@ -412,6 +469,15 @@ const MyBooking = () => {
             </View>
           </View>
         </View>
+        <ConfirmationModal
+          visible={modalVisible}
+          title={modalConfig.title}
+          message={modalConfig.message}
+          confirmText={modalConfig.confirmText}
+          confirmColor={modalConfig.confirmColor}
+          onConfirm={modalConfig.onConfirm}
+          onCancel={() => setModalVisible(false)}
+        />
       </ScrollView>
     </SafeAreaView>
   );
