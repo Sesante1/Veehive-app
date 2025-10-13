@@ -15,7 +15,6 @@ const CompleteBooking = () => {
     if (hostId) {
       openDirectConversation(
         String(hostId),
-        carName ? String(carName) : undefined
       );
     } else {
       Alert.alert("Error", "Host information not available");

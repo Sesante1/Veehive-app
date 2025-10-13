@@ -106,11 +106,8 @@ const BookingCard: React.FC<BookingCardProps> = ({
           }
           style={{ width: "100%", height: 160, borderRadius: 5 }}
         />
-        <View className="bg-white flex-row w-16 justify-center items-center gap-2 p-1 px-2 rounded-[5px] absolute top-2 left-2">
-          <AntDesign name="star" size={16} color="#FFD700" />
-          {/* <Text className="color-secondary-700">{avgRating ?? "N/A"}</Text> */}
-          {/* TODO: Replace with actual rating once data is available */}
-          <Text className="color-secondary-700">4.7</Text>
+        <View className="bg-white justify-center items-center gap-2 p-1 px-2 rounded-[5px] absolute top-2 left-2">
+          <Text className="color-secondary-700">{booking.bookingStatus}</Text>
         </View>
       </View>
 

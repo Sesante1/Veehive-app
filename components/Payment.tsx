@@ -278,6 +278,13 @@ const Payment = ({
     } else {
       console.log("=== Payment authorized successfully ===");
       setSuccess(true);
+
+      setTimeout(() => {
+        router.push({
+          pathname: "/(root)/completeBooking",
+          params: { hostId: ownerId},
+        });
+      }, 500);
     }
   };
 
@@ -296,30 +303,6 @@ const Payment = ({
         onPress={openPaymentSheet}
         disabled={disabled || loading || !location}
       />
-
-      <Modal isVisible={success} onBackdropPress={() => setSuccess(false)}>
-        <View className="flex flex-col items-center justify-center bg-white p-7 rounded-2xl">
-          <Image source={images.check} className="w-28 h-28 mt-5" />
-
-          <Text className="text-2xl text-center font-JakartaBold mt-5">
-            Booking Confirmed!
-          </Text>
-
-          <Text className="text-md text-general-200 font-JakartaRegular text-center mt-3">
-            Your car rental has been successfully booked. We've sent a
-            confirmation email with all the details.
-          </Text>
-
-          <CustomButton
-            title="Back to Home"
-            onPress={() => {
-              setSuccess(false);
-              router.push("/(root)/(tabs)/home");
-            }}
-            className="mt-5"
-          />
-        </View>
-      </Modal>
     </>
   );
 };

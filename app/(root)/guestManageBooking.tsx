@@ -288,7 +288,15 @@ const GuestBooking = () => {
             style={{ width: 140, height: 120, borderRadius: 8 }}
           />
           <View>
-            <Text className="font-JakartaSemiBold text-xl">Booked Trip</Text>
+            <Text className="font-JakartaSemiBold text-xl">
+              {bookingData.bookingStatus === "pending"
+                ? "Booked Trip"
+                : bookingData.bookingStatus === "completed"
+                  ? "Completed Trip"
+                  : bookingData.bookingStatus === "cancelled"
+                    ? "Cancelled Trip"
+                    : "Trip"}
+            </Text>
             <Text className="font-JakartaSemiBold text-lg mt-3">
               {carData?.make + " " + carData?.model + " " + carData?.year}
             </Text>
@@ -297,19 +305,51 @@ const GuestBooking = () => {
 
         <View className="flex-row gap-14 justify-center items-center">
           <View className="items-center">
-            <Text className="font-JakartaBold text-2xl">
+            <Text
+              className={`font-JakartaBold text-2xl ${
+                bookingData.bookingStatus === "cancelled" ? "line-through" : ""
+              }`}
+              style={{
+                color: bookingData.bookingStatus === "cancelled" ? "#999" : "black",
+              }}
+            >
               {formatDate(bookingData.pickupDate)}
             </Text>
-            <Text className="font-JakartaSemiBold text-1xl">
+            <Text
+              className={`font-JakartaSemiBold text-1xl ${
+                bookingData.bookingStatus === "cancelled" ? "line-through" : ""
+              }`}
+              style={{
+                color: bookingData.bookingStatus === "cancelled" ? "#999" : "black",
+              }}
+            >
               {formatTime(bookingData.pickupTime)}
             </Text>
           </View>
-          <Octicons name="dash" size={20} color={"black"} />
+          <Octicons
+            name="dash"
+            size={20}
+            color={bookingData.bookingStatus === "cancelled" ? "#999" : "black"}
+          />
           <View className="items-center">
-            <Text className="font-JakartaBold text-2xl">
+            <Text
+              className={`font-JakartaBold text-2xl ${
+                bookingData.bookingStatus === "cancelled" ? "line-through" : ""
+              }`}
+              style={{
+                color: bookingData.bookingStatus === "cancelled" ? "#999" : "black",
+              }}
+            >
               {formatDate(bookingData.returnDate)}
             </Text>
-            <Text className="font-JakartaSemiBold text-1xl">
+            <Text
+              className={`font-JakartaSemiBold text-1xl ${
+                bookingData.bookingStatus === "cancelled" ? "line-through" : ""
+              }`}
+              style={{
+                color: bookingData.bookingStatus === "cancelled" ? "#999" : "black",
+              }}
+            >
               {formatTime(bookingData.returnTime)}
             </Text>
           </View>
