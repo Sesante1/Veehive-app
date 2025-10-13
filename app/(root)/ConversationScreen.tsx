@@ -287,7 +287,7 @@ const ConversationScreen = () => {
   };
 
   const sendMessage = async () => {
-    if (newMessage.trim() && selectedConversation) {
+    if (newMessage.trim() && selectedConversation && currentUserId) {
       try {
         const messageData = {
           text: newMessage.trim(),

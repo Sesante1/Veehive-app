@@ -1,10 +1,27 @@
 import { icons } from "@/constants";
-import { router } from "expo-router";
+import { useDirectConversation } from "@/hooks/useDirectConversation";
+import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Alert, Image, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const CompleteBooking = () => {
+  const { hostId, carName } = useLocalSearchParams<{
+    hostId?: string;
+    carName?: string;
+  }>();
+  const { openDirectConversation } = useDirectConversation();
+  const handleMessageHost = () => {
+    if (hostId) {
+      openDirectConversation(
+        String(hostId),
+        carName ? String(carName) : undefined
+      );
+    } else {
+      Alert.alert("Error", "Host information not available");
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* Header */}
@@ -50,7 +67,10 @@ const CompleteBooking = () => {
           </Text>
         </View>
 
-        <Pressable className="bg-primary-500 rounded-lg py-4 items-center">
+        <Pressable
+          onPress={handleMessageHost}
+          className="bg-primary-500 rounded-lg py-4 items-center"
+        >
           <Text className="text-white font-JakartaSemiBold">
             Message your host
           </Text>

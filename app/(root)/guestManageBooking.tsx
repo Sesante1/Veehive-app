@@ -22,8 +22,15 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const GuestBooking = () => {
-  const { booking } = useLocalSearchParams<{ booking: string }>();
-  const bookingData = booking ? JSON.parse(booking) : null;
+  const { booking } = useLocalSearchParams<{ booking?: string }>();
+  let parsedBooking: any = null;
+  try {
+    parsedBooking = booking ? JSON.parse(booking) : null;
+  } catch {
+    parsedBooking = null;
+  }
+  const bookingData = parsedBooking;
+
   const [hostData, setHostData] = useState<UserData | null>(null);
   const [carData, setCarData] = useState<CarData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -35,6 +42,11 @@ const GuestBooking = () => {
   const [onConfirmAction, setOnConfirmAction] = useState<() => void>(() => {});
 
   useEffect(() => {
+    if (!bookingData) {
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       try {
         // Fetch host data
@@ -62,7 +74,7 @@ const GuestBooking = () => {
     };
 
     fetchData();
-  }, [bookingData.userId, bookingData.carId, bookingData.hostId]);
+  }, [booking]);
 
   const calculateRefundAmount = () => {
     const now = new Date();

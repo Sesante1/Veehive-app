@@ -115,7 +115,7 @@ export interface Booking {
   totalAmount: number;
   paymentStatus: "paid" | "pending" | "failed";
   paymentIntentId: string;
-  bookingStatus: "pending" | "confirmed" | "completed" | "cancelled";
+  bookingStatus: "pending" | "confirmed" | "completed" | "cancelled" | "declined";
   location: {
     address: string;
     latitude: number;

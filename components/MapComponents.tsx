@@ -26,9 +26,7 @@ interface CarDirectionsMapProps extends StaticCarLocationMapProps {
 
 const screenWidth = Dimensions.get("window").width;
 
-/**
- * StaticCarLocationMap - Shows a static Google Map with just the car pinpoint
- */
+// StaticCarLocationMap - Shows a static Google Map with just the car pinpoint
 export const StaticCarLocationMap: React.FC<StaticCarLocationMapProps> = ({
   carLocation,
   width,
@@ -52,7 +50,7 @@ export const StaticCarLocationMap: React.FC<StaticCarLocationMapProps> = ({
     <View
       style={
         {
-          width: "100%",
+          width: width ?? "100%",
           height: height,
           borderRadius: 10,
           overflow: "hidden",
@@ -87,9 +85,8 @@ export const StaticCarLocationMap: React.FC<StaticCarLocationMapProps> = ({
   );
 };
 
-/**
- * StaticCarDirectionsMap - Shows a Google Map with directions line from user to car
- */
+
+// StaticCarDirectionsMap - Shows a Google Map with directions line from user to car 
 export const StaticCarDirectionsMap: React.FC<CarDirectionsMapProps> = ({
   carLocation,
   userLocation,
