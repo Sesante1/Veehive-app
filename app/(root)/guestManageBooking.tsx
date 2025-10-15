@@ -12,6 +12,7 @@ import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -295,7 +296,7 @@ const GuestBooking = () => {
                   ? "Completed Trip"
                   : bookingData.bookingStatus === "cancelled"
                     ? "Cancelled Trip"
-                    : "Trip"}
+                    : "Booked Trip"}
             </Text>
             <Text className="font-JakartaSemiBold text-lg mt-3">
               {carData?.make + " " + carData?.model + " " + carData?.year}
@@ -310,7 +311,8 @@ const GuestBooking = () => {
                 bookingData.bookingStatus === "cancelled" ? "line-through" : ""
               }`}
               style={{
-                color: bookingData.bookingStatus === "cancelled" ? "#999" : "black",
+                color:
+                  bookingData.bookingStatus === "cancelled" ? "#999" : "black",
               }}
             >
               {formatDate(bookingData.pickupDate)}
@@ -320,7 +322,8 @@ const GuestBooking = () => {
                 bookingData.bookingStatus === "cancelled" ? "line-through" : ""
               }`}
               style={{
-                color: bookingData.bookingStatus === "cancelled" ? "#999" : "black",
+                color:
+                  bookingData.bookingStatus === "cancelled" ? "#999" : "black",
               }}
             >
               {formatTime(bookingData.pickupTime)}
@@ -337,7 +340,8 @@ const GuestBooking = () => {
                 bookingData.bookingStatus === "cancelled" ? "line-through" : ""
               }`}
               style={{
-                color: bookingData.bookingStatus === "cancelled" ? "#999" : "black",
+                color:
+                  bookingData.bookingStatus === "cancelled" ? "#999" : "black",
               }}
             >
               {formatDate(bookingData.returnDate)}
@@ -347,7 +351,8 @@ const GuestBooking = () => {
                 bookingData.bookingStatus === "cancelled" ? "line-through" : ""
               }`}
               style={{
-                color: bookingData.bookingStatus === "cancelled" ? "#999" : "black",
+                color:
+                  bookingData.bookingStatus === "cancelled" ? "#999" : "black",
               }}
             >
               {formatTime(bookingData.returnTime)}
@@ -404,9 +409,7 @@ const GuestBooking = () => {
                 onPress={() => {}}
                 disabled={actionLoading}
               >
-                <Text className="font-JakartaSemiBold text-lg">
-                  Report Damage
-                </Text>
+                <Text className="font-JakartaSemiBold text-lg">Check-in</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -449,23 +452,107 @@ const GuestBooking = () => {
           <Text className="font-JakartaMedium text-secondary-700 text-lg">
             TRIP INFO
           </Text>
-
           <View className="mt-4 py-5 border-t border-b border-gray-200 flex-row justify-between">
             <Text className="font-JakartaMedium">Trip photos</Text>
-            <Text className="font-JakartaMedium text-primary-500">
-              ADD PHOTOS
-            </Text>
-          </View>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => {
+                  router.push({
+                    pathname: "/TripPhotosReviewScreen",
+                    params: { bookingId: bookingData.id },
+                  });
+                }}
+              >
+                <Text className="font-JakartaSemiBold text-secondary-600">
+                  VIEW ALL
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  const now = new Date();
+                  const pickupDate = new Date(bookingData.pickupDate);
+                  const returnDate = new Date(bookingData.returnDate);
 
-          <View className="py-5 border-b border-gray-200 ">
-            <Text className="font-JakartaMedium">Total:</Text>
-            <Text className="font-JakartaMedium">
-              ₱
-              {(bookingData?.totalAmount / 100).toLocaleString("en-PH", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </Text>
+                  // Check-in photos: Available from 24 hours before pickup until pickup time
+                  const hoursUntilPickup =
+                    (pickupDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+                  const canCheckIn =
+                    hoursUntilPickup <= 24 && now < pickupDate && isConfirmed;
+
+                  // Check-out photos: Available from return time until 24 hours after
+                  const hoursSinceReturn =
+                    (now.getTime() - returnDate.getTime()) / (1000 * 60 * 60);
+                  const canCheckOut =
+                    now >= returnDate && hoursSinceReturn <= 24 && isConfirmed;
+
+                  if (!canCheckIn && !canCheckOut) {
+                    if (!isConfirmed) {
+                      Alert.alert(
+                        "Not Available",
+                        "Trip photos are only available for confirmed bookings."
+                      );
+                    } else if (hoursUntilPickup > 24) {
+                      Alert.alert(
+                        "Not Available Yet",
+                        "Check-in photos can be added starting 24 hours before your trip starts."
+                      );
+                    } else if (now >= pickupDate && now < returnDate) {
+                      Alert.alert(
+                        "Trip In Progress",
+                        "Check-in photos can only be added before the trip starts. Check-out photos will be available after the trip ends."
+                      );
+                    } else if (hoursSinceReturn > 24) {
+                      Alert.alert(
+                        "Time Expired",
+                        "The 24-hour window to submit check-out photos has passed."
+                      );
+                    }
+                    return;
+                  }
+
+                  const photoType = canCheckIn ? "checkin" : "checkout";
+                  router.push({
+                    pathname: "/TripPhotosScreen",
+                    params: {
+                      bookingId: bookingData.id,
+                      photoType,
+                      userRole: "guest",
+                    },
+                  });
+                }}
+              >
+                <Text className="font-JakartaSemiBold text-primary-500">
+                  ADD PHOTOS
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View className="py-5 border-b border-gray-200 flex-row justify-between items-center">
+            <View>
+              <Text className="font-JakartaMedium">Total:</Text>
+              <Text className="font-JakartaMedium">
+                ₱
+                {(bookingData?.totalAmount / 100).toLocaleString("en-PH", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              className="font-JakartaSemiBold text-primary-500"
+              onPress={() => {
+                router.push({
+                  pathname: "/receiptScreen",
+                  params: {
+                    booking: JSON.stringify(bookingData),
+                    userRole: "guest",
+                  },
+                });
+              }}
+            >
+              <Text>VIEW RECEIPT</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>

@@ -1,11 +1,26 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, ActivityIndicator, ListRenderItem } from "react-native";
+import BookingCard from "@/components/BookingCard";
+import { db } from "@/FirebaseConfig";
+import { useAuth } from "@/hooks/useUser";
+import { Booking } from "@/types/booking.types";
+import { router } from "expo-router";
+import {
+  collection,
+  DocumentData,
+  onSnapshot,
+  orderBy,
+  query,
+  QuerySnapshot,
+  where,
+} from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  ListRenderItem,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { collection, query, where, onSnapshot, orderBy, QuerySnapshot, DocumentData } from 'firebase/firestore';
-import { db } from '@/FirebaseConfig';
-import { useAuth } from '@/hooks/useUser';
-import BookingCard from '@/components/BookingCard';
-import { Booking } from '@/types/booking.types';
 
 export default function CompletedScreen() {
   const { user } = useAuth();
@@ -17,24 +32,25 @@ export default function CompletedScreen() {
     if (!user?.uid) return;
 
     const q = query(
-      collection(db, 'bookings'),
-      where('hostId', '==', user.uid),
-      where('bookingStatus', '==', 'completed'),
-      orderBy('createdAt', 'desc')
+      collection(db, "bookings"),
+      where("hostId", "==", user.uid),
+      where("bookingStatus", "==", "completed"),
+      orderBy("createdAt", "desc")
     );
 
-    const unsubscribe = onSnapshot(q, 
+    const unsubscribe = onSnapshot(
+      q,
       (snapshot: QuerySnapshot<DocumentData>) => {
-        const bookingData = snapshot.docs.map(doc => ({
+        const bookingData = snapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         })) as Booking[];
         setBookings(bookingData);
         setLoading(false);
         setRefreshing(false);
       },
       (error) => {
-        console.error('Error fetching completed bookings:', error);
+        console.error("Error fetching completed bookings:", error);
         setLoading(false);
         setRefreshing(false);
       }
@@ -49,7 +65,10 @@ export default function CompletedScreen() {
   };
 
   const handleViewDetails = (booking: Booking): void => {
-    console.log('View completed trip details:', booking);
+    router.push({
+      pathname: "/hostManageBooking",
+      params: { booking: JSON.stringify(booking) },
+    });
   };
 
   const renderItem: ListRenderItem<Booking> = ({ item }) => (
@@ -68,8 +87,12 @@ export default function CompletedScreen() {
 
   const renderEmpty = () => (
     <View className="items-center justify-center py-20">
-      <Text className="text-gray-400 text-lg font-medium">No completed trips</Text>
-      <Text className="text-gray-400 text-sm mt-2">Completed rentals will appear here</Text>
+      <Text className="text-gray-400 text-lg font-medium">
+        No completed trips
+      </Text>
+      <Text className="text-gray-400 text-sm mt-2">
+        Completed rentals will appear here
+      </Text>
     </View>
   );
 

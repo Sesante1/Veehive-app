@@ -27,7 +27,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const MyBooking = () => {
+const HostBooking = () => {
   const { booking } = useLocalSearchParams<{ booking: string }>();
   const bookingData = booking ? JSON.parse(booking) : null;
   const [guestData, setGuestData] = useState<UserData | null>(null);
@@ -316,7 +316,15 @@ const MyBooking = () => {
             style={{ width: 140, height: 120, borderRadius: 8 }}
           />
           <View>
-            <Text className="font-JakartaSemiBold text-xl">Booked Trip</Text>
+            <Text className="font-JakartaSemiBold text-xl">
+              {bookingData.bookingStatus === "pending"
+                ? "Booked Trip"
+                : bookingData.bookingStatus === "completed"
+                  ? "Completed Trip"
+                  : bookingData.bookingStatus === "cancelled"
+                    ? "Cancelled Trip"
+                    : "Booked Trip"}
+            </Text>
             <Text className="font-JakartaSemiBold text-lg mt-3">
               {carData?.make + " " + carData?.model + " " + carData?.year}
             </Text>
@@ -469,6 +477,116 @@ const MyBooking = () => {
             </View>
           </View>
         </View>
+
+        <View className="mt-10">
+          <Text className="font-JakartaMedium text-secondary-700 text-lg">
+            TRIP INFO
+          </Text>
+
+          <View className="mt-4 py-5 border-t border-b border-gray-200 flex-row justify-between">
+            <Text className="font-JakartaMedium">Trip photos</Text>
+            <TouchableOpacity
+              onPress={() => {
+                const now = new Date();
+                const pickupDate = new Date(bookingData.pickupDate);
+                const returnDate = new Date(bookingData.returnDate);
+
+                // Check-in photos: Available from 24 hours before pickup until pickup time
+                const hoursUntilPickup =
+                  (pickupDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+                const canCheckIn =
+                  hoursUntilPickup <= 24 && now < pickupDate && isConfirmed;
+
+                // Check-out photos: Available from return time until 24 hours after
+                const hoursSinceReturn =
+                  (now.getTime() - returnDate.getTime()) / (1000 * 60 * 60);
+                const canCheckOut =
+                  now >= returnDate && hoursSinceReturn <= 24 && isConfirmed;
+
+                if (!canCheckIn && !canCheckOut) {
+                  if (!isConfirmed) {
+                    Alert.alert(
+                      "Not Available",
+                      "Trip photos are only available for confirmed bookings."
+                    );
+                  } else if (hoursUntilPickup > 24) {
+                    Alert.alert(
+                      "Not Available Yet",
+                      "Check-in photos can be added starting 24 hours before the trip starts."
+                    );
+                  } else if (now >= pickupDate && now < returnDate) {
+                    Alert.alert(
+                      "Trip In Progress",
+                      "Check-in photos can only be added before the trip starts. Check-out photos will be available after the trip ends."
+                    );
+                  } else if (hoursSinceReturn > 24) {
+                    Alert.alert(
+                      "Time Expired",
+                      "The 24-hour window to submit check-out photos has passed."
+                    );
+                  }
+                  return;
+                }
+
+                const photoType = canCheckIn ? "checkin" : "checkout";
+                router.push({
+                  pathname: "/TripPhotosScreen",
+                  params: {
+                    bookingId: bookingData.id,
+                    photoType,
+                    userRole: "host",
+                  },
+                });
+              }}
+            >
+              <Text className="font-JakartaSemiBold text-primary-500">
+                ADD PHOTOS
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View className="py-5 border-b border-gray-200 flex-row justify-between items-center">
+            <View>
+              <Text className="font-JakartaMedium">Total:</Text>
+              <Text className="font-JakartaMedium">
+                ₱
+                {(bookingData?.totalAmount / 100).toLocaleString("en-PH", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => {
+                router.push({
+                  pathname: "/receiptScreen",
+                  params: {
+                    booking: JSON.stringify(bookingData),
+                    userRole: "host",
+                  },
+                });
+              }}
+            >
+              <Text className="font-JakartaSemiBold text-primary-500">
+                VIEW RECEIPT
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View className="py-5 border-b border-gray-200 ">
+            <View>
+              <Text className="font-JakartaMedium">Cancellation policy</Text>
+            </View>
+
+            <TouchableOpacity>
+              <Text className="font-JakartaSemiBold text-primary-500">
+                VIEW RECEIPT
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <ConfirmationModal
           visible={modalVisible}
           title={modalConfig.title}
@@ -483,4 +601,4 @@ const MyBooking = () => {
   );
 };
 
-export default MyBooking;
+export default HostBooking;

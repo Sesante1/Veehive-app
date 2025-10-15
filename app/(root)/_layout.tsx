@@ -139,6 +139,18 @@ export default function Layout() {
           name="completeBooking"
           options={{ headerShown: false, animation: "slide_from_right" }}
         />
+        <Stack.Screen
+          name="TripPhotosScreen"
+          options={{ headerShown: false, animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="TripPhotosReviewScreen"
+          options={{ headerShown: false, animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="receiptScreen"
+          options={{ headerShown: false, animation: "slide_from_right" }}
+        />
       </Stack>
   );
 }

@@ -194,7 +194,7 @@ export const notifyGuestBookingSuccess = async (
     message: `Your booking for ${carDetails.make} ${carDetails.model} is confirmed for ${pickupDate}`,
     relatedId: bookingId,
     relatedType: "booking",
-    actionUrl: "/(root)/bookings/" + bookingId,
+    actionUrl: "/bookingsReceived?tab=upcoming",
     data: {
       carMake: carDetails.make,
       carModel: carDetails.model,
