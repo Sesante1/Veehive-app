@@ -1,5 +1,6 @@
 import BookingCard from "@/components/BookingCard";
 import { db } from "@/FirebaseConfig";
+import { useDirectConversation } from "@/hooks/useDirectConversation";
 import { useAuth } from "@/hooks/useUser";
 import { Booking } from "@/types/booking.types";
 import { router } from "expo-router";
@@ -15,6 +16,7 @@ import {
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   ListRenderItem,
   Text,
@@ -27,6 +29,7 @@ export default function UpcomingScreen() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const { openDirectConversation } = useDirectConversation();
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -34,7 +37,7 @@ export default function UpcomingScreen() {
     const q = query(
       collection(db, "bookings"),
       where("hostId", "==", user.uid),
-      where("bookingStatus", "in", ["pending", "confirmed"]), 
+      where("bookingStatus", "in", ["pending", "confirmed"]),
       orderBy("createdAt", "desc")
     );
 
@@ -65,7 +68,11 @@ export default function UpcomingScreen() {
   };
 
   const handleContactGuest = (booking: Booking): void => {
-    console.log("Contact guest:", booking);
+    if (booking.userId) {
+      openDirectConversation(booking.userId);
+    } else {
+      Alert.alert("Error", "Owner information not available");
+    }
   };
 
   const handleManageTrip = (booking: Booking): void => {

@@ -32,11 +32,21 @@ const GuestBooking = () => {
   }
   const bookingData = parsedBooking;
 
+  if (!bookingData) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+        <Text className="font-JakartaSemiBold text-lg">
+          Booking details not available.
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
   const [hostData, setHostData] = useState<UserData | null>(null);
   const [carData, setCarData] = useState<CarData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [actionLoading, setActionLoading] = useState<boolean>(false);
-  const [ownerData, setOwnerData] = useState<UserData | null>(null);
+  const [GuestData, setOwnerData] = useState<UserData | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
@@ -63,7 +73,7 @@ const GuestBooking = () => {
         }
 
         // Fetch owner data
-        const ownerDoc = await getDoc(doc(db, "users", bookingData.hostId));
+        const ownerDoc = await getDoc(doc(db, "users", bookingData.userId));
         if (ownerDoc.exists()) {
           setOwnerData(ownerDoc.data() as UserData);
         }
@@ -249,6 +259,10 @@ const GuestBooking = () => {
     });
   };
 
+  const handleCheckIn = async () => {};
+
+  const handleCheckOut = async () => {};
+
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -406,10 +420,12 @@ const GuestBooking = () => {
             {isConfirmed && (
               <TouchableOpacity
                 className="w-full border border-gray-300 rounded-lg py-4 items-center mt-6"
-                onPress={() => {}}
+                onPress={handleCheckIn}
                 disabled={actionLoading}
               >
-                <Text className="font-JakartaSemiBold text-lg">Check-in</Text>
+                <Text className="font-JakartaSemiBold text-lg">
+                  Check In & Start Trip
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -552,6 +568,18 @@ const GuestBooking = () => {
               }}
             >
               <Text>VIEW RECEIPT</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View className="py-5 border-b border-gray-200 flex-row justify-between items-center">
+            <Text className="font-JakartaMedium">Cancellation policy</Text>
+
+            <TouchableOpacity
+              onPress={() => router.push("/CancellationPolicyScreen")}
+            >
+              <Text className="font-JakartaSemiBold text-primary-500">
+                REVIEW
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

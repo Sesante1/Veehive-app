@@ -202,3 +202,53 @@ export const notifyGuestBookingSuccess = async (
     },
   });
 };
+
+export const notifyHostTripStarted = async (
+  hostId: string,
+  bookingId: string,
+  renterName: string,
+  carDetails: { make: string; model: string }
+) => {
+  return createNotification({
+    userId: hostId,
+    recipientRole: "hoster",
+    type: "system_alert",
+    title: "Trip Started",
+    message: `${renterName} has started the trip with your ${carDetails.make} ${carDetails.model}`,
+    relatedId: bookingId,
+    relatedType: "booking",
+  });
+};
+
+export const notifyHostTripReturned = async (
+  hostId: string,
+  bookingId: string,
+  renterName: string,
+  carDetails: { make: string; model: string }
+) => {
+  return createNotification({
+    userId: hostId,
+    recipientRole: "hoster",
+    type: "system_alert",
+    title: "Car Returned - Action Required",
+    message: `${renterName} has returned your ${carDetails.make} ${carDetails.model}. Please confirm the return.`,
+    relatedId: bookingId,
+    relatedType: "booking",
+  });
+};
+
+export const notifyGuestTripCompleted = async (
+  guestId: string,
+  bookingId: string,
+  carDetails: { make: string; model: string }
+) => {
+  return createNotification({
+    userId: guestId,
+    recipientRole: "guest",
+    type: "booking_completed",
+    title: "Trip Completed",
+    message: `Your trip with ${carDetails.make} ${carDetails.model} has been completed. Thank you!`,
+    relatedId: bookingId,
+    relatedType: "booking",
+  });
+};

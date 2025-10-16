@@ -1,6 +1,6 @@
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { icons } from "@/constants";
-import { db } from "@/FirebaseConfig";
+import { db, FIREBASE_AUTH } from "@/FirebaseConfig";
 import { UserData } from "@/hooks/useUser";
 import { fetchAPI } from "@/lib/fetch";
 import {
@@ -29,7 +29,24 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const HostBooking = () => {
   const { booking } = useLocalSearchParams<{ booking: string }>();
-  const bookingData = booking ? JSON.parse(booking) : null;
+  let parsedBooking: any = null;
+  try {
+    parsedBooking = booking ? JSON.parse(booking) : null;
+  } catch {
+    parsedBooking = null;
+  }
+  const bookingData = parsedBooking;
+
+  if (!bookingData) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+        <Text className="font-JakartaSemiBold text-lg">
+          Booking details not available.
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
   const [guestData, setGuestData] = useState<UserData | null>(null);
   const [carData, setCarData] = useState<CarData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -98,9 +115,13 @@ const HostBooking = () => {
     try {
       console.log("=== Starting booking acceptance ===");
 
+      const idToken = await FIREBASE_AUTH.currentUser?.getIdToken();
       const response = await fetchAPI("/(api)/(stripe)/accepts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
           payment_intent_id: bookingData.paymentIntentId,
           booking_id: bookingData.id,
@@ -119,7 +140,7 @@ const HostBooking = () => {
 
       if (bookingData.carId) {
         await updateDoc(doc(db, "cars", bookingData.carId), {
-          status: "on a trip",
+          status: "reserved",
           lastBookedAt: serverTimestamp(),
         });
       }
@@ -172,9 +193,13 @@ const HostBooking = () => {
       console.log("=== Starting booking decline/cancel ===");
 
       if (isPending && bookingData.paymentStatus === "authorized") {
+        const idToken = await FIREBASE_AUTH.currentUser?.getIdToken();
         const response = await fetchAPI("/(api)/(stripe)/decline", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
           body: JSON.stringify({
             payment_intent_id: bookingData.paymentIntentId,
             booking_id: bookingData.id,
@@ -211,9 +236,13 @@ const HostBooking = () => {
       } else if (bookingData.bookingStatus === "confirmed") {
         const totalAmount = bookingData.totalAmount / 100;
 
+        const idToken = await FIREBASE_AUTH.currentUser?.getIdToken();
         const refundResponse = await fetchAPI("/(api)/(stripe)/refund", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
           body: JSON.stringify({
             payment_intent_id: bookingData.paymentIntentId,
             amount: totalAmount,
@@ -262,11 +291,11 @@ const HostBooking = () => {
         );
       }
     } catch (error) {
-      console.error("Error accepting booking:", error);
+      console.error("Error declining/cancelling booking:", error);
       const errorMessage =
         error instanceof Error
           ? error.message
-          : "Failed to accept booking. Please try again.";
+          : "Failed to decline/cancel booking. Please try again.";
 
       Alert.alert("Error", errorMessage);
     } finally {
@@ -333,19 +362,55 @@ const HostBooking = () => {
 
         <View className="flex-row gap-14 justify-center items-center">
           <View className="items-center">
-            <Text className="font-JakartaBold text-2xl">
+            <Text
+              className={`font-JakartaBold text-2xl ${
+                bookingData.bookingStatus === "cancelled" ? "line-through" : ""
+              }`}
+              style={{
+                color:
+                  bookingData.bookingStatus === "cancelled" ? "#999" : "black",
+              }}
+            >
               {formatDate(bookingData.pickupDate)}
             </Text>
-            <Text className="font-JakartaSemiBold text-1xl">
+            <Text
+              className={`font-JakartaSemiBold text-1xl ${
+                bookingData.bookingStatus === "cancelled" ? "line-through" : ""
+              }`}
+              style={{
+                color:
+                  bookingData.bookingStatus === "cancelled" ? "#999" : "black",
+              }}
+            >
               {formatTime(bookingData.pickupTime)}
             </Text>
           </View>
-          <Octicons name="dash" size={20} color={"black"} />
+          <Octicons
+            name="dash"
+            size={20}
+            color={bookingData.bookingStatus === "cancelled" ? "#999" : "black"}
+          />
           <View className="items-center">
-            <Text className="font-JakartaBold text-2xl">
+            <Text
+              className={`font-JakartaBold text-2xl ${
+                bookingData.bookingStatus === "cancelled" ? "line-through" : ""
+              }`}
+              style={{
+                color:
+                  bookingData.bookingStatus === "cancelled" ? "#999" : "black",
+              }}
+            >
               {formatDate(bookingData.returnDate)}
             </Text>
-            <Text className="font-JakartaSemiBold text-1xl">
+            <Text
+              className={`font-JakartaSemiBold text-1xl ${
+                bookingData.bookingStatus === "cancelled" ? "line-through" : ""
+              }`}
+              style={{
+                color:
+                  bookingData.bookingStatus === "cancelled" ? "#999" : "black",
+              }}
+            >
               {formatTime(bookingData.returnTime)}
             </Text>
           </View>
@@ -417,16 +482,6 @@ const HostBooking = () => {
               disabled={actionLoading}
             >
               <Text className="font-JakartaSemiBold text-lg">Car Received</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              className="w-full border border-gray-300 rounded-lg py-4 items-center mt-6"
-              onPress={() => {}}
-              disabled={actionLoading}
-            >
-              <Text className="font-JakartaSemiBold text-lg">
-                Report Damage
-              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -574,14 +629,14 @@ const HostBooking = () => {
             </TouchableOpacity>
           </View>
 
-          <View className="py-5 border-b border-gray-200 ">
-            <View>
-              <Text className="font-JakartaMedium">Cancellation policy</Text>
-            </View>
+          <View className="py-5 border-b border-gray-200 flex-row justify-between items-center">
+            <Text className="font-JakartaMedium">Cancellation policy</Text>
 
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/CancellationPolicyScreen")}
+            >
               <Text className="font-JakartaSemiBold text-primary-500">
-                VIEW RECEIPT
+                REVIEW
               </Text>
             </TouchableOpacity>
           </View>

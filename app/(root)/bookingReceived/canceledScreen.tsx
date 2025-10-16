@@ -1,6 +1,7 @@
 // screens/CanceledScreen.tsx
 import BookingCard from "@/components/BookingCard";
 import { db } from "@/FirebaseConfig";
+import { useDirectConversation } from "@/hooks/useDirectConversation";
 import { useAuth } from "@/hooks/useUser";
 import { Booking } from "@/types/booking.types";
 import { router } from "expo-router";
@@ -16,6 +17,7 @@ import {
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   ListRenderItem,
   RefreshControl,
@@ -29,6 +31,7 @@ export default function CanceledScreen() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const { openDirectConversation } = useDirectConversation();
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -66,6 +69,14 @@ export default function CanceledScreen() {
     setTimeout(() => setRefreshing(false), 1000);
   };
 
+  const handleContactGuest = (booking: Booking): void => {
+    if (booking.userId) {
+      openDirectConversation(booking.userId);
+    } else {
+      Alert.alert("Error", "Owner information not available");
+    }
+  };
+
   const handleViewDetails = (booking: Booking): void => {
     router.push({
       pathname: "/hostManageBooking",
@@ -76,7 +87,7 @@ export default function CanceledScreen() {
   const renderItem: ListRenderItem<Booking> = ({ item }) => (
     <BookingCard
       booking={item}
-      onContactGuest={() => {}}
+      onContactGuest={handleContactGuest}
       onManageTrip={handleViewDetails}
     />
   );

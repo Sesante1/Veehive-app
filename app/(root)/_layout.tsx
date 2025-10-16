@@ -151,6 +151,10 @@ export default function Layout() {
           name="receiptScreen"
           options={{ headerShown: false, animation: "slide_from_right" }}
         />
+        <Stack.Screen
+          name="CancellationPolicyScreen"
+          options={{ headerShown: false, animation: "slide_from_right" }}
+        />
       </Stack>
   );
 }

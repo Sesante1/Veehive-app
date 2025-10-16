@@ -133,7 +133,18 @@ const ReceiptScreen = () => {
     );
   }
 
-  const isCompleted = bookingData?.bookingStatus === "completed";
+  if (!bookingData) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="flex-1 justify-center items-center">
+          <Text className="font-JakartaSemiBold text-secondary-700">
+            Booking not found.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  const isCompleted = bookingData.bookingStatus === "completed";
   const isCancelled = bookingData?.bookingStatus === "cancelled";
   const isPending = bookingData?.bookingStatus === "pending";
   const isConfirmed = bookingData?.bookingStatus === "confirmed";
@@ -157,7 +168,7 @@ const ReceiptScreen = () => {
             Trip Receipt
           </Text>
           <Text className="text-sm font-JakartaMedium text-secondary-600">
-            Thank you for booking with DriveShare!
+            Thank you for booking with Veehive!
           </Text>
         </View>
       </View>
@@ -225,7 +236,7 @@ const ReceiptScreen = () => {
 
       <View className="bg-blue-50 rounded-lg p-4 mb-6">
         <Text className="text-sm font-JakartaMedium text-secondary-700 text-center">
-          Drive safely and enjoy your trip! 🚗
+          Drive safely and enjoy your trip!
         </Text>
       </View>
     </>
@@ -488,7 +499,7 @@ const ReceiptScreen = () => {
           <Text className="text-lg font-JakartaBold text-gray-900 mb-4">
             Booking Details
           </Text>
-          <View className="bg-gray-50 rounded-lg p-4 space-y-3">
+          <View className="bg-secondary-100 rounded-lg p-4 space-y-3">
             <InfoRow label="Trip ID" value={`#${bookingData.id.slice(0, 8)}`} />
             <InfoRow
               label="Car"
@@ -513,7 +524,7 @@ const ReceiptScreen = () => {
           <Text className="text-lg font-JakartaBold text-gray-900 mb-4">
             Renter Refund
           </Text>
-          <View className="bg-gray-50 rounded-lg p-4 space-y-3">
+          <View className="bg-secondary-100 rounded-lg p-4 space-y-3">
             <InfoRow
               label="Total Refund"
               value={`₱${refundAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}

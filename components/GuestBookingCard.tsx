@@ -186,7 +186,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
           activeOpacity={0.7}
         >
           <Text className="text-center text-gray-700 font-JakartaSemiBold">
-            Cancel
+            Contact Host
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
