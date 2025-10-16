@@ -36,17 +36,6 @@ const HostBooking = () => {
     parsedBooking = null;
   }
   const bookingData = parsedBooking;
-
-  if (!bookingData) {
-    return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
-        <Text className="font-JakartaSemiBold text-lg">
-          Booking details not available.
-        </Text>
-      </SafeAreaView>
-    );
-  }
-
   const [guestData, setGuestData] = useState<UserData | null>(null);
   const [carData, setCarData] = useState<CarData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -66,6 +55,16 @@ const HostBooking = () => {
     confirmText: "",
     onConfirm: () => {},
   });
+
+  if (!bookingData) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+        <Text className="font-JakartaSemiBold text-lg">
+          Booking details not available.
+        </Text>
+      </SafeAreaView>
+    );
+  }
 
   useEffect(() => {
     const fetchData = async () => {
