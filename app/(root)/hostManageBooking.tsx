@@ -56,16 +56,6 @@ const HostBooking = () => {
     onConfirm: () => {},
   });
 
-  if (!bookingData) {
-    return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
-        <Text className="font-JakartaSemiBold text-lg">
-          Booking details not available.
-        </Text>
-      </SafeAreaView>
-    );
-  }
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -95,6 +85,16 @@ const HostBooking = () => {
 
     fetchData();
   }, [bookingData.userId, bookingData.carId, bookingData.hostId]);
+
+  if (!bookingData) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+        <Text className="font-JakartaSemiBold text-lg">
+          Booking details not available.
+        </Text>
+      </SafeAreaView>
+    );
+  }
 
   const handleAccept = () => {
     setModalConfig({

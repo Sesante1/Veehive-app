@@ -42,16 +42,6 @@ const GuestBooking = () => {
   const [modalMessage, setModalMessage] = useState("");
   const [onConfirmAction, setOnConfirmAction] = useState<() => void>(() => {});
 
-  if (!bookingData) {
-    return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
-        <Text className="font-JakartaSemiBold text-lg">
-          Booking details not available.
-        </Text>
-      </SafeAreaView>
-    );
-  }
-
   useEffect(() => {
     if (!bookingData) {
       setLoading(false);
@@ -86,6 +76,16 @@ const GuestBooking = () => {
 
     fetchData();
   }, [booking]);
+
+  if (!bookingData) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+        <Text className="font-JakartaSemiBold text-lg">
+          Booking details not available.
+        </Text>
+      </SafeAreaView>
+    );
+  }
 
   const calculateRefundAmount = () => {
     const now = new Date();
