@@ -1,4 +1,4 @@
-import GuestBookingCard from "@/components/GuestBookingCard";
+import BookingCard from "@/components/BookingCard";
 import { db } from "@/FirebaseConfig";
 import { useDirectConversation } from "@/hooks/useDirectConversation";
 import { useAuth } from "@/hooks/useUser";
@@ -24,7 +24,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function CompletedScreen() {
+export default function UpcomingScreen() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -36,8 +36,8 @@ export default function CompletedScreen() {
 
     const q = query(
       collection(db, "bookings"),
-      where("userId", "==", user.uid),
-      where("bookingStatus", "==", "completed"),
+      where("hostId", "==", user.uid),
+      where("bookingStatus", "in", ["pending", "confirmed"]),
       orderBy("createdAt", "desc")
     );
 
@@ -68,8 +68,8 @@ export default function CompletedScreen() {
   };
 
   const handleContactGuest = (booking: Booking): void => {
-    if (booking.hostId) {
-      openDirectConversation(booking.hostId);
+    if (booking.userId) {
+      openDirectConversation(booking.userId);
     } else {
       Alert.alert("Error", "Owner information not available");
     }
@@ -77,23 +77,29 @@ export default function CompletedScreen() {
 
   const handleManageTrip = (booking: Booking): void => {
     router.push({
-      pathname: "/guestManageBooking",
+      pathname: "/hostManageBooking",
       params: { booking: JSON.stringify(booking) },
     });
   };
 
   const renderItem: ListRenderItem<Booking> = ({ item }) => (
-    <GuestBookingCard
+    <BookingCard
       booking={item}
       onContactGuest={handleContactGuest}
       onManageTrip={handleManageTrip}
     />
   );
 
+  const renderHeader = () => (
+    <Text className="text-lg font-bold text-gray-900 mb-3 mt-2">
+      Pending Requests ({bookings.length})
+    </Text>
+  );
+
   const renderEmpty = () => (
     <View className="items-center justify-center py-20">
       <Text className="text-gray-400 text-lg font-medium">
-        No completed bookings
+        No pending bookings
       </Text>
       <Text className="text-gray-400 text-sm mt-2">
         New requests will appear here
@@ -117,6 +123,7 @@ export default function CompletedScreen() {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerClassName="px-4 pt-2"
+        ListHeaderComponent={bookings.length > 0 ? renderHeader : null}
         ListEmptyComponent={renderEmpty}
         refreshing={refreshing}
         onRefresh={onRefresh}

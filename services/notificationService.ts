@@ -1,8 +1,7 @@
-// lib/notificationService.ts
 import { db } from "@/FirebaseConfig";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
-export type NotificationType = 
+export type NotificationType =
   | "booking_confirmed"
   | "booking_cancelled"
   | "payment_received"
@@ -12,28 +11,28 @@ export type NotificationType =
   | "system_alert";
 
 export interface NotificationData {
-  userId: string; // Who receives the notification
-  recipientRole: "guest" | "hoster"; // 👈 Which role should see this
+  userId: string;
+  recipientRole: "guest" | "hoster";
   type: NotificationType;
   title: string;
   message: string;
-  
+
   // Optional metadata for flexibility
-  relatedId?: string; // e.g., bookingId, carId, messageId
+  relatedId?: string;
   relatedType?: "booking" | "car" | "user" | "message" | "review";
-  actionUrl?: string; // Deep link or navigation path
-  imageUrl?: string; // Optional image for rich notifications
-  
+  actionUrl?: string;
+  imageUrl?: string;
+
   // Additional flexible data
-  data?: Record<string, any>; // For any extra info you might need
-  
+  data?: Record<string, any>;
+
   // Status tracking
   read: boolean;
   readAt?: Date | null;
-  
+
   // Metadata
-  createdAt: any; // serverTimestamp
-  expiresAt?: Date | null; // Optional expiration
+  createdAt: any;
+  expiresAt?: Date | null;
 }
 
 export const createNotification = async (
@@ -71,13 +70,13 @@ export const notifyBookingConfirmed = async (
 ) => {
   return createNotification({
     userId: ownerId,
-    recipientRole: "hoster", // 👈 Only for hoster role
+    recipientRole: "hoster", 
     type: "booking_confirmed",
     title: "New Booking Received! 🎉",
     message: `${renterName} has booked your ${carDetails.make} ${carDetails.model} for ${pickupDate}`,
     relatedId: bookingId,
     relatedType: "booking",
-    actionUrl: "/(root)/bookings/" + bookingId,
+    actionUrl: "/bookingsReceived?tab=upcoming",
     data: {
       renterName,
       carMake: carDetails.make,
@@ -96,7 +95,7 @@ export const notifyPaymentReceived = async (
 ) => {
   return createNotification({
     userId: ownerId,
-    recipientRole: "hoster", // 👈 Only for hoster role
+    recipientRole: "hoster",
     type: "payment_received",
     title: "Payment Received 💰",
     message: `You've received ₱${amount} for your ${carDetails.make} ${carDetails.model}`,
@@ -111,27 +110,71 @@ export const notifyPaymentReceived = async (
   });
 };
 
-export const notifyBookingCancelled = async (
+export const notifyGuestBookingCancelled = async (
+  ownerId: string,
+  bookingId: string,
+  hosterName: string,
+  carDetails: { make: string; model: string },
+) => {
+  return createNotification({
+    userId: ownerId,
+    recipientRole: "guest", 
+    type: "booking_cancelled",
+    title: "Booking Cancelled",
+    message: `${hosterName} cancelled your booking for ${carDetails.make} ${carDetails.model}`,
+    relatedId: bookingId,
+    relatedType: "booking",
+    actionUrl: "/bookingsReceived?tab=canceled",
+    data: {
+      hosterName,
+      carMake: carDetails.make,
+      carModel: carDetails.model,
+    },
+  });
+};
+
+export const notifyGuestBookingdeclined = async (
+  ownerId: string,
+  bookingId: string,
+  hosterName: string,
+  carDetails: { make: string; model: string },
+) => {
+  return createNotification({
+    userId: ownerId,
+    recipientRole: "guest", 
+    type: "booking_cancelled",
+    title: "Booking Cancelled",
+    message: `${hosterName} declined your booking for ${carDetails.make} ${carDetails.model}`,
+    relatedId: bookingId,
+    relatedType: "booking",
+    actionUrl: "/bookingsReceived?tab=canceled",
+    data: {
+      hosterName,
+      carMake: carDetails.make,
+      carModel: carDetails.model,
+    },
+  });
+};
+
+export const notifyHostBookingCancelled = async (
   ownerId: string,
   bookingId: string,
   renterName: string,
   carDetails: { make: string; model: string },
-  cancellationReason?: string
 ) => {
   return createNotification({
     userId: ownerId,
-    recipientRole: "hoster", // 👈 Only for hoster role
+    recipientRole: "hoster", 
     type: "booking_cancelled",
     title: "Booking Cancelled",
     message: `${renterName} cancelled their booking for ${carDetails.make} ${carDetails.model}`,
     relatedId: bookingId,
     relatedType: "booking",
-    actionUrl: "/(root)/bookings/" + bookingId,
+    actionUrl: "/bookingsReceived?tab=canceled",
     data: {
       renterName,
       carMake: carDetails.make,
       carModel: carDetails.model,
-      cancellationReason,
     },
   });
 };
@@ -145,17 +188,67 @@ export const notifyGuestBookingSuccess = async (
 ) => {
   return createNotification({
     userId: guestId,
-    recipientRole: "guest", // 👈 For guest role
+    recipientRole: "guest", 
     type: "booking_confirmed",
     title: "Booking Confirmed! ✅",
     message: `Your booking for ${carDetails.make} ${carDetails.model} is confirmed for ${pickupDate}`,
     relatedId: bookingId,
     relatedType: "booking",
-    actionUrl: "/(root)/bookings/" + bookingId,
+    actionUrl: "/bookingsReceived?tab=upcoming",
     data: {
       carMake: carDetails.make,
       carModel: carDetails.model,
       pickupDate,
     },
+  });
+};
+
+export const notifyHostTripStarted = async (
+  hostId: string,
+  bookingId: string,
+  renterName: string,
+  carDetails: { make: string; model: string }
+) => {
+  return createNotification({
+    userId: hostId,
+    recipientRole: "hoster",
+    type: "system_alert",
+    title: "Trip Started",
+    message: `${renterName} has started the trip with your ${carDetails.make} ${carDetails.model}`,
+    relatedId: bookingId,
+    relatedType: "booking",
+  });
+};
+
+export const notifyHostTripReturned = async (
+  hostId: string,
+  bookingId: string,
+  renterName: string,
+  carDetails: { make: string; model: string }
+) => {
+  return createNotification({
+    userId: hostId,
+    recipientRole: "hoster",
+    type: "system_alert",
+    title: "Car Returned - Action Required",
+    message: `${renterName} has returned your ${carDetails.make} ${carDetails.model}. Please confirm the return.`,
+    relatedId: bookingId,
+    relatedType: "booking",
+  });
+};
+
+export const notifyGuestTripCompleted = async (
+  guestId: string,
+  bookingId: string,
+  carDetails: { make: string; model: string }
+) => {
+  return createNotification({
+    userId: guestId,
+    recipientRole: "guest",
+    type: "booking_completed",
+    title: "Trip Completed",
+    message: `Your trip with ${carDetails.make} ${carDetails.model} has been completed. Thank you!`,
+    relatedId: bookingId,
+    relatedType: "booking",
   });
 };

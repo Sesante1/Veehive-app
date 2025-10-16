@@ -1,4 +1,4 @@
-import GuestBookingCard from "@/components/GuestBookingCard";
+import BookingCard from "@/components/BookingCard";
 import { db } from "@/FirebaseConfig";
 import { useDirectConversation } from "@/hooks/useDirectConversation";
 import { useAuth } from "@/hooks/useUser";
@@ -36,7 +36,7 @@ export default function CompletedScreen() {
 
     const q = query(
       collection(db, "bookings"),
-      where("userId", "==", user.uid),
+      where("hostId", "==", user.uid),
       where("bookingStatus", "==", "completed"),
       orderBy("createdAt", "desc")
     );
@@ -53,7 +53,7 @@ export default function CompletedScreen() {
         setRefreshing(false);
       },
       (error) => {
-        console.error("Error fetching bookings:", error);
+        console.error("Error fetching completed bookings:", error);
         setLoading(false);
         setRefreshing(false);
       }
@@ -68,35 +68,41 @@ export default function CompletedScreen() {
   };
 
   const handleContactGuest = (booking: Booking): void => {
-    if (booking.hostId) {
-      openDirectConversation(booking.hostId);
+    if (booking.userId) {
+      openDirectConversation(booking.userId);
     } else {
       Alert.alert("Error", "Owner information not available");
     }
   };
 
-  const handleManageTrip = (booking: Booking): void => {
+  const handleViewDetails = (booking: Booking): void => {
     router.push({
-      pathname: "/guestManageBooking",
+      pathname: "/hostManageBooking",
       params: { booking: JSON.stringify(booking) },
     });
   };
 
   const renderItem: ListRenderItem<Booking> = ({ item }) => (
-    <GuestBookingCard
+    <BookingCard
       booking={item}
       onContactGuest={handleContactGuest}
-      onManageTrip={handleManageTrip}
+      onManageTrip={handleViewDetails}
     />
+  );
+
+  const renderHeader = () => (
+    <Text className="text-lg font-bold text-gray-900 mb-3 mt-2">
+      Completed Trips ({bookings.length})
+    </Text>
   );
 
   const renderEmpty = () => (
     <View className="items-center justify-center py-20">
       <Text className="text-gray-400 text-lg font-medium">
-        No completed bookings
+        No completed trips
       </Text>
       <Text className="text-gray-400 text-sm mt-2">
-        New requests will appear here
+        Completed rentals will appear here
       </Text>
     </View>
   );
@@ -105,22 +111,23 @@ export default function CompletedScreen() {
     return (
       <SafeAreaView className="bg-gray-50 flex-1 justify-center items-center">
         <ActivityIndicator size="large" color="#0066FF" />
-        <Text className="mt-2 text-gray-500">Loading bookings...</Text>
+        <Text className="mt-2 text-gray-500">Loading completed trips...</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <View className="bg-white flex-1">
+    <SafeAreaView className="bg-white flex-1">
       <FlatList
         data={bookings}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerClassName="px-4 pt-2"
+        ListHeaderComponent={bookings.length > 0 ? renderHeader : null}
         ListEmptyComponent={renderEmpty}
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
-    </View>
+    </SafeAreaView>
   );
 }

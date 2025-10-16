@@ -7,7 +7,6 @@ import {
   doc,
   getDoc,
   serverTimestamp,
-  updateDoc,
 } from "firebase/firestore";
 import React, { useState } from "react";
 import { Alert, Image, Text, View } from "react-native";
@@ -16,10 +15,7 @@ import Modal from "react-native-modal";
 import CustomButton from "@/components/CustomButton";
 import { images } from "@/constants";
 import { fetchAPI } from "@/lib/fetch";
-import {
-  notifyBookingConfirmed,
-  notifyPaymentReceived,
-} from "@/services/notificationService";
+import { notifyBookingConfirmed } from "@/services/notificationService";
 
 interface PaymentProps {
   fullName: string;
@@ -42,6 +38,11 @@ interface PaymentProps {
     year?: string;
     dailyRate: string;
   };
+  location: {
+    address: string;
+    latitude: number;
+    longitude: number;
+  } | null;
   disabled?: boolean;
 }
 
@@ -60,6 +61,7 @@ const Payment = ({
   userId,
   ownerId,
   carDetails,
+  location,
   disabled,
 }: PaymentProps) => {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
@@ -74,6 +76,7 @@ const Payment = ({
       const bookingData = {
         userId: userId,
         carId: carId,
+        hostId: ownerId,
         pickupDate: pickupDate,
         returnDate: returnDate,
         pickupTime: pickupTime.toISOString(),
@@ -82,9 +85,18 @@ const Payment = ({
         subtotal: Math.round(parseFloat(subtotal) * 100),
         platformFee: Math.round(parseFloat(platformFee) * 100),
         totalAmount: Math.round(parseFloat(amount) * 100),
-        paymentStatus: "paid",
+        paymentStatus: "authorized", // Changed from "paid" to "authorized"
         paymentIntentId: paymentIntentId,
-        bookingStatus: "pending",
+        bookingStatus: "pending", // Waiting for host acceptance
+
+        //Location
+        location: location
+          ? {
+              address: location.address,
+              latitude: location.latitude,
+              longitude: location.longitude,
+            }
+          : null,
 
         // Cancellation & Refund fields
         cancellationStatus: null,
@@ -104,14 +116,6 @@ const Payment = ({
 
       const bookingRef = await addDoc(collection(db, "bookings"), bookingData);
 
-      if (carId) {
-        const carRef = doc(db, "cars", carId);
-        await updateDoc(carRef, {
-          isAvailable: false,
-          lastBookedAt: serverTimestamp(),
-        });
-      }
-
       console.log("=== Sending notifications to owner ===");
 
       try {
@@ -129,16 +133,9 @@ const Payment = ({
             amount
           );
 
-          // Notify about the payment
-          await notifyPaymentReceived(ownerId, bookingRef.id, amount, {
-            make: carDetails.make,
-            model: carDetails.model,
-          });
-
           console.log("✅ Notifications sent successfully");
         }
       } catch (notificationError) {
-        // Don't fail the booking if notification fails
         console.error("⚠️ Failed to send notifications:", notificationError);
       }
 
@@ -166,7 +163,7 @@ const Payment = ({
             try {
               console.log("=== Step 1: Creating payment intent ===");
 
-              // Step 1: Create payment intent and customer
+              // Step 1: Create payment intent with manual capture
               const createResponse = await fetchAPI("/(api)/(stripe)/create", {
                 method: "POST",
                 headers: {
@@ -186,7 +183,7 @@ const Payment = ({
 
               const { paymentIntent, customer } = createResponse;
 
-              // Step 2: Confirm the payment
+              // Step 2: Confirm the payment (authorize only)
               const payResponse = await fetchAPI("/(api)/(stripe)/pay", {
                 method: "POST",
                 headers: {
@@ -201,22 +198,24 @@ const Payment = ({
               });
 
               if (!payResponse.result?.client_secret) {
-                throw new Error("Payment confirmation failed");
+                throw new Error("Payment authorization failed");
               }
 
               const { result } = payResponse;
 
-              // Step 3: Create booking directly in Firestore (with notifications)
+              // Step 3: Create booking in Firestore with "authorized" status
               const bookingId = await createBooking(paymentIntent.id);
 
-              console.log("=== All steps completed successfully ===");
+              console.log(
+                "=== Payment authorized, waiting for host acceptance ==="
+              );
               console.log("Booking ID:", bookingId);
 
               intentCreationCallback({
                 clientSecret: result.client_secret,
               });
             } catch (error) {
-              console.error("=== Payment confirmation error ===", error);
+              console.error("=== Payment authorization error ===", error);
 
               const errorMessage =
                 error instanceof Error
@@ -277,8 +276,15 @@ const Payment = ({
     if (error) {
       Alert.alert(`Error code: ${error.code}`, error.message);
     } else {
-      console.log("=== Payment sheet completed successfully ===");
+      console.log("=== Payment authorized successfully ===");
       setSuccess(true);
+
+      setTimeout(() => {
+        router.push({
+          pathname: "/(root)/completeBooking",
+          params: { hostId: ownerId},
+        });
+      }, 500);
     }
   };
 
@@ -286,39 +292,17 @@ const Payment = ({
     <>
       <CustomButton
         title={
-          disabled
-            ? "Car Not Available"
-            : loading
-              ? "Processing..."
-              : "Confirm Booking"
+          !location
+            ? "Select Return Location"
+            : disabled
+              ? "Car Not Available"
+              : loading
+                ? "Processing..."
+                : "Confirm Booking"
         }
         onPress={openPaymentSheet}
-        disabled={disabled || loading}
+        disabled={disabled || loading || !location}
       />
-
-      <Modal isVisible={success} onBackdropPress={() => setSuccess(false)}>
-        <View className="flex flex-col items-center justify-center bg-white p-7 rounded-2xl">
-          <Image source={images.check} className="w-28 h-28 mt-5" />
-
-          <Text className="text-2xl text-center font-JakartaBold mt-5">
-            Booking Confirmed!
-          </Text>
-
-          <Text className="text-md text-general-200 font-JakartaRegular text-center mt-3">
-            Your car rental has been successfully booked. We've sent a
-            confirmation email with all the details.
-          </Text>
-
-          <CustomButton
-            title="Back to Home"
-            onPress={() => {
-              setSuccess(false);
-              router.push("/(root)/(tabs)/home");
-            }}
-            className="mt-5"
-          />
-        </View>
-      </Modal>
     </>
   );
 };
