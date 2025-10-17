@@ -122,6 +122,8 @@ export interface Booking {
     longitude: number;
   } | null;
 
+  tripStatus?: "not_started" | "checked_in" | "in_progress" | "checked_out" | "awaiting_host_confirmation" | "completed";
+
   // Cancellation & Refund fields
   cancellationStatus: string | null;
   cancellationRequestedAt: Timestamp | null;
