@@ -4,16 +4,24 @@ import { db, FIREBASE_AUTH } from "@/FirebaseConfig";
 import { UserData } from "@/hooks/useUser";
 import { fetchAPI } from "@/lib/fetch";
 import {
-  notifyGuestBookingCancelled,
   notifyGuestBookingdeclined,
   notifyGuestBookingSuccess,
+  notifyGuestTripCompleted,
 } from "@/services/notificationService";
 import { CarData } from "@/types/booking.types";
 import { formatDate, formatTime } from "@/utils/dateUtils";
 import { getTripEndCountdown, getTripStartCountdown } from "@/utils/tripUtils";
 import { MaterialIcons, Octicons } from "@expo/vector-icons";
+import { encode as btoa } from "base-64";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  increment,
+  onSnapshot,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -28,14 +36,18 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const HostBooking = () => {
-  const { booking } = useLocalSearchParams<{ booking: string }>();
-  let parsedBooking: any = null;
+  const { booking } = useLocalSearchParams<{ booking?: string }>();
+  let initialBooking: any = null;
   try {
-    parsedBooking = booking ? JSON.parse(booking) : null;
+    initialBooking = booking ? JSON.parse(booking) : null;
   } catch {
-    parsedBooking = null;
+    initialBooking = null;
   }
-  const bookingData = parsedBooking;
+
+  // Create state for real-time booking data
+  const [bookingData, setBookingData] = useState<any>(initialBooking);
+
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [guestData, setGuestData] = useState<UserData | null>(null);
   const [carData, setCarData] = useState<CarData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -55,6 +67,36 @@ const HostBooking = () => {
     confirmText: "",
     onConfirm: () => {},
   });
+
+  useEffect(() => {
+    if (!initialBooking?.id) {
+      setLoading(false);
+      return;
+    }
+
+    const unsubscribe = onSnapshot(
+      doc(db, "bookings", initialBooking.id),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setBookingData({ id: docSnap.id, ...docSnap.data() });
+        }
+      },
+      (error) => {
+        console.error("Error listening to booking updates:", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [initialBooking?.id]);
+
+  // Live countdown
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -169,29 +211,24 @@ const HostBooking = () => {
   };
 
   const handleDecline = () => {
-    const isPending = bookingData.bookingStatus === "pending";
-    const title = isPending ? "Decline Booking Request" : "Cancel Booking";
-    const message = isPending
-      ? "Are you sure you want to decline this booking request? The renter will not be charged and the payment authorization will be released."
-      : "Are you sure you want to cancel this booking? The renter will be fully refunded.";
-
     setModalConfig({
-      title,
-      message,
-      confirmText: isPending ? "Decline" : "Yes, Cancel",
+      title: "Decline Booking Request",
+      message:
+        "Are you sure you want to decline this booking request? The renter will not be charged and the payment authorization will be released.",
+      confirmText: "Decline",
       confirmColor: "#dc2626",
-      onConfirm: () => handleDeclineConfirm(isPending),
+      onConfirm: handleDeclineConfirm,
     });
     setModalVisible(true);
   };
 
-  const handleDeclineConfirm = async (isPending: boolean) => {
+  const handleDeclineConfirm = async () => {
     setModalVisible(false);
     setActionLoading(true);
     try {
-      console.log("=== Starting booking decline/cancel ===");
+      console.log("=== Starting booking decline ===");
 
-      if (isPending && bookingData.paymentStatus === "authorized") {
+      if (bookingData.paymentStatus === "authorized") {
         const idToken = await FIREBASE_AUTH.currentUser?.getIdToken();
         const response = await fetchAPI("/(api)/(stripe)/decline", {
           method: "POST",
@@ -232,70 +269,74 @@ const HostBooking = () => {
         Alert.alert("Booking Declined", "The guest was not charged.", [
           { text: "OK", onPress: () => router.back() },
         ]);
-      } else if (bookingData.bookingStatus === "confirmed") {
-        const totalAmount = bookingData.totalAmount / 100;
+      }
+    } catch (error) {
+      console.error("Error declining booking:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to decline booking. Please try again.";
 
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleConfirmReturn = async () => {
+    setActionLoading(true);
+    try {
+      let chargeResponse = null;
+
+      // Check for late fees
+      if (bookingData.lateReturn && bookingData.lateFee > 0) {
         const idToken = await FIREBASE_AUTH.currentUser?.getIdToken();
-        const refundResponse = await fetchAPI("/(api)/(stripe)/refund", {
+        chargeResponse = await fetchAPI("/(api)/(stripe)/charge-late-fee", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${idToken}`,
           },
           body: JSON.stringify({
+            booking_id: bookingData.id,
             payment_intent_id: bookingData.paymentIntentId,
-            amount: totalAmount,
-            reason: "requested_by_customer",
+            late_fee: bookingData.lateFee,
           }),
         });
 
-        if (!refundResponse.success)
-          throw new Error("Failed to process refund");
-
-        await updateDoc(doc(db, "bookings", bookingData.id), {
-          bookingStatus: "cancelled",
-          cancelledBy: "host",
-          cancelledAt: serverTimestamp(),
-          cancellationReason: "Host cancelled - Full refund issued",
-          refundStatus: refundResponse.refund.status,
-          refundAmount: refundResponse.refund.amount / 100,
-          refundPercentage: 100,
-          refundId: refundResponse.refund.id,
-          refundProcessedAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-
-        if (bookingData.carId) {
-          await updateDoc(doc(db, "cars", bookingData.carId), {
-            status: "active",
-            updatedAt: serverTimestamp(),
-          });
+        if (!chargeResponse.success) {
+          throw new Error(
+            chargeResponse.error ||
+              chargeResponse.message ||
+              "Failed to charge late fee"
+          );
         }
-
-        const ownerName = ownerData
-          ? `${ownerData.firstName} ${ownerData.lastName}`
-          : "The owner";
-
-        await notifyGuestBookingCancelled(
-          bookingData.userId,
-          bookingData.id,
-          ownerName,
-          { make: carData?.make || "", model: carData?.model || "" }
-        );
-
-        Alert.alert(
-          "Booking Cancelled",
-          `₱${totalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })} refunded to the guest.`,
-          [{ text: "OK", onPress: () => router.back() }]
-        );
       }
-    } catch (error) {
-      console.error("Error declining/cancelling booking:", error);
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to decline/cancel booking. Please try again.";
 
+      await updateDoc(doc(db, "bookings", bookingData.id), {
+        bookingStatus: "completed",
+        tripStatus: "completed",
+        completedAt: serverTimestamp(),
+        lateChargeId: chargeResponse?.charge?.id || null,
+        updatedAt: serverTimestamp(),
+      });
+
+      await updateDoc(doc(db, "cars", bookingData.carId), {
+        status: "active",
+        totalTrips: increment(1),
+        updatedAt: serverTimestamp(),
+      });
+
+      await notifyGuestTripCompleted(bookingData.userId, bookingData.id, {
+        make: carData?.make ?? "",
+        model: carData?.model ?? "",
+      });
+
+      Alert.alert("Success", "Trip completed successfully!");
+      router.back();
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to complete trip";
       Alert.alert("Error", errorMessage);
     } finally {
       setActionLoading(false);
@@ -470,22 +511,42 @@ const HostBooking = () => {
         {isConfirmed && (
           <View className="mt-10 p-4 border border-gray-300 rounded-lg">
             <Text className="mb-6 font-JakartaSemiBold text-secondary-700">
-              {new Date() >= new Date(bookingData.pickupDate)
-                ? getTripEndCountdown(bookingData.returnDate)
-                : getTripStartCountdown(bookingData.pickupDate)}
+              {currentTime >= new Date(bookingData.pickupTime)
+                ? getTripEndCountdown(bookingData.returnTime)
+                : getTripStartCountdown(bookingData.pickupTime)}
             </Text>
 
-            <TouchableOpacity
-              className="w-full border border-gray-300 rounded-lg py-4 items-center"
-              onPress={() => {}}
-              disabled={actionLoading}
-            >
-              <Text className="font-JakartaSemiBold text-lg">Car Received</Text>
-            </TouchableOpacity>
+            {isConfirmed &&
+              bookingData.tripStatus === "awaiting_host_confirmation" && (
+                <TouchableOpacity
+                  className="w-full bg-green-500 rounded-lg py-4 items-center"
+                  onPress={handleConfirmReturn}
+                  disabled={actionLoading}
+                >
+                  <Text className="font-JakartaSemiBold text-lg text-white">
+                    Confirm Return
+                  </Text>
+                </TouchableOpacity>
+              )}
 
             <TouchableOpacity
               className="w-full border border-red-500 rounded-lg py-4 items-center mt-6"
-              onPress={handleDecline}
+              onPress={() => {
+                router.push({
+                  pathname: "/hostCancellationScreen",
+                  params: {
+                    booking: JSON.stringify({
+                      ...bookingData,
+                      carMake: carData?.make,
+                      carModel: carData?.model,
+                      carYear: carData?.year,
+                      carImage: btoa(carData?.images?.[0]?.url || ""),
+                      guestName: `${guestData?.firstName} ${guestData?.lastName}`,
+                      hostName: `${ownerData?.firstName} ${ownerData?.lastName}`,
+                    }),
+                  },
+                });
+              }}
               disabled={actionLoading}
             >
               {actionLoading ? (
@@ -539,64 +600,88 @@ const HostBooking = () => {
 
           <View className="mt-4 py-5 border-t border-b border-gray-200 flex-row justify-between">
             <Text className="font-JakartaMedium">Trip photos</Text>
-            <TouchableOpacity
-              onPress={() => {
-                const now = new Date();
-                const pickupDate = new Date(bookingData.pickupDate);
-                const returnDate = new Date(bookingData.returnDate);
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => {
+                  router.push({
+                    pathname: "/TripPhotosReviewScreen",
+                    params: { bookingId: bookingData.id },
+                  });
+                }}
+              >
+                <Text className="font-JakartaSemiBold text-secondary-600">
+                  VIEW ALL
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  const now = new Date();
+                  const pickupDateTime = new Date(bookingData.pickupTime);
+                  const returnDateTime = new Date(bookingData.returnTime);
 
-                // Check-in photos: Available from 24 hours before pickup until pickup time
-                const hoursUntilPickup =
-                  (pickupDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-                const canCheckIn =
-                  hoursUntilPickup <= 24 && now < pickupDate && isConfirmed;
+                  const hoursUntilPickup =
+                    (pickupDateTime.getTime() - now.getTime()) /
+                    (1000 * 60 * 60);
+                  const hoursSinceReturn =
+                    (now.getTime() - returnDateTime.getTime()) /
+                    (1000 * 60 * 60);
 
-                // Check-out photos: Available from return time until 24 hours after
-                const hoursSinceReturn =
-                  (now.getTime() - returnDate.getTime()) / (1000 * 60 * 60);
-                const canCheckOut =
-                  now >= returnDate && hoursSinceReturn <= 24 && isConfirmed;
+                  const isConfirmed = bookingData.bookingStatus === "confirmed";
 
-                if (!canCheckIn && !canCheckOut) {
-                  if (!isConfirmed) {
-                    Alert.alert(
-                      "Not Available",
-                      "Trip photos are only available for confirmed bookings."
-                    );
-                  } else if (hoursUntilPickup > 24) {
-                    Alert.alert(
-                      "Not Available Yet",
-                      "Check-in photos can be added starting 24 hours before the trip starts."
-                    );
-                  } else if (now >= pickupDate && now < returnDate) {
-                    Alert.alert(
-                      "Trip In Progress",
-                      "Check-in photos can only be added before the trip starts. Check-out photos will be available after the trip ends."
-                    );
-                  } else if (hoursSinceReturn > 24) {
-                    Alert.alert(
-                      "Time Expired",
-                      "The 24-hour window to submit check-out photos has passed."
-                    );
+                  // ✅ Only allow check-in BEFORE pickup time, within 24h window
+                  const canCheckIn =
+                    isConfirmed &&
+                    hoursUntilPickup <= 24 &&
+                    now < pickupDateTime;
+
+                  // ✅ Only allow check-out AFTER return time, within 24h window
+                  const canCheckOut =
+                    isConfirmed &&
+                    now >= returnDateTime &&
+                    hoursSinceReturn <= 24;
+
+                  if (!canCheckIn && !canCheckOut) {
+                    if (!isConfirmed) {
+                      Alert.alert(
+                        "Not Available",
+                        "Trip photos are only available for confirmed bookings."
+                      );
+                    } else if (hoursUntilPickup > 24) {
+                      Alert.alert(
+                        "Not Available Yet",
+                        "Check-in photos can be added starting 24 hours before the trip starts."
+                      );
+                    } else if (now >= pickupDateTime && now < returnDateTime) {
+                      Alert.alert(
+                        "Trip In Progress",
+                        "Check-in photos can only be added before the trip starts. Check-out photos will be available after the trip ends."
+                      );
+                    } else if (hoursSinceReturn > 24) {
+                      Alert.alert(
+                        "Time Expired",
+                        "The 24-hour window to submit check-out photos has passed."
+                      );
+                    }
+                    return;
                   }
-                  return;
-                }
 
-                const photoType = canCheckIn ? "checkin" : "checkout";
-                router.push({
-                  pathname: "/TripPhotosScreen",
-                  params: {
-                    bookingId: bookingData.id,
-                    photoType,
-                    userRole: "host",
-                  },
-                });
-              }}
-            >
-              <Text className="font-JakartaSemiBold text-primary-500">
-                ADD PHOTOS
-              </Text>
-            </TouchableOpacity>
+                  const photoType = canCheckIn ? "checkin" : "checkout";
+
+                  router.push({
+                    pathname: "/TripPhotosScreen",
+                    params: {
+                      bookingId: bookingData.id,
+                      photoType,
+                      userRole: "host",
+                    },
+                  });
+                }}
+              >
+                <Text className="font-JakartaSemiBold text-primary-500">
+                  ADD PHOTOS
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View className="py-5 border-b border-gray-200 flex-row justify-between items-center">

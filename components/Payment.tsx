@@ -9,13 +9,12 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import React, { useState } from "react";
-import { Alert, Image, Text, View } from "react-native";
-import Modal from "react-native-modal";
+import { Alert } from "react-native";
 
 import CustomButton from "@/components/CustomButton";
-import { images } from "@/constants";
 import { fetchAPI } from "@/lib/fetch";
 import { notifyBookingConfirmed } from "@/services/notificationService";
+import dayjs from "dayjs";
 
 interface PaymentProps {
   fullName: string;
@@ -68,6 +67,20 @@ const Payment = ({
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const combinedPickupTime = dayjs(pickupDate)
+    .hour(dayjs(pickupTime).hour())
+    .minute(dayjs(pickupTime).minute())
+    .second(0)
+    .millisecond(0)
+    .toDate();
+
+  const combinedReturnTime = dayjs(returnDate)
+    .hour(dayjs(returnTime).hour())
+    .minute(dayjs(returnTime).minute())
+    .second(0)
+    .millisecond(0)
+    .toDate();
+
   // Create booking directly in Firestore
   const createBooking = async (paymentIntentId: string) => {
     try {
@@ -79,8 +92,8 @@ const Payment = ({
         hostId: ownerId,
         pickupDate: pickupDate,
         returnDate: returnDate,
-        pickupTime: pickupTime.toISOString(),
-        returnTime: returnTime.toISOString(),
+        pickupTime: combinedPickupTime.toISOString(),
+        returnTime: combinedReturnTime.toISOString(),
         rentalDays: rentalDays,
         subtotal: Math.round(parseFloat(subtotal) * 100),
         platformFee: Math.round(parseFloat(platformFee) * 100),
@@ -88,6 +101,7 @@ const Payment = ({
         paymentStatus: "authorized", // Changed from "paid" to "authorized"
         paymentIntentId: paymentIntentId,
         bookingStatus: "pending", // Waiting for host acceptance
+        tripStatus: "not_started",
 
         //Location
         location: location
@@ -282,7 +296,7 @@ const Payment = ({
       setTimeout(() => {
         router.push({
           pathname: "/(root)/completeBooking",
-          params: { hostId: ownerId},
+          params: { hostId: ownerId },
         });
       }, 500);
     }
