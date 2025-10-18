@@ -15,9 +15,8 @@ export async function POST(request: Request) {
     }
 
     // Capture the payment (charge the customer)
-    const paymentIntent = await stripe.paymentIntents.capture(
-      payment_intent_id
-    );
+    const paymentIntent =
+      await stripe.paymentIntents.capture(payment_intent_id);
 
     if (paymentIntent.status !== "succeeded") {
       return new Response(
@@ -27,6 +26,40 @@ export async function POST(request: Request) {
         }),
         { status: 400 }
       );
+    }
+
+    // After successful capture, attach the PaymentMethod to the customer for future use
+    if (paymentIntent.payment_method && paymentIntent.customer) {
+      const paymentMethodId =
+        typeof paymentIntent.payment_method === "string"
+          ? paymentIntent.payment_method
+          : paymentIntent.payment_method.id;
+
+      const customerId =
+        typeof paymentIntent.customer === "string"
+          ? paymentIntent.customer
+          : paymentIntent.customer.id;
+
+      try {
+        // Attach the payment method to the customer
+        await stripe.paymentMethods.attach(paymentMethodId, {
+          customer: customerId,
+        });
+        console.log(
+          `PaymentMethod ${paymentMethodId} attached to customer ${customerId}`
+        );
+      } catch (attachError) {
+        // If it's already attached, that's fine - just log and continue
+        if (
+          attachError instanceof Stripe.errors.StripeError &&
+          attachError.message.includes("already been attached")
+        ) {
+          console.log("PaymentMethod already attached to customer");
+        } else {
+          // Log the error but don't fail the request since payment was successful
+          console.error("Error attaching payment method:", attachError);
+        }
+      }
     }
 
     return new Response(

@@ -1,14 +1,25 @@
+import BottomSheet from "@/components/BottomSheet";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { icons } from "@/constants";
 import { db } from "@/FirebaseConfig";
 import { UserData } from "@/hooks/useUser";
-import { fetchAPI } from "@/lib/fetch";
+import {
+  notifyHostTripReturned,
+  notifyHostTripStarted,
+} from "@/services/notificationService";
 import { CarData } from "@/types/booking.types";
 import { formatDate, formatTime } from "@/utils/dateUtils";
 import { getTripEndCountdown, getTripStartCountdown } from "@/utils/tripUtils";
 import { MaterialIcons, Octicons } from "@expo/vector-icons";
+import { encode as btoa } from "base-64";
 import { router, useLocalSearchParams } from "expo-router";
-import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  onSnapshot,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -24,13 +35,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const GuestBooking = () => {
   const { booking } = useLocalSearchParams<{ booking?: string }>();
-  let parsedBooking: any = null;
+  let initialBooking: any = null;
   try {
-    parsedBooking = booking ? JSON.parse(booking) : null;
+    initialBooking = booking ? JSON.parse(booking) : null;
   } catch {
-    parsedBooking = null;
+    initialBooking = null;
   }
-  const bookingData = parsedBooking;
+
+  // Create state for real-time booking data
+  const [bookingData, setBookingData] = useState<any>(initialBooking);
+
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const [hostData, setHostData] = useState<UserData | null>(null);
   const [carData, setCarData] = useState<CarData | null>(null);
@@ -41,6 +56,60 @@ const GuestBooking = () => {
   const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
   const [onConfirmAction, setOnConfirmAction] = useState<() => void>(() => {});
+
+  //BottomSheet states
+  const [isTripBottomSheetVisible, setIsTripBottomSheetVisible] =
+    useState(false);
+  const [tripType, setTripType] = useState<"checkin" | "checkout" | null>(null);
+
+  const openTripBottomSheet = (type: "checkin" | "checkout") => {
+    setTripType(type);
+    setIsTripBottomSheetVisible(true);
+  };
+
+  const closeTripBottomSheet = () => {
+    setIsTripBottomSheetVisible(false);
+  };
+
+  const handleTripConfirm = async () => {
+    closeTripBottomSheet();
+
+    if (tripType === "checkin") {
+      await handleCheckIn();
+    } else if (tripType === "checkout") {
+      await handleCheckOut();
+    }
+  };
+
+  useEffect(() => {
+    if (!initialBooking?.id) {
+      setLoading(false);
+      return;
+    }
+
+    const unsubscribe = onSnapshot(
+      doc(db, "bookings", initialBooking.id),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setBookingData({ id: docSnap.id, ...docSnap.data() });
+        }
+      },
+      (error) => {
+        console.error("Error listening to booking updates:", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [initialBooking?.id]);
+
+  // Live countdown
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!bookingData) {
@@ -75,7 +144,7 @@ const GuestBooking = () => {
     };
 
     fetchData();
-  }, [booking]);
+  }, [bookingData]);
 
   if (!bookingData) {
     return (
@@ -87,181 +156,84 @@ const GuestBooking = () => {
     );
   }
 
-  const calculateRefundAmount = () => {
+  const handleCheckIn = async () => {
     const now = new Date();
-    const pickupDate = new Date(bookingData.pickupDate);
+    const pickupDateTime = new Date(bookingData.pickupTime);
     const hoursUntilPickup =
-      (pickupDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-    const totalAmount = bookingData.totalAmount / 100;
+      (pickupDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-    // If trip has started, no refund
-    if (now >= pickupDate) {
-      return { amount: 0, percentage: 0 };
+    // ✅ Block early check-in (more than 10 minutes before pickup)
+    if (hoursUntilPickup > 0.1667) {
+      Alert.alert(
+        "Too Early",
+        "Check-in is available 10 minutes before pickup time."
+      );
+      return;
     }
 
-    // If more than 24 hours before pickup, full refund
-    if (hoursUntilPickup >= 24) {
-      return { amount: totalAmount, percentage: 100 };
-    }
-
-    // If less than 24 hours, no refund (or partial based on policy)
-    return { amount: 0, percentage: 0 };
-  };
-
-  const handleCancelTrip = async () => {
-    const { amount: refundAmount, percentage: refundPercentage } =
-      calculateRefundAmount();
-    const now = new Date();
-    const pickupDate = new Date(bookingData.pickupDate);
-    const isPending = bookingData.bookingStatus === "pending";
-    const isConfirmed = bookingData.bookingStatus === "confirmed";
-
-    let alertMessage = "";
-    if (isPending) {
-      alertMessage =
-        "Your booking is still pending. If you cancel now, the payment authorization will be released and you won't be charged.";
-    } else if (now >= pickupDate) {
-      alertMessage =
-        "Your trip has already started. According to our policy, no refunds can be issued once the trip begins.";
-    } else if (refundPercentage === 100) {
-      alertMessage = `You're canceling more than 24 hours before your trip. You'll receive a full refund of ₱${refundAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}.`;
-    } else {
-      alertMessage =
-        "You're canceling less than 24 hours before your trip start time. According to our policy, no refund will be issued.";
-    }
-
-    setModalTitle("Cancel Booking");
-    setModalMessage(
-      `${alertMessage}\n\nDo you want to continue with cancellation?`
-    );
-    setModalVisible(true);
-
-    // Define what happens when user confirms
-    setOnConfirmAction(() => async () => {
-      setModalVisible(false);
-      setActionLoading(true);
-      try {
-        console.log("=== Starting booking cancellation ===");
-        console.log("Booking Status:", bookingData.bookingStatus);
-        console.log("Payment Status:", bookingData.paymentStatus);
-        console.log("Refund Amount:", refundAmount);
-
-        if (isPending && bookingData.paymentStatus === "authorized") {
-          // Cancel the authorization
-          const response = await fetchAPI("/(api)/(stripe)/decline", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              payment_intent_id: bookingData.paymentIntentId,
-              booking_id: bookingData.id,
-              reason: "requested_by_customer",
-            }),
-          });
-
-          if (!response.success)
-            throw new Error("Failed to cancel payment authorization");
-
-          await updateDoc(doc(db, "bookings", bookingData.id), {
-            bookingStatus: "cancelled",
-            paymentStatus: "cancelled",
-            cancelledBy: "guest",
-            cancelledAt: serverTimestamp(),
-            cancellationReason: "Guest cancelled before host acceptance",
-            updatedAt: serverTimestamp(),
-          });
-
-          setModalTitle("Success");
-          setModalMessage("Booking cancelled. No charges applied.");
-          setModalVisible(true);
-          setOnConfirmAction(() => () => router.back());
-        } else if (isConfirmed && bookingData.paymentStatus === "paid") {
-          if (refundAmount > 0) {
-            const refundResponse = await fetchAPI("/(api)/(stripe)/refund", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                payment_intent_id: bookingData.paymentIntentId,
-                amount: refundAmount,
-                reason: "requested_by_customer",
-              }),
-            });
-
-            if (!refundResponse.success)
-              throw new Error("Failed to process refund");
-
-            await updateDoc(doc(db, "bookings", bookingData.id), {
-              bookingStatus: "cancelled",
-              cancelledBy: "guest",
-              cancelledAt: serverTimestamp(),
-              cancellationReason: `Guest cancelled - ${refundPercentage}% refund`,
-              refundStatus: refundResponse.refund.status,
-              refundAmount: refundResponse.refund.amount / 100,
-              refundPercentage,
-              refundId: refundResponse.refund.id,
-              refundProcessedAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-            });
-
-            if (bookingData.carId) {
-              await updateDoc(doc(db, "cars", bookingData.carId), {
-                status: "available",
-                updatedAt: serverTimestamp(),
-              });
-            }
-
-            setModalTitle("Refund Processed");
-            setModalMessage(
-              `Your booking has been cancelled and ₱${refundAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })} has been refunded.`
-            );
-            setModalVisible(true);
-            setOnConfirmAction(() => () => router.back());
-          } else {
-            await updateDoc(doc(db, "bookings", bookingData.id), {
-              bookingStatus: "cancelled",
-              cancelledBy: "guest",
-              cancelledAt: serverTimestamp(),
-              cancellationReason:
-                "Guest cancelled - No refund (less than 24hrs)",
-              refundStatus: "none",
-              refundAmount: 0,
-              refundPercentage: 0,
-              updatedAt: serverTimestamp(),
-            });
-
-            if (bookingData.carId) {
-              await updateDoc(doc(db, "cars", bookingData.carId), {
-                status: "active",
-                updatedAt: serverTimestamp(),
-              });
-            }
-
-            setModalTitle("Booking Cancelled");
-            setModalMessage(
-              "Your booking has been cancelled. No refund issued per cancellation policy."
-            );
-            setModalVisible(true);
-            setOnConfirmAction(() => () => router.back());
-          }
-        }
-      } catch (error) {
-        console.error("Error cancelling booking:", error);
-        setModalTitle("Error");
-        setModalMessage(
-          error instanceof Error
-            ? error.message
-            : "Failed to cancel booking. Please try again."
-        );
-        setModalVisible(true);
-        setOnConfirmAction(() => () => setModalVisible(false));
-      } finally {
-        setActionLoading(false);
-      }
+    await updateDoc(doc(db, "bookings", bookingData.id), {
+      tripStatus: "in_progress",
+      actualStartTime: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
+
+    // Update car status
+    await updateDoc(doc(db, "cars", bookingData.carId), {
+      status: "on a trip",
+      updatedAt: serverTimestamp(),
+    });
+
+    // Notify host (add to notificationService.ts)
+    await notifyHostTripStarted(
+      bookingData.hostId,
+      bookingData.id,
+      `${GuestData?.firstName ?? ""} ${GuestData?.lastName ?? ""}`,
+      {
+        make: carData?.make ?? "",
+        model: carData?.model ?? "",
+      }
+    );
   };
 
-  const handleCheckIn = async () => {};
+  const handleCheckOut = async () => {
+    const now = new Date();
+    const returnDateTime = new Date(bookingData.returnTime);
 
-  const handleCheckOut = async () => {};
+    // Prevent early checkout (before return time)
+    if (now < returnDateTime) {
+      Alert.alert(
+        "Too Early",
+        "Check-out is available only once your return time has arrived."
+      );
+      return;
+    }
+
+    // Calculate lateness
+    const hoursSinceReturn =
+      (now.getTime() - returnDateTime.getTime()) / (1000 * 60 * 60);
+    const isLate = hoursSinceReturn > 1; // > 1 hour late
+    const lateHours = isLate ? Math.ceil(hoursSinceReturn - 1) : 0;
+    const lateFee = lateHours * 100;
+
+    await updateDoc(doc(db, "bookings", bookingData.id), {
+      tripStatus: "awaiting_host_confirmation",
+      actualEndTime: serverTimestamp(),
+      lateReturn: isLate,
+      lateHours: lateHours,
+      lateFee: lateFee,
+      updatedAt: serverTimestamp(),
+    });
+
+    await notifyHostTripReturned(
+      bookingData.hostId,
+      bookingData.id,
+      `${GuestData?.firstName ?? ""} ${GuestData?.lastName ?? ""}`,
+      {
+        make: carData?.make ?? "",
+        model: carData?.model ?? "",
+      }
+    );
+  };
 
   if (loading) {
     return (
@@ -383,13 +355,24 @@ const GuestBooking = () => {
           </Text>
         </View>
 
-        {/* Status Badge */}
         <View className="mt-10 p-4 bg-secondary-100 rounded-lg">
           <Text className="font-JakartaMedium text-[14px] color-secondary-700">
-            Booking Status
+            Status
           </Text>
+
+          {/* Show combined status message */}
           <Text className="font-JakartaBold text-lg mt-1 color-primary-500">
-            {bookingData.bookingStatus.toUpperCase()}
+            {bookingData.bookingStatus === "pending" &&
+              "AWAITING HOST APPROVAL"}
+            {bookingData.bookingStatus === "confirmed" &&
+              !bookingData.tripStatus &&
+              "CONFIRMED - READY FOR CHECK-IN"}
+            {bookingData.tripStatus === "in_progress" && "TRIP IN PROGRESS"}
+            {bookingData.tripStatus === "awaiting_host_confirmation" &&
+              "AWAITING HOST CONFIRMATION"}
+            {bookingData.bookingStatus === "completed" && "COMPLETED"}
+            {bookingData.bookingStatus === "cancelled" && "CANCELLED"}
+            {bookingData.bookingStatus === "declined" && "DECLINED"}
           </Text>
         </View>
 
@@ -397,15 +380,29 @@ const GuestBooking = () => {
           <View className="mt-10 p-4 border border-gray-300 rounded-lg">
             {isConfirmed && (
               <Text className="mb-6 font-JakartaSemiBold text-secondary-700">
-                {new Date() >= new Date(bookingData.pickupDate)
-                  ? getTripEndCountdown(bookingData.returnDate)
-                  : getTripStartCountdown(bookingData.pickupDate)}
+                {currentTime >= new Date(bookingData.pickupTime)
+                  ? getTripEndCountdown(bookingData.returnTime)
+                  : getTripStartCountdown(bookingData.pickupTime)}
               </Text>
             )}
 
             <TouchableOpacity
               className="w-full border border-red-500 rounded-lg py-4 items-center"
-              onPress={handleCancelTrip}
+              onPress={() => {
+                router.push({
+                  pathname: "/cancellationScreen",
+                  params: {
+                    booking: JSON.stringify({
+                      ...bookingData,
+                      carMake: carData?.make,
+                      carModel: carData?.model,
+                      carYear: carData?.year,
+                      carImage: btoa(carData?.images?.[0]?.url || ""),
+                      hostName: `${hostData?.firstName} ${hostData?.lastName}`,
+                    }),
+                  },
+                });
+              }}
               disabled={actionLoading}
             >
               {actionLoading ? (
@@ -418,15 +415,59 @@ const GuestBooking = () => {
             </TouchableOpacity>
 
             {isConfirmed && (
-              <TouchableOpacity
-                className="w-full border border-gray-300 rounded-lg py-4 items-center mt-6"
-                onPress={handleCheckIn}
-                disabled={actionLoading}
-              >
-                <Text className="font-JakartaSemiBold text-lg">
-                  Check In & Start Trip
-                </Text>
-              </TouchableOpacity>
+              <View className="mt-6 space-y-4">
+                {/* Check-In Button - Only show before trip starts */}
+                {(!bookingData.tripStatus ||
+                  bookingData.tripStatus === "not_started") && (
+                  <TouchableOpacity
+                    className="w-full bg-primary-500 rounded-lg py-4 items-center"
+                    // onPress={() => openTripModal("checkin")}
+                    onPress={() => openTripBottomSheet("checkin")}
+                    disabled={actionLoading}
+                  >
+                    {actionLoading ? (
+                      <ActivityIndicator color="white" />
+                    ) : (
+                      <Text className="font-JakartaSemiBold text-lg text-white">
+                        Check In & Start Trip
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+
+                {/* Check-Out Button - Only show during trip */}
+                {bookingData.tripStatus === "in_progress" && (
+                  <TouchableOpacity
+                    className="w-full bg-primary-500 rounded-lg py-4 items-center"
+                    // onPress={() => openTripModal("checkout")}
+                    onPress={() => openTripBottomSheet("checkout")}
+                    disabled={actionLoading}
+                  >
+                    {actionLoading ? (
+                      <ActivityIndicator color="white" />
+                    ) : (
+                      <Text className="font-JakartaSemiBold text-lg text-white">
+                        Check Out & End Trip
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+
+                {/* Waiting for Host Status */}
+                {bookingData.tripStatus === "awaiting_host_confirmation" && (
+                  <View className="w-full bg-yellow-50 border border-yellow-300 rounded-lg p-4">
+                    <View className="flex-row items-center justify-center">
+                      <ActivityIndicator color="#ca8a04" size="small" />
+                      <Text className="font-JakartaSemiBold text-lg text-yellow-700 ml-2">
+                        Awaiting Host Confirmation
+                      </Text>
+                    </View>
+                    <Text className="font-JakartaMedium text-sm text-yellow-600 mt-2 text-center">
+                      The host will confirm your vehicle return soon
+                    </Text>
+                  </View>
+                )}
+              </View>
             )}
           </View>
         )}
@@ -486,20 +527,29 @@ const GuestBooking = () => {
               <TouchableOpacity
                 onPress={() => {
                   const now = new Date();
-                  const pickupDate = new Date(bookingData.pickupDate);
-                  const returnDate = new Date(bookingData.returnDate);
+                  const pickupDateTime = new Date(bookingData.pickupTime);
+                  const returnDateTime = new Date(bookingData.returnTime);
 
-                  // Check-in photos: Available from 24 hours before pickup until pickup time
                   const hoursUntilPickup =
-                    (pickupDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-                  const canCheckIn =
-                    hoursUntilPickup <= 24 && now < pickupDate && isConfirmed;
-
-                  // Check-out photos: Available from return time until 24 hours after
+                    (pickupDateTime.getTime() - now.getTime()) /
+                    (1000 * 60 * 60);
                   const hoursSinceReturn =
-                    (now.getTime() - returnDate.getTime()) / (1000 * 60 * 60);
+                    (now.getTime() - returnDateTime.getTime()) /
+                    (1000 * 60 * 60);
+
+                  const isConfirmed = bookingData.bookingStatus === "confirmed";
+
+                  // ✅ Allow check-in photos only within 30 minutes before pickup time
+                  const canCheckIn =
+                    isConfirmed &&
+                    hoursUntilPickup <= 0.5 &&
+                    now < pickupDateTime;
+
+                  // ✅ Allow check-out photos only after return time (within 24 hours)
                   const canCheckOut =
-                    now >= returnDate && hoursSinceReturn <= 24 && isConfirmed;
+                    isConfirmed &&
+                    now >= returnDateTime &&
+                    hoursSinceReturn <= 24;
 
                   if (!canCheckIn && !canCheckOut) {
                     if (!isConfirmed) {
@@ -507,12 +557,12 @@ const GuestBooking = () => {
                         "Not Available",
                         "Trip photos are only available for confirmed bookings."
                       );
-                    } else if (hoursUntilPickup > 24) {
+                    } else if (hoursUntilPickup > 0.5) {
                       Alert.alert(
-                        "Not Available Yet",
-                        "Check-in photos can be added starting 24 hours before your trip starts."
+                        "Too Early",
+                        "Check-in photos can be added starting 30 minutes before your trip starts."
                       );
-                    } else if (now >= pickupDate && now < returnDate) {
+                    } else if (now >= pickupDateTime && now < returnDateTime) {
                       Alert.alert(
                         "Trip In Progress",
                         "Check-in photos can only be added before the trip starts. Check-out photos will be available after the trip ends."
@@ -593,6 +643,74 @@ const GuestBooking = () => {
         onConfirm={onConfirmAction}
         onCancel={() => setModalVisible(false)}
       />
+
+      <BottomSheet
+        visible={isTripBottomSheetVisible}
+        onClose={closeTripBottomSheet}
+        height={430}
+        showDragHandle={true}
+        enablePanGesture={true}
+        backdropOpacity={0.5}
+        dismissThreshold={0.3}
+        borderRadius={24}
+        backgroundColor="#FFFFFF"
+      >
+        <View className="px-6 pt-2 pb-6">
+          {/* Title */}
+          <Text className="text-2xl font-JakartaBold text-gray-900 text-center mb-4">
+            {tripType === "checkin" ? "Confirm Check-In" : "Confirm Check-Out"}
+          </Text>
+
+          {/* Icon */}
+          <View className="items-center mb-6">
+            <View className="w-20 h-20 bg-blue-100 rounded-full items-center justify-center">
+              <MaterialIcons
+                name={tripType === "checkin" ? "login" : "logout"}
+                size={40}
+                color="#3B82F6"
+              />
+            </View>
+          </View>
+
+          {/* Message */}
+          <View className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <View className="flex-row items-start">
+              <MaterialIcons name="info" size={20} color="#ca8a04" />
+              <Text className="flex-1 ml-2 font-JakartaMedium text-gray-700 leading-5">
+                Please upload trip photos to avoid responsibility for
+                pre-existing damages.
+              </Text>
+            </View>
+          </View>
+
+          {/* Buttons */}
+          <View className="gap-3">
+            <TouchableOpacity
+              className="w-full bg-primary-500 rounded-lg py-4 items-center"
+              onPress={handleTripConfirm}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="font-JakartaSemiBold text-lg text-white">
+                  Continue
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="w-full border border-gray-300 rounded-lg py-4 items-center"
+              onPress={closeTripBottomSheet}
+              disabled={actionLoading}
+            >
+              <Text className="font-JakartaSemiBold text-lg text-gray-700">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </BottomSheet>
     </SafeAreaView>
   );
 };

@@ -1,19 +1,17 @@
 import React, { useEffect } from "react";
-import { Dimensions, Modal, TouchableOpacity, View } from "react-native";
+import { Dimensions, Pressable, StatusBar, View } from "react-native";
 import {
+  Gesture,
+  GestureDetector,
   GestureHandlerRootView,
-  PanGestureHandler,
 } from "react-native-gesture-handler";
 import Animated, {
   runOnJS,
-  useAnimatedGestureHandler,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface BottomSheetProps {
   visible: boolean;
@@ -25,7 +23,6 @@ interface BottomSheetProps {
   animationDuration?: number;
   backdropOpacity?: number;
   dismissThreshold?: number;
-  snapToOffsets?: number[];
   borderRadius?: number;
   backgroundColor?: string;
   statusBarTranslucent?: boolean;
@@ -45,150 +42,178 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
   backgroundColor = "#FFFFFF",
   statusBarTranslucent = true,
 }) => {
+  const screenHeight = Dimensions.get("window").height;
   const translateY = useSharedValue(height);
-  const opacity = useSharedValue(0);
+  const context = useSharedValue(0);
+  const backdropOpacityValue = useSharedValue(0);
 
-  // Calculate threshold based on height
-  const threshold = height * dismissThreshold;
-
-  // Animation for showing/hiding bottom sheet
+  // Animate open/close
   useEffect(() => {
     if (visible) {
-      opacity.value = withTiming(1, { duration: animationDuration });
+      backdropOpacityValue.value = withTiming(backdropOpacity, {
+        duration: animationDuration,
+      });
       translateY.value = withSpring(0, {
-        damping: 20,
-        stiffness: 300,
+        damping: 50,
+        stiffness: 400,
+        mass: 0.8,
       });
     } else {
-      opacity.value = withTiming(0, { duration: animationDuration * 0.7 });
-      translateY.value = withSpring(height, {
-        damping: 20,
-        stiffness: 300,
+      backdropOpacityValue.value = withTiming(0, {
+        duration: animationDuration * 0.7,
+      });
+      translateY.value = withTiming(height + 100, {
+        duration: animationDuration * 0.8,
       });
     }
-  }, [visible, height, animationDuration]);
+  }, [visible, height, animationDuration, backdropOpacity]);
 
-  // Close bottom sheet function
-  const closeBottomSheet = () => {
-    opacity.value = withTiming(0, { duration: animationDuration * 0.7 });
-    translateY.value = withSpring(height, {
-      damping: 20,
-      stiffness: 300,
-    });
-    // Delay onClose to allow animation to complete
-    setTimeout(() => onClose(), animationDuration * 0.7);
-  };
-
-  // Pan gesture handler for drag-to-close
-  const gestureHandler = useAnimatedGestureHandler({
-    onStart: (_, context: any) => {
-      context.startY = translateY.value;
-    },
-    onActive: (event, context: any) => {
-      const newTranslateY = context.startY + event.translationY;
-      if (newTranslateY >= 0) {
-        translateY.value = newTranslateY;
-        // Adjust opacity based on drag distance
-        const dragProgress = Math.min(newTranslateY / height, 1);
-        opacity.value = Math.max(1 - dragProgress * 0.5, 0.3);
-      }
-    },
-    onEnd: (event) => {
-      const shouldClose =
-        event.translationY > threshold || event.velocityY > 500;
-
-      if (shouldClose) {
-        runOnJS(closeBottomSheet)();
-      } else {
-        // Snap back to original position
-        translateY.value = withSpring(0, {
-          damping: 20,
-          stiffness: 300,
-        });
-        opacity.value = withTiming(1, { duration: 200 });
-      }
-    },
-  });
-
-  // Animated styles
-  const backdropStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value * backdropOpacity,
+  const rBackdropStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacityValue.value,
   }));
 
-  const bottomSheetStyle = useAnimatedStyle(() => ({
+  const rBottomSheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
+
+  // Pan gesture to drag down
+  const panGesture = Gesture.Pan()
+    .onStart(() => {
+      context.value = translateY.value;
+    })
+    .onUpdate((event) => {
+      const newY = context.value + event.translationY;
+      translateY.value = Math.max(newY, 0);
+    })
+    .onEnd((event) => {
+      const closeThreshold = height * dismissThreshold;
+      if (event.velocityY > 500 || translateY.value > closeThreshold) {
+        backdropOpacityValue.value = withTiming(0, {
+          duration: animationDuration * 0.7,
+        });
+        translateY.value = withTiming(height + 100, {
+          duration: animationDuration * 0.8,
+        });
+        runOnJS(onClose)();
+      } else {
+        translateY.value = withSpring(0, {
+          damping: 50,
+          stiffness: 400,
+          mass: 0.8,
+        });
+      }
+    });
+
+  const handleBackdropPress = () => {
+    backdropOpacityValue.value = withTiming(0, {
+      duration: animationDuration * 0.7,
+    });
+    translateY.value = withTiming(height + 100, {
+      duration: animationDuration * 0.8,
+    });
+    runOnJS(onClose)();
+  };
 
   if (!visible) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      statusBarTranslucent={statusBarTranslucent}
-      onRequestClose={closeBottomSheet}
-    >
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
-          {/* Backdrop */}
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={closeBottomSheet}
-            style={{ position: "absolute", inset: 0 }}
-          >
-            <Animated.View
-              style={[backdropStyle, { flex: 1, backgroundColor: "#000000" }]}
-            />
-          </TouchableOpacity>
+    <>
+      {statusBarTranslucent && (
+        <StatusBar backgroundColor="rgba(0,0,0,0.5)" barStyle="light-content" />
+      )}
 
-          {/* Bottom Sheet Container */}
-          <PanGestureHandler
-            onGestureEvent={enablePanGesture ? gestureHandler : undefined}
-            enabled={enablePanGesture}
-          >
+      {/* Full Screen Container */}
+      <View
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 50,
+        }}
+      >
+        {/* Full Height/Width Backdrop */}
+        <Animated.View
+          style={[
+            rBackdropStyle,
+            {
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "#000000",
+            },
+          ]}
+        >
+          <Pressable style={{ flex: 1 }} onPress={handleBackdropPress} />
+        </Animated.View>
+
+        {/* Bottom Sheet Container */}
+        <View
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+          }}
+          pointerEvents="box-none"
+        >
+          <GestureHandlerRootView>
             <Animated.View
               style={[
-                bottomSheetStyle,
+                rBottomSheetStyle,
                 {
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
                   height: height,
                   backgroundColor: backgroundColor,
                   borderTopLeftRadius: borderRadius,
                   borderTopRightRadius: borderRadius,
+                  shadowColor: "#000",
+                  shadowOffset: {
+                    width: 0,
+                    height: -4,
+                  },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 8,
+                  elevation: 10,
+                  overflow: "hidden",
                 },
               ]}
             >
               {/* Drag Handle */}
               {showDragHandle && (
-                <View
-                  style={{
-                    alignItems: "center",
-                    paddingTop: 16,
-                    paddingBottom: 8,
-                  }}
+                <GestureDetector
+                  gesture={enablePanGesture ? panGesture : Gesture.Pan()}
                 >
-                  <View
-                    style={{
-                      width: 48,
-                      height: 4,
-                      backgroundColor: "#D1D5DB",
-                      borderRadius: 2,
-                    }}
-                  />
-                </View>
+                  <Animated.View>
+                    <View
+                      style={{
+                        alignItems: "center",
+                        paddingTop: 16,
+                        paddingBottom: 8,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 48,
+                          height: 6,
+                          backgroundColor: "#D1D5DB",
+                          borderRadius: 3,
+                        }}
+                      />
+                    </View>
+                  </Animated.View>
+                </GestureDetector>
               )}
 
               {/* Content */}
               <View style={{ flex: 1 }}>{children}</View>
             </Animated.View>
-          </PanGestureHandler>
+          </GestureHandlerRootView>
         </View>
-      </GestureHandlerRootView>
-    </Modal>
+      </View>
+    </>
   );
 };
 

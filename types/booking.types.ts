@@ -124,6 +124,16 @@ export interface Booking {
 
   tripStatus?: "not_started" | "checked_in" | "in_progress" | "checked_out" | "awaiting_host_confirmation" | "completed";
 
+  // Trip tracking
+  actualStartTime?: Timestamp | null;
+  actualEndTime?: Timestamp | null;
+
+  // Late return
+  lateReturn?: boolean;
+  lateHours?: number;
+  lateFee?: number;
+  lateChargeId?: string | null;
+
   // Cancellation & Refund fields
   cancellationStatus: string | null;
   cancellationRequestedAt: Timestamp | null;
