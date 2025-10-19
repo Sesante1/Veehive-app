@@ -113,16 +113,27 @@ export interface Booking {
   subtotal: number;
   platformFee: number;
   totalAmount: number;
-  paymentStatus: "paid" | "pending" | "failed";
+  paymentStatus: "authorized" | "paid" | "pending" | "failed" | "cancelled";
   paymentIntentId: string;
-  bookingStatus: "pending" | "confirmed" | "completed" | "cancelled" | "declined";
+  bookingStatus:
+    | "pending"
+    | "confirmed"
+    | "completed"
+    | "cancelled"
+    | "declined";
   location: {
     address: string;
     latitude: number;
     longitude: number;
   } | null;
 
-  tripStatus?: "not_started" | "checked_in" | "in_progress" | "checked_out" | "awaiting_host_confirmation" | "completed";
+  tripStatus?:
+    | "not_started"
+    | "checked_in"
+    | "in_progress"
+    | "checked_out"
+    | "awaiting_host_confirmation"
+    | "completed";
 
   // Trip tracking
   actualStartTime?: Timestamp | null;

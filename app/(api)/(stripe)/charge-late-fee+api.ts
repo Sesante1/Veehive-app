@@ -62,24 +62,25 @@ export async function POST(request: Request) {
     const paymentMethodId = paymentMethods.data[0].id;
 
     // Create and immediately capture a payment intent for the late fee
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(lateFeeNumber * 100), // Convert to cents
-      currency: "php",
-      customer: customerId,
-      payment_method: paymentMethodId,
-      confirm: true, // Immediately confirm and charge
-      off_session: true, // Allow charging without customer present
-      automatic_payment_methods: {
-        enabled: true,
-        allow_redirects: "never",
+    const paymentIntent = await stripe.paymentIntents.create(
+      {
+        amount: Math.round(lateFeeNumber * 100), // Convert to cents
+        currency: "php",
+        customer: customerId,
+        payment_method: paymentMethodId,
+        confirm: true, // Immediately confirm and charge
+        off_session: true, // Allow charging without customer present
+        metadata: {
+          booking_id,
+          charge_type: "late_fee",
+          original_payment_intent: payment_intent_id,
+        },
+        description: `Late return fee for booking ${booking_id}`,
       },
-      metadata: {
-        booking_id,
-        charge_type: "late_fee",
-        original_payment_intent: payment_intent_id,
-      },
-      description: `Late return fee for booking ${booking_id}`,
-    });
+      {
+        idempotencyKey: `late_fee_${booking_id}_${payment_intent_id}_${Math.round(lateFeeNumber * 100)}`,
+      }
+    );
 
     // Check if charge was successful
     if (paymentIntent.status !== "succeeded") {

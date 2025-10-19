@@ -53,7 +53,10 @@ export default function HostCancellationScreen() {
 
       if (isConfirmed && bookingData.paymentStatus === "paid") {
         // Full refund for host cancellation
-        const idToken = await FIREBASE_AUTH.currentUser?.getIdToken();
+        // const idToken = await FIREBASE_AUTH.currentUser?.getIdToken();
+        const currentUser = FIREBASE_AUTH.currentUser;
+        if (!currentUser) throw new Error("Not authenticated");
+        const idToken = await currentUser.getIdToken();
         const refundResponse = await fetchAPI("/(api)/(stripe)/refund", {
           method: "POST",
           headers: {
@@ -62,7 +65,7 @@ export default function HostCancellationScreen() {
           },
           body: JSON.stringify({
             payment_intent_id: bookingData.paymentIntentId,
-            amount: totalAmount,
+            amount: bookingData.totalAmount,
             reason: "requested_by_customer",
           }),
         });

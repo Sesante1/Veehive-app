@@ -246,7 +246,7 @@ const HostBooking = () => {
         if (!response.success) throw new Error("Failed to cancel payment");
 
         await updateDoc(doc(db, "bookings", bookingData.id), {
-          bookingStatus: "cancelled",
+          bookingStatus: "declined",
           paymentStatus: "cancelled",
           cancelledBy: "host",
           cancelledAt: serverTimestamp(),

@@ -72,6 +72,8 @@ const GuestBooking = () => {
   };
 
   const handleTripConfirm = async () => {
+    if (actionLoading) return;
+    setActionLoading(true);
     closeTripBottomSheet();
 
     if (tripType === "checkin") {
@@ -79,6 +81,7 @@ const GuestBooking = () => {
     } else if (tripType === "checkout") {
       await handleCheckOut();
     }
+    setActionLoading(false);
   };
 
   useEffect(() => {

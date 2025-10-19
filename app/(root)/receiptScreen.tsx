@@ -273,6 +273,10 @@ const ReceiptScreen = () => {
               value={`${hostData?.firstName} ${hostData?.lastName}`}
             />
             <InfoRow
+              label="Requested by"
+              value={`${bookingData?.cancelledBy}`}
+            />
+            <InfoRow
               label="Original Trip Dates"
               value={`${formatDate(bookingData.pickupDate)} → ${formatDate(bookingData.returnDate)}`}
             />

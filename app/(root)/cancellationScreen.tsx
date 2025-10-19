@@ -1,5 +1,5 @@
 import { icons } from "@/constants";
-import { db } from "@/FirebaseConfig";
+import { db, FIREBASE_AUTH } from "@/FirebaseConfig";
 import { fetchAPI } from "@/lib/fetch";
 import { decode as atob } from "base-64";
 import { router, useLocalSearchParams } from "expo-router";
@@ -22,7 +22,6 @@ export default function CancellationScreen() {
   const [actionLoading, setActionLoading] = useState(false);
 
   let bookingData: any = null;
-
   try {
     bookingData = booking ? JSON.parse(booking) : null;
   } catch {
@@ -46,13 +45,15 @@ export default function CancellationScreen() {
   // Calculate refund amount
   const calculateRefundAmount = () => {
     const now = new Date();
-    const pickupDate = new Date(bookingData.pickupDate);
+
+    // ✅ FIXED: Use pickupTime (full datetime) instead of pickupDate
+    const pickupDateTime = new Date(bookingData.pickupTime);
     const hoursUntilPickup =
-      (pickupDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+      (pickupDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
     const totalAmount = bookingData.totalAmount / 100;
 
     // If trip has started, no refund
-    if (now >= pickupDate) {
+    if (now >= pickupDateTime) {
       return { amount: 0, percentage: 0 };
     }
 
@@ -62,19 +63,25 @@ export default function CancellationScreen() {
     }
 
     // If less than 24 hours, no refund
-    return { amount: 0, percentage: 0 };
+    // return { amount: 0, percentage: 0 };
+    const partialRefundPercentage = 50;
+    const partialRefundAmount = totalAmount * (partialRefundPercentage / 100);
+    return { amount: partialRefundAmount, percentage: partialRefundPercentage };
   };
 
   const { amount: refundAmount, percentage: refundPercentage } =
     calculateRefundAmount();
   const totalAmount = bookingData.totalAmount / 100;
-  const nonRefundableAmount = totalAmount - refundAmount;
+
+  // ✅ FIXED: For pending bookings, show ₱0 non-refundable (since they're not charged)
+  const isPending = bookingData.bookingStatus === "pending";
+  const nonRefundableAmount = isPending ? 0 : totalAmount - refundAmount;
 
   const handleCancelTrip = async () => {
     setActionLoading(true);
     try {
       const now = new Date();
-      const pickupDate = new Date(bookingData.pickupDate);
+      const pickupDateTime = new Date(bookingData.pickupTime);
       const isPending = bookingData.bookingStatus === "pending";
       const isConfirmed = bookingData.bookingStatus === "confirmed";
 
@@ -85,9 +92,13 @@ export default function CancellationScreen() {
 
       if (isPending && bookingData.paymentStatus === "authorized") {
         // Cancel the authorization
+        const idToken = await FIREBASE_AUTH.currentUser?.getIdToken();
         const response = await fetchAPI("/(api)/(stripe)/decline", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
           body: JSON.stringify({
             payment_intent_id: bookingData.paymentIntentId,
             booking_id: bookingData.id,
@@ -112,12 +123,16 @@ export default function CancellationScreen() {
         ]);
       } else if (isConfirmed && bookingData.paymentStatus === "paid") {
         if (refundAmount > 0) {
+          const idToken = await FIREBASE_AUTH.currentUser?.getIdToken();
           const refundResponse = await fetchAPI("/(api)/(stripe)/refund", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${idToken}`,
+            },
             body: JSON.stringify({
               payment_intent_id: bookingData.paymentIntentId,
-              amount: refundAmount,
+              amount: Math.round(refundAmount * 100),
               reason: "requested_by_customer",
             }),
           });
@@ -127,7 +142,6 @@ export default function CancellationScreen() {
 
           await updateDoc(doc(db, "bookings", bookingData.id), {
             bookingStatus: "cancelled",
-            tripStatus: "not_started",
             cancelledBy: "guest",
             cancelledAt: serverTimestamp(),
             cancellationReason: `Guest cancelled - ${refundPercentage}% refund`,
@@ -141,7 +155,7 @@ export default function CancellationScreen() {
 
           if (bookingData.carId) {
             await updateDoc(doc(db, "cars", bookingData.carId), {
-              status: "active",
+              status: "available",
               updatedAt: serverTimestamp(),
             });
           }
@@ -154,7 +168,7 @@ export default function CancellationScreen() {
         } else {
           await updateDoc(doc(db, "bookings", bookingData.id), {
             bookingStatus: "cancelled",
-            cancelledBy: "Guest",
+            cancelledBy: "guest",
             cancelledAt: serverTimestamp(),
             cancellationReason: "Guest cancelled - No refund (less than 24hrs)",
             refundStatus: "none",
@@ -193,18 +207,18 @@ export default function CancellationScreen() {
   // Get cancellation policy message
   const getCancellationMessage = () => {
     const now = new Date();
-    const pickupDate = new Date(bookingData.pickupDate);
+    const pickupDateTime = new Date(bookingData.pickupTime);
     const hoursUntilPickup =
-      (pickupDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+      (pickupDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
 
     if (bookingData.bookingStatus === "pending") {
       return "Your booking is still pending. If you cancel now, the payment authorization will be released and you won't be charged.";
-    } else if (now >= pickupDate) {
+    } else if (now >= pickupDateTime) {
       return "Your trip has already started. According to our policy, no refunds can be issued once the trip begins.";
     } else if (hoursUntilPickup >= 24) {
       return "You're canceling more than 24 hours before your trip. You'll receive a full refund.";
     } else {
-      return "You're canceling less than 24 hours before your trip start time. According to our policy, no refund will be issued.";
+      return `You're canceling less than 24 hours before your trip start time. You'll receive a partial refund of ${refundPercentage}% (₱${refundAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}).`;
     }
   };
 
@@ -244,7 +258,6 @@ export default function CancellationScreen() {
             }
             style={{ width: 120, height: 80, borderRadius: 8 }}
           />
-          <Text></Text>
         </View>
 
         {/* Cancellation Policy Message */}
@@ -258,7 +271,7 @@ export default function CancellationScreen() {
         <View className="mt-8">
           <View className="flex-row justify-between border-t border-gray-200 py-4">
             <Text className="font-JakartaSemiBold text-secondary-700">
-              Trip cost
+              {isPending ? "Booking amount (not charged)" : "Trip cost"}
             </Text>
             <Text className="font-JakartaSemiBold text-secondary-700">
               ₱
@@ -270,23 +283,28 @@ export default function CancellationScreen() {
 
           <View className="flex-row justify-between border-b border-gray-200 py-4">
             <Text className="font-JakartaSemiBold text-secondary-700">
-              Non-refundable amount
+              {isPending ? "Amount you'll be charged" : "Non-refundable amount"}
             </Text>
-            <Text className="font-JakartaSemiBold text-red-600">
-              -₱
-              {nonRefundableAmount.toLocaleString("en-PH", {
-                minimumFractionDigits: 2,
-              })}
+            <Text
+              className={`font-JakartaSemiBold ${isPending ? "text-green-600" : "text-red-600"}`}
+            >
+              {isPending
+                ? "₱0.00"
+                : `-₱${nonRefundableAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
             </Text>
           </View>
 
           <View className="flex-row justify-between py-4">
-            <Text className="font-JakartaBold text-lg">Your trip refund</Text>
+            <Text className="font-JakartaBold text-lg">
+              {isPending ? "Total charges" : "Your trip refund"}
+            </Text>
             <Text className="font-JakartaBold text-lg text-green-600">
               ₱
-              {refundAmount.toLocaleString("en-PH", {
-                minimumFractionDigits: 2,
-              })}
+              {isPending
+                ? "0.00"
+                : refundAmount.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                  })}
             </Text>
           </View>
         </View>
