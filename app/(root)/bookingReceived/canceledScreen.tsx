@@ -92,12 +92,6 @@ export default function CanceledScreen() {
     />
   );
 
-  const renderHeader = () => (
-    <Text className="text-lg font-bold text-gray-900 mb-3 mt-2">
-      Cancelled Trips ({bookings.length})
-    </Text>
-  );
-
   const renderEmpty = () => (
     <View className="items-center justify-center py-20">
       <Text className="text-gray-400 text-lg font-medium">
@@ -119,13 +113,13 @@ export default function CanceledScreen() {
   }
 
   return (
-    <SafeAreaView className="bg-white flex-1">
+    <View className="bg-white flex-1">
       <FlatList
+        className="mt-4"
         data={bookings}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerClassName="px-4 pt-2"
-        ListHeaderComponent={bookings.length > 0 ? renderHeader : null}
         ListEmptyComponent={renderEmpty}
         refreshControl={
           <RefreshControl
@@ -135,6 +129,6 @@ export default function CanceledScreen() {
           />
         }
       />
-    </SafeAreaView>
+    </View>
   );
 }

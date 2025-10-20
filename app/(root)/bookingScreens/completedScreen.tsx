@@ -113,6 +113,7 @@ export default function CompletedScreen() {
   return (
     <View className="bg-white flex-1">
       <FlatList
+        className="mt-4"
         data={bookings}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
