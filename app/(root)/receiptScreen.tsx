@@ -133,18 +133,7 @@ const ReceiptScreen = () => {
     );
   }
 
-  if (!bookingData) {
-    return (
-      <SafeAreaView className="flex-1 bg-white">
-        <View className="flex-1 justify-center items-center">
-          <Text className="font-JakartaSemiBold text-secondary-700">
-            Booking not found.
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-  const isCompleted = bookingData.bookingStatus === "completed";
+  const isCompleted = bookingData?.bookingStatus === "completed";
   const isCancelled = bookingData?.bookingStatus === "cancelled";
   const isPending = bookingData?.bookingStatus === "pending";
   const isConfirmed = bookingData?.bookingStatus === "confirmed";
@@ -211,10 +200,18 @@ const ReceiptScreen = () => {
             label="Platform Fee"
             value={`₱${platformFee.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
           />
+          {bookingData.lateReturn && bookingData.lateFee > 0 && (
+            <InfoRow
+              label={`Late Return Fee (${bookingData.lateHours}h)`}
+              // value={`₱${bookingData.lateFee.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+              value={`₱${(bookingData.lateFee / 100).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+              valueColor="text-red-600"
+            />
+          )}
           <View className="border-t border-gray-300 pt-3 mt-3">
             <InfoRow
               label="Total Paid"
-              value={`₱${totalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+              value={`₱${(totalAmount + (bookingData.lateFee || 0)).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
               bold
             />
           </View>
@@ -236,7 +233,7 @@ const ReceiptScreen = () => {
 
       <View className="bg-blue-50 rounded-lg p-4 mb-6">
         <Text className="text-sm font-JakartaMedium text-secondary-700 text-center">
-          Drive safely and enjoy your trip!
+          Drive safely and enjoy your trip! 🚗
         </Text>
       </View>
     </>
@@ -275,6 +272,10 @@ const ReceiptScreen = () => {
             <InfoRow
               label="Host"
               value={`${hostData?.firstName} ${hostData?.lastName}`}
+            />
+            <InfoRow
+              label="Requested by"
+              value={`${bookingData?.cancelledBy}`}
             />
             <InfoRow
               label="Original Trip Dates"
@@ -451,6 +452,13 @@ const ReceiptScreen = () => {
             label="Trip Total"
             value={`₱${totalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
           />
+          {bookingData.lateReturn && bookingData.lateFee > 0 && (
+            <InfoRow
+              label={`Late Fee (${bookingData.lateHours}h)`}
+              value={`₱${bookingData.lateFee.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+              valueColor="text-green-600"
+            />
+          )}
           <InfoRow
             label="Platform Fee"
             value={`-₱${platformFee.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
@@ -459,7 +467,7 @@ const ReceiptScreen = () => {
           <View className="border-t border-gray-300 pt-3 mt-3">
             <InfoRow
               label="Your Earnings"
-              value={`₱${hostEarnings.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+              value={`₱${(hostEarnings + (bookingData.lateFee || 0)).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
               bold
               valueColor="text-green-600"
             />
@@ -499,7 +507,7 @@ const ReceiptScreen = () => {
           <Text className="text-lg font-JakartaBold text-gray-900 mb-4">
             Booking Details
           </Text>
-          <View className="bg-secondary-100 rounded-lg p-4 space-y-3">
+          <View className="bg-gray-50 rounded-lg p-4 space-y-3">
             <InfoRow label="Trip ID" value={`#${bookingData.id.slice(0, 8)}`} />
             <InfoRow
               label="Car"
@@ -524,7 +532,7 @@ const ReceiptScreen = () => {
           <Text className="text-lg font-JakartaBold text-gray-900 mb-4">
             Renter Refund
           </Text>
-          <View className="bg-secondary-100 rounded-lg p-4 space-y-3">
+          <View className="bg-gray-50 rounded-lg p-4 space-y-3">
             <InfoRow
               label="Total Refund"
               value={`₱${refundAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
