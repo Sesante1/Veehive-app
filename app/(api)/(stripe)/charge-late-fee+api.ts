@@ -4,9 +4,22 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(request: Request) {
   try {
+    // Authenticate
+    const authz = request.headers.get("authorization") || "";
+    const idToken = authz.startsWith("Bearer ") ? authz.slice(7) : "";
+    if (!idToken) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+      });
+    }
+    // TODO: verify idToken with your auth (e.g., Firebase Admin) and load the user
+    // const user = await verifyIdToken(idToken)
+    // TODO: check user is allowed to charge late fee for booking_id (host/owner)
+
     const body = await request.json();
     const { booking_id, payment_intent_id, late_fee } = body;
-    console.log(booking_id + " " + payment_intent_id + " " + late_fee);
+
+    console.log("Charging late fee request received");
 
     if (!booking_id || !payment_intent_id || !late_fee) {
       return new Response(

@@ -57,16 +57,19 @@ export default function CancellationScreen() {
       return { amount: 0, percentage: 0 };
     }
 
-    // If more than 24 hours before pickup, full refund
     if (hoursUntilPickup >= 24) {
+      // More than 24 hours: Full refund
       return { amount: totalAmount, percentage: 100 };
+    } else if (hoursUntilPickup >= 12) {
+      // 12-24 hours: 75% refund
+      return { amount: totalAmount * 0.75, percentage: 75 };
+    } else if (hoursUntilPickup >= 6) {
+      // 6-12 hours: 50% refund
+      return { amount: totalAmount * 0.5, percentage: 50 };
+    } else {
+      // Less than 6 hours: 25% refund
+      return { amount: totalAmount * 0.25, percentage: 25 };
     }
-
-    // If less than 24 hours, no refund
-    // return { amount: 0, percentage: 0 };
-    const partialRefundPercentage = 50;
-    const partialRefundAmount = totalAmount * (partialRefundPercentage / 100);
-    return { amount: partialRefundAmount, percentage: partialRefundPercentage };
   };
 
   const { amount: refundAmount, percentage: refundPercentage } =
@@ -84,11 +87,6 @@ export default function CancellationScreen() {
       const pickupDateTime = new Date(bookingData.pickupTime);
       const isPending = bookingData.bookingStatus === "pending";
       const isConfirmed = bookingData.bookingStatus === "confirmed";
-
-      console.log("=== Starting booking cancellation ===");
-      console.log("Booking Status:", bookingData.bookingStatus);
-      console.log("Payment Status:", bookingData.paymentStatus);
-      console.log("Refund Amount:", refundAmount);
 
       if (isPending && bookingData.paymentStatus === "authorized") {
         // Cancel the authorization
@@ -132,7 +130,7 @@ export default function CancellationScreen() {
             },
             body: JSON.stringify({
               payment_intent_id: bookingData.paymentIntentId,
-              amount: Math.round(refundAmount * 100),
+              amount: refundAmount,
               reason: "requested_by_customer",
             }),
           });
@@ -155,7 +153,7 @@ export default function CancellationScreen() {
 
           if (bookingData.carId) {
             await updateDoc(doc(db, "cars", bookingData.carId), {
-              status: "available",
+              status: "active",
               updatedAt: serverTimestamp(),
             });
           }
@@ -216,9 +214,13 @@ export default function CancellationScreen() {
     } else if (now >= pickupDateTime) {
       return "Your trip has already started. According to our policy, no refunds can be issued once the trip begins.";
     } else if (hoursUntilPickup >= 24) {
-      return "You're canceling more than 24 hours before your trip. You'll receive a full refund.";
+      return "You're canceling more than 24 hours before your trip. You'll receive a full refund (100%).";
+    } else if (hoursUntilPickup >= 12) {
+      return `You're canceling 12-24 hours before your trip. You'll receive a ${refundPercentage}% refund (₱${refundAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}).`;
+    } else if (hoursUntilPickup >= 6) {
+      return `You're canceling 6-12 hours before your trip. You'll receive a ${refundPercentage}% refund (₱${refundAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}).`;
     } else {
-      return `You're canceling less than 24 hours before your trip start time. You'll receive a partial refund of ${refundPercentage}% (₱${refundAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}).`;
+      return `You're canceling less than 6 hours before your trip. You'll receive a ${refundPercentage}% refund (₱${refundAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}).`;
     }
   };
 

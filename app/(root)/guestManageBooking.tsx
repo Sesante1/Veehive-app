@@ -216,7 +216,9 @@ const GuestBooking = () => {
       (now.getTime() - returnDateTime.getTime()) / (1000 * 60 * 60);
     const isLate = hoursSinceReturn > 1; // > 1 hour late
     const lateHours = isLate ? Math.ceil(hoursSinceReturn - 1) : 0;
-    const lateFee = lateHours * 100;
+    // const lateFee = lateHours * 100;
+    const LATE_FEE_PER_HOUR_CENTAVOS = 100 * 100; // ₱100/hr in centavos
+    const lateFee = lateHours * LATE_FEE_PER_HOUR_CENTAVOS;
 
     await updateDoc(doc(db, "bookings", bookingData.id), {
       tripStatus: "awaiting_host_confirmation",
@@ -358,24 +360,32 @@ const GuestBooking = () => {
           </Text>
         </View>
 
+        {/* Show combined status message */}
         <View className="mt-10 p-4 bg-secondary-100 rounded-lg">
           <Text className="font-JakartaMedium text-[14px] color-secondary-700">
             Status
           </Text>
-
-          {/* Show combined status message */}
           <Text className="font-JakartaBold text-lg mt-1 color-primary-500">
+            {/* Booking statuses first */}
             {bookingData.bookingStatus === "pending" &&
               "AWAITING HOST APPROVAL"}
-            {bookingData.bookingStatus === "confirmed" &&
-              !bookingData.tripStatus &&
-              "CONFIRMED - READY FOR CHECK-IN"}
-            {bookingData.tripStatus === "in_progress" && "TRIP IN PROGRESS"}
-            {bookingData.tripStatus === "awaiting_host_confirmation" &&
-              "AWAITING HOST CONFIRMATION"}
-            {bookingData.bookingStatus === "completed" && "COMPLETED"}
-            {bookingData.bookingStatus === "cancelled" && "CANCELLED"}
             {bookingData.bookingStatus === "declined" && "DECLINED"}
+            {bookingData.bookingStatus === "cancelled" && "CANCELLED"}
+            {bookingData.bookingStatus === "completed" && "COMPLETED"}
+
+            {/* Only show trip status if booking is confirmed */}
+            {bookingData.bookingStatus === "confirmed" && (
+              <>
+                {bookingData.tripStatus === "not_started" && "TRIP NOT STARTED"}
+                {bookingData.tripStatus === "checked_in" && "CHECKED IN"}
+                {bookingData.tripStatus === "in_progress" && "TRIP IN PROGRESS"}
+                {bookingData.tripStatus === "checked_out" && "CHECKED OUT"}
+                {bookingData.tripStatus === "awaiting_host_confirmation" &&
+                  "AWAITING HOST CONFIRMATION"}
+                {bookingData.tripStatus === "completed" && "COMPLETED"}
+                {!bookingData.tripStatus && "CONFIRMED - READY FOR CHECK-IN"}
+              </>
+            )}
           </Text>
         </View>
 

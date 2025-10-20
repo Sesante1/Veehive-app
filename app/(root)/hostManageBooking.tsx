@@ -465,13 +465,32 @@ const HostBooking = () => {
           </Text>
         </View>
 
-        {/* Status Badge */}
+        {/* Show combined status message */}
         <View className="mt-10 p-4 bg-secondary-100 rounded-lg">
           <Text className="font-JakartaMedium text-[14px] color-secondary-700">
-            Booking Status
+            Status
           </Text>
           <Text className="font-JakartaBold text-lg mt-1 color-primary-500">
-            {bookingData.bookingStatus.toUpperCase()}
+            {/* Booking statuses first */}
+            {bookingData.bookingStatus === "pending" &&
+              "AWAITING HOST APPROVAL"}
+            {bookingData.bookingStatus === "declined" && "DECLINED"}
+            {bookingData.bookingStatus === "cancelled" && "CANCELLED"}
+            {bookingData.bookingStatus === "completed" && "COMPLETED"}
+
+            {/* Only show trip status if booking is confirmed */}
+            {bookingData.bookingStatus === "confirmed" && (
+              <>
+                {bookingData.tripStatus === "not_started" && "TRIP NOT STARTED"}
+                {bookingData.tripStatus === "checked_in" && "CHECKED IN"}
+                {bookingData.tripStatus === "in_progress" && "TRIP IN PROGRESS"}
+                {bookingData.tripStatus === "checked_out" && "CHECKED OUT"}
+                {bookingData.tripStatus === "awaiting_host_confirmation" &&
+                  "AWAITING HOST CONFIRMATION"}
+                {bookingData.tripStatus === "completed" && "COMPLETED"}
+                {!bookingData.tripStatus && "CONFIRMED - READY FOR CHECK-IN"}
+              </>
+            )}
           </Text>
         </View>
 

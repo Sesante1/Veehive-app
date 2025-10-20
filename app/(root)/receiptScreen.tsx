@@ -203,7 +203,8 @@ const ReceiptScreen = () => {
           {bookingData.lateReturn && bookingData.lateFee > 0 && (
             <InfoRow
               label={`Late Return Fee (${bookingData.lateHours}h)`}
-              value={`₱${bookingData.lateFee.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+              // value={`₱${bookingData.lateFee.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+              value={`₱${(bookingData.lateFee / 100).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
               valueColor="text-red-600"
             />
           )}
