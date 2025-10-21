@@ -1,4 +1,4 @@
-import ConfirmationModal from "@/components/ConfirmationModal";
+import BottomSheet from "@/components/BottomSheet";
 import { icons } from "@/constants";
 import { db, FIREBASE_AUTH } from "@/FirebaseConfig";
 import { UserData } from "@/hooks/useUser";
@@ -67,6 +67,25 @@ const HostBooking = () => {
     confirmText: "",
     onConfirm: () => {},
   });
+
+  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+  const [bottomSheetType, setBottomSheetType] = useState<
+    "accept" | "decline" | null
+  >(null);
+
+  const handleAccept = () => {
+    setBottomSheetType("accept");
+    setIsBottomSheetVisible(true);
+  };
+
+  const handleDecline = () => {
+    setBottomSheetType("decline");
+    setIsBottomSheetVisible(true);
+  };
+
+  const closeBottomSheet = () => {
+    setIsBottomSheetVisible(false);
+  };
 
   useEffect(() => {
     if (!initialBooking?.id) {
@@ -138,20 +157,20 @@ const HostBooking = () => {
     );
   }
 
-  const handleAccept = () => {
-    setModalConfig({
-      title: "Accept Booking",
-      message:
-        "Are you sure you want to accept this booking? The guest will be charged.",
-      confirmText: "Accept",
-      confirmColor: "#007bff",
-      onConfirm: handleAcceptConfirm,
-    });
-    setModalVisible(true);
-  };
+  // const handleAccept = () => {
+  //   setModalConfig({
+  //     title: "Accept Booking",
+  //     message:
+  //       "Are you sure you want to accept this booking? The guest will be charged.",
+  //     confirmText: "Accept",
+  //     confirmColor: "#007bff",
+  //     onConfirm: handleAcceptConfirm,
+  //   });
+  //   setModalVisible(true);
+  // };
 
   const handleAcceptConfirm = async () => {
-    setModalVisible(false);
+    closeBottomSheet();
     setActionLoading(true);
     try {
       console.log("=== Starting booking acceptance ===");
@@ -210,20 +229,20 @@ const HostBooking = () => {
     }
   };
 
-  const handleDecline = () => {
-    setModalConfig({
-      title: "Decline Booking Request",
-      message:
-        "Are you sure you want to decline this booking request? The renter will not be charged and the payment authorization will be released.",
-      confirmText: "Decline",
-      confirmColor: "#dc2626",
-      onConfirm: handleDeclineConfirm,
-    });
-    setModalVisible(true);
-  };
+  // const handleDecline = () => {
+  //   setModalConfig({
+  //     title: "Decline Booking Request",
+  //     message:
+  //       "Are you sure you want to decline this booking request? The renter will not be charged and the payment authorization will be released.",
+  //     confirmText: "Decline",
+  //     confirmColor: "#dc2626",
+  //     onConfirm: handleDeclineConfirm,
+  //   });
+  //   setModalVisible(true);
+  // };
 
   const handleDeclineConfirm = async () => {
-    setModalVisible(false);
+    closeBottomSheet();
     setActionLoading(true);
     try {
       console.log("=== Starting booking decline ===");
@@ -744,17 +763,140 @@ const HostBooking = () => {
             </TouchableOpacity>
           </View>
         </View>
-
-        <ConfirmationModal
-          visible={modalVisible}
-          title={modalConfig.title}
-          message={modalConfig.message}
-          confirmText={modalConfig.confirmText}
-          confirmColor={modalConfig.confirmColor}
-          onConfirm={modalConfig.onConfirm}
-          onCancel={() => setModalVisible(false)}
-        />
       </ScrollView>
+      <BottomSheet
+        visible={isBottomSheetVisible}
+        onClose={closeBottomSheet}
+        height={bottomSheetType === "accept" ? 515 : 515}
+        showDragHandle={true}
+        enablePanGesture={true}
+        backdropOpacity={0.5}
+        dismissThreshold={0.3}
+        borderRadius={24}
+        backgroundColor="#FFFFFF"
+      >
+        <View className="px-6 pt-2 pb-6">
+          {/* Title */}
+          <Text className="text-2xl font-JakartaBold text-gray-900 text-center mb-4">
+            {bottomSheetType === "accept"
+              ? "Accept Booking"
+              : "Decline Booking Request"}
+          </Text>
+
+          {/* Booking Info Card */}
+          <View className="overflow-hidden mb-4">
+            <View className="flex-row gap-8">
+              {/* Car Image - Left Side */}
+              <View className="w-32 h-full">
+                <Image
+                  source={
+                    carData && carData.images.length > 0
+                      ? { uri: carData.images[0].url }
+                      : require("../../assets/images/adaptive-icon.png")
+                  }
+                  style={{
+                    width: 140,
+                    height: 140,
+                    minHeight: 140,
+                    borderRadius: 5,
+                  }}
+                  resizeMode="cover"
+                />
+              </View>
+
+              {/* Info - Right Side */}
+              <View className="flex-1 p-4">
+                {/* Car Info */}
+                <View className="mb-3">
+                  <Text className="font-JakartaBold text-base text-gray-900">
+                    {carData?.make} {carData?.model}
+                  </Text>
+                  <Text className="font-JakartaMedium text-xs text-gray-500">
+                    {carData?.year}
+                  </Text>
+                </View>
+
+                {/* Dates */}
+                <View className="flex-row justify-between pt-2 border-t border-gray-200">
+                  <View>
+                    <Text className="font-JakartaMedium text-xs text-gray-500">
+                      Pickup
+                    </Text>
+                    <Text className="font-JakartaSemiBold text-xs text-gray-900">
+                      {formatDate(bookingData.pickupDate)}
+                    </Text>
+                  </View>
+                  <View>
+                    <Text className="font-JakartaMedium text-xs text-gray-500">
+                      Return
+                    </Text>
+                    <Text className="font-JakartaSemiBold text-xs text-gray-900">
+                      {formatDate(bookingData.returnDate)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Message */}
+          <View
+            className={`rounded-lg p-4 mb-6 ${
+              bottomSheetType === "accept"
+                ? "bg-blue-50 border border-blue-200"
+                : "bg-red-50 border border-red-200"
+            }`}
+          >
+            <View className="flex-row items-start">
+              <MaterialIcons
+                name="info"
+                size={20}
+                color={bottomSheetType === "accept" ? "#3B82F6" : "#EF4444"}
+              />
+              <Text className="flex-1 ml-2 font-JakartaMedium text-gray-700 leading-5">
+                {bottomSheetType === "accept"
+                  ? "Are you sure you want to accept this booking? The guest will be charged."
+                  : "Are you sure you want to decline this booking request? The renter will not be charged and the payment authorization will be released."}
+              </Text>
+            </View>
+          </View>
+
+          {/* Buttons */}
+          <View className="gap-3">
+            <TouchableOpacity
+              className={`w-full rounded-lg py-4 items-center ${
+                bottomSheetType === "accept" ? "bg-green-500" : "bg-red-500"
+              }`}
+              onPress={
+                bottomSheetType === "accept"
+                  ? handleAcceptConfirm
+                  : handleDeclineConfirm
+              }
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="font-JakartaSemiBold text-lg text-white">
+                  {bottomSheetType === "accept"
+                    ? "Accept Booking"
+                    : "Decline Booking"}
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="w-full border border-gray-300 rounded-lg py-4 items-center"
+              onPress={closeBottomSheet}
+              disabled={actionLoading}
+            >
+              <Text className="font-JakartaSemiBold text-lg text-gray-700">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </BottomSheet>
     </SafeAreaView>
   );
 };

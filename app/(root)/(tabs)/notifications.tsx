@@ -1,4 +1,4 @@
-import { images } from "@/constants";
+import { icons, images } from "@/constants";
 import {
   deleteNotification,
   markAllAsRead,
@@ -24,7 +24,10 @@ const Notifications = () => {
   const { user } = useAuth();
   const userId = user?.uid || null;
 
-  const { notifications, unreadCount, loading } = useNotifications(userId, "guest");
+  const { notifications, unreadCount, loading } = useNotifications(
+    userId,
+    "guest"
+  );
 
   const handleNotificationPress = async (notification: any) => {
     // Mark as read
@@ -103,7 +106,7 @@ const Notifications = () => {
   if (notifications.length === 0) {
     return (
       <SafeAreaView className="flex-1 bg-white px-4">
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1}}>
           <Text className="text-2xl mt-6 font-JakartaBold">Notifications</Text>
           <View className="flex-1 justify-center items-center">
             <Image
@@ -167,10 +170,16 @@ const Notifications = () => {
                 !item.read ? "bg-blue-50" : "bg-white"
               }`}
             >
-              <View className="flex-row">
-                <Text className="text-2xl mr-3">
+              <View className="flex-row items-center gap-4">
+                {/* <Text className="text-2xl mr-3">
                   {getNotificationIcon(item.type)}
-                </Text>
+                </Text> */}
+                <View className="bg-primary-500 p-3 rounded-full shadow-md flex justify-center items-center h-16 w-16">
+                  <Image
+                    source={icons.notification}
+                    className="h-7 w-7 tint-white"
+                  />
+                </View>
 
                 <View className="flex-1">
                   <View className="flex-row items-center justify-between mb-1">
@@ -193,7 +202,7 @@ const Notifications = () => {
               </View>
             </TouchableOpacity>
           )}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ paddingBottom: 90 }}
         />
       </View>
     </SafeAreaView>

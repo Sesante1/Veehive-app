@@ -1,4 +1,4 @@
-import { images } from "@/constants";
+import { icons, images } from "@/constants";
 import {
   deleteNotification,
   markAllAsRead,
@@ -24,7 +24,10 @@ const Notifications = () => {
   const { user } = useAuth();
   const userId = user?.uid || null;
 
-  const { notifications, unreadCount, loading } = useNotifications(userId, "hoster");
+  const { notifications, unreadCount, loading } = useNotifications(
+    userId,
+    "hoster"
+  );
 
   const handleNotificationPress = async (notification: any) => {
     // Mark as read
@@ -168,9 +171,12 @@ const Notifications = () => {
               }`}
             >
               <View className="flex-row">
-                <Text className="text-2xl mr-3">
-                  {getNotificationIcon(item.type)}
-                </Text>
+                <View className="bg-primary-500 p-3 rounded-full shadow-md flex justify-center items-center h-16 w-16">
+                  <Image
+                    source={icons.notification}
+                    className="h-7 w-7 tint-white"
+                  />
+                </View>
 
                 <View className="flex-1">
                   <View className="flex-row items-center justify-between mb-1">
