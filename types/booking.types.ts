@@ -135,6 +135,9 @@ export interface Booking {
     | "awaiting_host_confirmation"
     | "completed";
 
+  guestReviewSubmitted: boolean;
+  hostReviewSubmitted: boolean;
+
   // Trip tracking
   actualStartTime?: Timestamp | null;
   actualEndTime?: Timestamp | null;

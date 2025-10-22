@@ -211,7 +211,7 @@ const ReceiptScreen = () => {
           <View className="border-t border-gray-300 pt-3 mt-3">
             <InfoRow
               label="Total Paid"
-              value={`₱${(totalAmount + (bookingData.lateFee || 0)).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+              value={`₱${(totalAmount + (bookingData.lateFee || 0 / 100)).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
               bold
             />
           </View>
@@ -455,7 +455,7 @@ const ReceiptScreen = () => {
           {bookingData.lateReturn && bookingData.lateFee > 0 && (
             <InfoRow
               label={`Late Fee (${bookingData.lateHours}h)`}
-              value={`₱${bookingData.lateFee.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+              value={`₱${(bookingData.lateFee / 100).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
               valueColor="text-green-600"
             />
           )}
@@ -467,7 +467,7 @@ const ReceiptScreen = () => {
           <View className="border-t border-gray-300 pt-3 mt-3">
             <InfoRow
               label="Your Earnings"
-              value={`₱${(hostEarnings + (bookingData.lateFee || 0)).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+              value={`₱${(hostEarnings + (bookingData.lateFee / 100)).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
               bold
               valueColor="text-green-600"
             />

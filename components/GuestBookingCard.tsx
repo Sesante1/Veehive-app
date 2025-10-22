@@ -6,6 +6,7 @@ import {
   MaterialCommunityIcons,
   MaterialIcons,
 } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
@@ -56,38 +57,17 @@ const BookingCard: React.FC<BookingCardProps> = ({
     fetchData();
   }, [booking.userId, booking.carId]);
 
-  const getStatusStyle = (status: string): string => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100";
-      case "confirmed":
-        return "bg-blue-100";
-      case "completed":
-        return "bg-green-100";
-      case "cancelled":
-        return "bg-red-100";
-      default:
-        return "bg-gray-100";
-    }
-  };
-
-  const getStatusTextStyle = (status: string): string => {
-    switch (status) {
-      case "pending":
-        return "text-yellow-800";
-      case "confirmed":
-        return "text-blue-800";
-      case "completed":
-        return "text-green-800";
-      case "cancelled":
-        return "text-red-800";
-      default:
-        return "text-gray-800";
-    }
-  };
-
-  const getStatusLabel = (status: string): string => {
-    return status.charAt(0).toUpperCase() + status.slice(1);
+  const handleReviewHost = () => {
+    router.push({
+      pathname: "/GuestReviewCarScreen",
+      params: {
+        bookingId: booking.id,
+        hostId: booking.userId,
+        carId: booking.carId,
+        guestName: `${guestData?.firstName || "Guest"} ${guestData?.lastName || ""}`,
+        guestImage: guestData?.profileImage || "",
+      },
+    });
   };
 
   if (loading) {
@@ -179,25 +159,72 @@ const BookingCard: React.FC<BookingCardProps> = ({
       </View>
 
       {/* Actions */}
-      <View className="py-3 flex-row gap-2">
-        <TouchableOpacity
-          onPress={() => onContactGuest(booking)}
-          className="flex-1 bg-gray-100 py-3.5 rounded-lg"
-          activeOpacity={0.7}
-        >
-          <Text className="text-center text-gray-700 font-JakartaSemiBold">
-            Contact Host
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => onManageTrip(booking)}
-          className="flex-1 bg-primary-500 py-3.5 rounded-lg"
-          activeOpacity={0.7}
-        >
-          <Text className="text-center text-white font-JakartaSemiBold">
-            Details
-          </Text>
-        </TouchableOpacity>
+      <View className="px-4 py-3 flex-row gap-2">
+        {booking.bookingStatus === "completed" ? (
+          // Show review buttons for completed trips
+          <>
+            {!booking.guestReviewSubmitted ? (
+              <TouchableOpacity
+                onPress={handleReviewHost}
+                className="flex-1 bg-primary-500 py-3.5 rounded-lg"
+                activeOpacity={0.7}
+              >
+                <View className="flex-row items-center justify-center gap-2">
+                  <MaterialIcons name="star" size={20} color="white" />
+                  <Text className="text-center text-white font-JakartaSemiBold">
+                    Rate Host
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ) : (
+              // Already reviewed
+              <View className="flex-1 bg-green-50 py-3.5 rounded-lg border border-green-200">
+                <View className="flex-row items-center justify-center gap-2">
+                  <MaterialIcons
+                    name="check-circle"
+                    size={20}
+                    color="#16a34a"
+                  />
+                  <Text className="text-center text-green-700 font-JakartaSemiBold">
+                    Review Submitted
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            <TouchableOpacity
+              onPress={() => onManageTrip(booking)}
+              className="flex-1 bg-gray-100 py-3.5 rounded-lg"
+              activeOpacity={0.7}
+            >
+              <Text className="text-center text-gray-700 font-JakartaSemiBold">
+                View Details
+              </Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          // Show default buttons for pending/confirmed trips
+          <>
+            <TouchableOpacity
+              onPress={() => onContactGuest(booking)}
+              className="flex-1 bg-gray-100 py-3.5 rounded-lg"
+              activeOpacity={0.7}
+            >
+              <Text className="text-center text-gray-700 font-JakartaSemiBold">
+                Contact Guest
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => onManageTrip(booking)}
+              className="flex-1 bg-primary-500 py-3.5 rounded-lg"
+              activeOpacity={0.7}
+            >
+              <Text className="text-center text-white font-JakartaSemiBold">
+                Details
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </View>
   );

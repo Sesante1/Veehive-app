@@ -1,6 +1,8 @@
 import { db } from "@/FirebaseConfig";
 import { Booking, CarData, UserData } from "@/types/booking.types";
 import { formatDate, formatTime } from "@/utils/dateUtils";
+import { MaterialIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
@@ -78,6 +80,18 @@ const BookingCard: React.FC<BookingCardProps> = ({
       default:
         return "text-gray-800";
     }
+  };
+
+  const handleReviewGuest = () => {
+    router.push({
+      pathname: "/HostReviewGuestScreen",
+      params: {
+        bookingId: booking.id,
+        guestId: booking.userId,
+        guestName: `${guestData?.firstName || "Guest"} ${guestData?.lastName || ""}`,
+        guestImage: guestData?.profileImage || "",
+      },
+    });
   };
 
   const getStatusLabel = (status: string): string => {
@@ -196,24 +210,71 @@ const BookingCard: React.FC<BookingCardProps> = ({
 
       {/* Actions */}
       <View className="px-4 py-3 flex-row gap-2">
-        <TouchableOpacity
-          onPress={() => onContactGuest(booking)}
-          className="flex-1 bg-gray-100 py-3.5 rounded-lg"
-          activeOpacity={0.7}
-        >
-          <Text className="text-center text-gray-700 font-JakartaSemiBold">
-            Contact Guest
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => onManageTrip(booking)}
-          className="flex-1 bg-primary-500 py-3.5 rounded-lg"
-          activeOpacity={0.7}
-        >
-          <Text className="text-center text-white font-JakartaSemiBold">
-            Details
-          </Text>
-        </TouchableOpacity>
+        {booking.bookingStatus === "completed" ? (
+          // Show review buttons for completed trips
+          <>
+            {!booking.hostReviewSubmitted ? (
+              <TouchableOpacity
+                onPress={handleReviewGuest}
+                className="flex-1 bg-primary-500 py-3.5 rounded-lg"
+                activeOpacity={0.7}
+              >
+                <View className="flex-row items-center justify-center gap-2">
+                  <MaterialIcons name="star" size={20} color="white" />
+                  <Text className="text-center text-white font-JakartaSemiBold">
+                    Rate Guest
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ) : (
+              // Already reviewed
+              <View className="flex-1 bg-green-50 py-3.5 rounded-lg border border-green-200">
+                <View className="flex-row items-center justify-center gap-2">
+                  <MaterialIcons
+                    name="check-circle"
+                    size={20}
+                    color="#16a34a"
+                  />
+                  <Text className="text-center text-green-700 font-JakartaSemiBold">
+                    Review Submitted
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            <TouchableOpacity
+              onPress={() => onManageTrip(booking)}
+              className="flex-1 bg-gray-100 py-3.5 rounded-lg"
+              activeOpacity={0.7}
+            >
+              <Text className="text-center text-gray-700 font-JakartaSemiBold">
+                View Details
+              </Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          // Show default buttons for pending/confirmed trips
+          <>
+            <TouchableOpacity
+              onPress={() => onContactGuest(booking)}
+              className="flex-1 bg-gray-100 py-3.5 rounded-lg"
+              activeOpacity={0.7}
+            >
+              <Text className="text-center text-gray-700 font-JakartaSemiBold">
+                Contact Guest
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => onManageTrip(booking)}
+              className="flex-1 bg-primary-500 py-3.5 rounded-lg"
+              activeOpacity={0.7}
+            >
+              <Text className="text-center text-white font-JakartaSemiBold">
+                Details
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </View>
   );

@@ -100,13 +100,8 @@ const CreateCar = () => {
       if (!id) return;
       if (!refreshing) setLoading(true);
 
-      // subscribe to car changes
-      const unsubscribe = getCarWithOwner(id, (carData) => {
-        setCar(carData);
-        setLoading(false);
-      });
-
-      return () => unsubscribe();
+      const carData = await getCarWithOwner(id);
+      setCar(carData);
     } catch (e) {
       console.log("Error fetching car:", e);
       Alert.alert("Error", "Failed to load car details");

@@ -38,87 +38,6 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-const reviews = [
-  {
-    id: 1,
-    rating: 5,
-    timeAgo: "1 month ago",
-    reviewText:
-      "Reliable, fuel-efficient, and holds resale value well; perfect for hassle-free daily driving.",
-    user: {
-      name: "Boy Kneegrow",
-      profileImage:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ7mPoWIcV-V4FlEoHOWZwOGrAdTKpjocR5RVSRm86OHXcksxOr",
-    },
-    postedOn: "2 months on Veehive",
-  },
-  {
-    id: 2,
-    rating: 5,
-    timeAgo: "3 months ago",
-    reviewText:
-      "Known for sporty handling and durable engines; great mix of practicality and fun.",
-    user: {
-      name: "Tung Tung Tung Sahur",
-      profileImage:
-        "https://tr.rbxcdn.com/180DAY-414e6959161ce846f3ffff988d75a69b/420/420/Hat/Png/noFilter",
-    },
-    postedOn: "3 months on Veehive",
-  },
-  {
-    id: 3,
-    rating: 4,
-    timeAgo: "2 weeks ago",
-    reviewText:
-      "Comfortable seats and smooth ride, though fuel economy could be better on longer trips.",
-    user: {
-      name: "Maria Lopez",
-      profileImage:
-        "https://tr.rbxcdn.com/180DAY-414e6959161ce846f3ffff988d75a69b/420/420/Hat/Png/noFilter",
-    },
-    postedOn: "1 month on Veehive",
-  },
-  {
-    id: 4,
-    rating: 5,
-    timeAgo: "5 days ago",
-    reviewText:
-      "Excellent value for money. Great tech features and easy to maintain. Highly recommended!",
-    user: {
-      name: "James Carter",
-      profileImage:
-        "https://tr.rbxcdn.com/180DAY-414e6959161ce846f3ffff988d75a69b/420/420/Hat/Png/noFilter",
-    },
-    postedOn: "2 weeks on Veehive",
-  },
-  {
-    id: 5,
-    rating: 3,
-    timeAgo: "2 months ago",
-    reviewText:
-      "Decent overall, but the interior materials feel a bit cheap compared to competitors.",
-    user: {
-      name: "Aisha Khan",
-      profileImage:
-        "https://tr.rbxcdn.com/180DAY-414e6959161ce846f3ffff988d75a69b/420/420/Hat/Png/noFilter",
-    },
-    postedOn: "3 months on Veehive",
-  },
-  {
-    id: 6,
-    rating: 4,
-    timeAgo: "4 months ago",
-    reviewText:
-      "Handles well on city roads and highways. Cargo space is a bonus for family trips.",
-    user: {
-      name: "David Kim",
-      profileImage:
-        "https://tr.rbxcdn.com/180DAY-414e6959161ce846f3ffff988d75a69b/420/420/Hat/Png/noFilter",
-    },
-    postedOn: "4 months on Veehive",
-  },
-];
-
 type Car = {
   id: string;
   make: string;
@@ -144,65 +63,76 @@ type Car = {
     longitude: number;
     address: string;
   } | null;
-};
-
-type Review = {
-  id: string | number;
-  rating: number;
-  timeAgo: string;
-  reviewText: string;
-  user: {
-    name: string;
-    profileImage: string;
-  };
-  postedOn: string;
+  // ✅ Add these
+  reviews?: any[];
+  averageRating?: string;
+  reviewCount?: number;
 };
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.8;
 const CARD_SPACING = 15;
 
-const ReviewCard = ({ item }: { item: Review }) => (
-  <View
-    style={{ width: CARD_WIDTH }}
-    className="bg-white py-5 border-r border-gray-200 mr-5"
-  >
-    <View className="flex-row items-center mb-4">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <AntDesign
-          key={index}
-          name={index < item.rating ? "star" : "staro"}
-          size={13}
-          color="#FFD700"
-          style={{ marginRight: 2 }}
-        />
-      ))}
+const ReviewCard = ({ item }: { item: any }) => {
+  // Calculate time ago
+  const getTimeAgo = (timestamp: any) => {
+    if (!timestamp) return "Recently";
 
-      <Text className="text-xs text-gray-500 font-Jakarta ml-2">
-        {item.timeAgo}
-      </Text>
-    </View>
-    <Text className="text-sm text-gray-800 mb-4 font-Jakarta">
-      {item.reviewText}
-    </Text>
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-    <View className="flex-row items-center mt-auto">
-      <Image
-        source={{ uri: item.user.profileImage }}
-        className="w-10 h-10 rounded-full mr-3"
-        style={{ width: 40, height: 40, marginRight: 10, borderRadius: 40 / 2 }}
-      />
-      <View>
-        <Text className="font-JakartaSemiBold text-gray-900">
-          {item.user.name}
-        </Text>
-        <Text className="text-xs text-gray-500 font-Jakarta mt-1">
-          {item.postedOn}
+    if (diffInDays === 0) return "Today";
+    if (diffInDays === 1) return "1 day ago";
+    if (diffInDays < 30) return `${diffInDays} days ago`;
+    if (diffInDays < 60) return "1 month ago";
+    if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`;
+    return `${Math.floor(diffInDays / 365)} years ago`;
+  };
+
+  return (
+    <View
+      style={{ width: CARD_WIDTH }}
+      className="bg-white py-5 border-r border-gray-200 mr-5"
+    >
+      <View className="flex-row items-center mb-4">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <AntDesign
+            key={index}
+            name={index < item.rating ? "star" : "staro"}
+            size={13}
+            color="#FFD700"
+            style={{ marginRight: 2 }}
+          />
+        ))}
+
+        <Text className="text-xs text-gray-500 font-Jakarta ml-2">
+          {getTimeAgo(item.createdAt)}
         </Text>
       </View>
+      <Text className="text-sm text-gray-800 mb-4 font-Jakarta">
+        {item.comment}
+      </Text>
+
+      <View className="flex-row items-center mt-auto">
+        <Image
+          source={{ uri: item.guestImage || "https://via.placeholder.com/40" }}
+          className="w-10 h-10 rounded-full mr-3"
+          style={{ width: 40, height: 40, marginRight: 10, borderRadius: 20 }}
+        />
+        <View>
+          <Text className="font-JakartaSemiBold text-gray-900">
+            {item.guestName || "Anonymous"}
+          </Text>
+          <Text className="text-xs text-gray-500 font-Jakarta mt-1">
+            Veehive User
+          </Text>
+        </View>
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 const CarDetails = () => {
   const { id } = useLocalSearchParams<{
@@ -228,13 +158,8 @@ const CarDetails = () => {
     const fetchCar = async () => {
       try {
         setLoading(true);
-        // subscribe to car changes
-        const unsubscribe = getCarWithOwner(id, (carData) => {
-          setCar(carData);
-          setLoading(false);
-        });
-
-        return () => unsubscribe();
+        const carData = await getCarWithOwner(id);
+        setCar(carData);
       } catch (e) {
         console.log("Error fetching car:", e);
       } finally {
@@ -413,8 +338,9 @@ const CarDetails = () => {
 
             <View className="flex flex-row justify-center items-center gap-2 rounded-[5px]">
               <AntDesign name="star" size={16} color="#FFD700" />
-              {/* TODO: Replace with actual rating once data is available */}
-              <Text className="color-secondary-700">4.7</Text>
+              <Text className="color-secondary-700">
+                {car.averageRating || "No ratings"}
+              </Text>
             </View>
           </View>
 
@@ -535,20 +461,29 @@ const CarDetails = () => {
           <View className="mt-12">
             <View className="flex-row items-center gap-2">
               <AntDesign name="star" size={16} color="#FFD700" />
-              <Text className="font-JakartaSemiBold">4.75.100 reviews</Text>
+              <Text className="font-JakartaSemiBold">
+                {car.averageRating || "0.0"} · {car.reviewCount || 0} reviews
+              </Text>
             </View>
-            <FlatList
-              data={reviews}
-              renderItem={({ item }: { item: Review }) => (
-                <ReviewCard item={item} />
-              )}
-              keyExtractor={(item) => item.id.toString()}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              snapToInterval={CARD_WIDTH + CARD_SPACING}
-              decelerationRate="fast"
-              pagingEnabled={false}
-            />
+
+            {car.reviews && car.reviews.length > 0 ? (
+              <FlatList
+                data={car.reviews}
+                renderItem={({ item }) => <ReviewCard item={item} />}
+                keyExtractor={(item) => item.id}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                snapToInterval={CARD_WIDTH + CARD_SPACING}
+                decelerationRate="fast"
+                pagingEnabled={false}
+              />
+            ) : (
+              <View className="mt-4 p-6 bg-gray-50 rounded-lg items-center">
+                <Text className="font-Jakarta text-gray-500">
+                  No reviews yet. Be the first to review this car!
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Show all reviews button */}

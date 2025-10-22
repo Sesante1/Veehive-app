@@ -30,6 +30,7 @@ const UserListing = () => {
       setLoading(false);
       return;
     }
+    
     try {
       const carList = await fetchCarsByOwner(user.uid);
       setCars(carList);
@@ -73,23 +74,10 @@ const UserListing = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white px-4">
-      {/* <View className="flex bg-gray items-center py-4">
-        <Pressable
-          className="bg-white rounded-full p-1 absolute left-0 top-4"
-          onPress={() => {
-            router.back();
-          }}
-        >
-          <Image source={icons.backArrow} style={{ width: 30, height: 30 }} />
-        </Pressable>
-
-        <Text className="text-2xl font-JakartaSemiBold">Your listing</Text>
-        <Text className="text-sm text-gray-500">
-          {userCars.length} cars found
-        </Text>
-      </View> */}
       <View className="h-20">
-        <Text className="text-2xl font-JakartaSemiBold mt-6 ">Your listing</Text>
+        <Text className="text-2xl font-JakartaSemiBold mt-6 ">
+          Your listing
+        </Text>
       </View>
 
       <>
@@ -108,7 +96,7 @@ const UserListing = () => {
             { label: "Canceled", value: "canceled" },
           ]}
           value={status}
-          onChangeValue={setStatus} 
+          onChangeValue={setStatus}
         />
 
         <Text className="text-lg font-JakartaSemiBold my-4">

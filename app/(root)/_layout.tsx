@@ -162,6 +162,14 @@ export default function Layout() {
         name="hostCancellationScreen"
         options={{ headerShown: false, animation: "slide_from_right" }}
       />
+      <Stack.Screen
+        name="GuestReviewCarScreen"
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="HostReviewGuestScreen"
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
     </Stack>
   );
 }
