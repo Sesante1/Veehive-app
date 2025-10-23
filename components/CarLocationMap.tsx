@@ -288,7 +288,7 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
   return (
     <View className="flex-1 bg-white">
       {/* Header */}
-      <View className="absolute top-4 left-4 z-50">
+      <View className="absolute top-2 left-2 z-50">
         <TouchableOpacity
           onPress={onClose}
           className="bg-white p-2 rounded-full"
