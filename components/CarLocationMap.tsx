@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { icons } from "@/constants";
+import * as Location from "expo-location";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
+  ActivityIndicator,
   Alert,
+  Image,
   Linking,
   Platform,
-  Image,
-  ActivityIndicator,
-} from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
-import * as Location from 'expo-location';
-import { icons } from '@/constants';
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
 
 interface CarLocationMapProps {
   carLocation: {
@@ -47,8 +47,8 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [routeCoordinates, setRouteCoordinates] = useState<RoutePoint[]>([]);
-  const [routeDistance, setRouteDistance] = useState<string>('');
-  const [routeDuration, setRouteDuration] = useState<string>('');
+  const [routeDistance, setRouteDistance] = useState<string>("");
+  const [routeDuration, setRouteDuration] = useState<string>("");
   const [loadingRoute, setLoadingRoute] = useState<boolean>(false);
   const mapRef = useRef<MapView>(null);
 
@@ -57,14 +57,14 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
     const requestLocationPermission = async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
-        
-        if (status !== 'granted') {
+
+        if (status !== "granted") {
           setLocationPermission(false);
           setIsLoading(false);
           Alert.alert(
-            'Location Permission Required',
-            'Please enable location permissions to see your current location and get directions.',
-            [{ text: 'OK' }]
+            "Location Permission Required",
+            "Please enable location permissions to see your current location and get directions.",
+            [{ text: "OK" }]
           );
           return;
         }
@@ -88,14 +88,13 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
           fetchRoute(userLoc);
           fitMarkersInView(userLoc);
         }, 500);
-
       } catch (error) {
-        console.error('Error getting location:', error);
+        console.error("Error getting location:", error);
         setIsLoading(false);
         Alert.alert(
-          'Location Error',
-          'Could not get your current location. You can still view the car location.',
-          [{ text: 'OK' }]
+          "Location Error",
+          "Could not get your current location. You can still view the car location.",
+          [{ text: "OK" }]
         );
       }
     };
@@ -108,9 +107,9 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
     setLoadingRoute(true);
     try {
       const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
-      
+
       if (!googleMapsApiKey) {
-        console.error('Google Maps API key not found');
+        console.error("Google Maps API key not found");
         setLoadingRoute(false);
         return;
       }
@@ -123,7 +122,7 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
 
       if (data.routes && data.routes.length > 0) {
         const route = data.routes[0];
-        
+
         // Decode polyline
         const points = decodePolyline(route.overview_polyline.points);
         setRouteCoordinates(points);
@@ -134,7 +133,7 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
         setRouteDuration(leg.duration.text);
       }
     } catch (error) {
-      console.error('Error fetching route:', error);
+      console.error("Error fetching route:", error);
     } finally {
       setLoadingRoute(false);
     }
@@ -210,8 +209,8 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
   // Navigate to car location - auto-detect device
   const navigateToCarLocation = () => {
     const { latitude, longitude } = carLocation;
-    
-    if (Platform.OS === 'ios') {
+
+    if (Platform.OS === "ios") {
       // Use Apple Maps on iOS
       openAppleMaps(latitude, longitude);
     } else {
@@ -226,9 +225,9 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
       ios: `comgooglemaps://?daddr=${lat},${lng}&directionsmode=driving`,
       android: `google.navigation:q=${lat},${lng}&mode=d`,
     });
-    
+
     const fallbackUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-    
+
     if (url) {
       Linking.canOpenURL(url)
         .then((supported) => {
@@ -248,7 +247,7 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
   const openAppleMaps = (lat: number, lng: number) => {
     const url = `maps:0,0?q=${lat},${lng}`;
     const fallbackUrl = `http://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`;
-    
+
     Linking.canOpenURL(url)
       .then((supported) => {
         if (supported) {
@@ -264,7 +263,7 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
   const openWaze = (lat: number, lng: number) => {
     const url = `waze://?ll=${lat},${lng}&navigate=yes`;
     const fallbackUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
-    
+
     Linking.canOpenURL(url)
       .then((supported) => {
         if (supported) {
@@ -289,14 +288,14 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
   return (
     <View className="flex-1 bg-white">
       {/* Header */}
-      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-200">
-        <TouchableOpacity onPress={onClose} className="p-2">
+      <View className="absolute top-4 left-4 z-50">
+        <TouchableOpacity
+          onPress={onClose}
+          className="bg-white p-2 rounded-full"
+          activeOpacity={0.7}
+        >
           <Image source={icons.backArrow} className="w-6 h-6" />
         </TouchableOpacity>
-        <Text className="flex-1 text-lg font-semibold text-center text-gray-800">
-          Car Location
-        </Text>
-        <View className="w-10" />
       </View>
 
       {/* Map */}
@@ -334,12 +333,20 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
             latitude: carLocation.latitude,
             longitude: carLocation.longitude,
           }}
-          title={carDetails ? `${carDetails.year} ${carDetails.make} ${carDetails.model}` : "Car Location"}
+          title={
+            carDetails
+              ? `${carDetails.year} ${carDetails.make} ${carDetails.model}`
+              : "Car Location"
+          }
           description={carLocation.address}
           pinColor="red"
         >
           <View className="bg-red-500 p-1 rounded-full border-2 border-white shadow-lg">
-            <Image source={icons.selectedMarker} className="w-6 h-6" style={{ tintColor: '#fff' }} />
+            <Image
+              source={icons.selectedMarker}
+              className="w-6 h-6"
+              style={{ tintColor: "#fff" }}
+            />
           </View>
         </Marker>
 
@@ -372,8 +379,11 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
             )}
           </View>
         )}
-        
-        <Text className="text-sm text-gray-500 mb-2 leading-5" numberOfLines={2}>
+
+        <Text
+          className="text-sm text-gray-500 mb-2 leading-5"
+          numberOfLines={2}
+        >
           📍 {carLocation.address}
         </Text>
 
@@ -400,8 +410,14 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
           className="flex-1 bg-blue-500 flex-row items-center justify-center py-3.5 rounded-lg shadow-lg"
           onPress={navigateToCarLocation}
         >
-          <Image source={icons.pin} className="w-5 h-5 mr-2" style={{ tintColor: '#fff' }} />
-          <Text className="text-white text-base font-semibold">Get Directions</Text>
+          <Image
+            source={icons.pin}
+            className="w-5 h-5 mr-2"
+            style={{ tintColor: "#fff" }}
+          />
+          <Text className="text-white text-base font-semibold">
+            Get Directions
+          </Text>
         </TouchableOpacity>
 
         {userLocation && (
@@ -409,8 +425,14 @@ const CarLocationMap: React.FC<CarLocationMapProps> = ({
             className="bg-white flex-row items-center justify-center py-3.5 px-4 rounded-lg border border-gray-300 shadow-sm"
             onPress={handleCenterMap}
           >
-            <Image source={icons.target} className="w-5 h-5 mr-1.5" style={{ tintColor: '#6b7280' }} />
-            <Text className="text-gray-500 text-sm font-medium">Center Map</Text>
+            <Image
+              source={icons.target}
+              className="w-5 h-5 mr-1.5"
+              style={{ tintColor: "#6b7280" }}
+            />
+            <Text className="text-gray-500 text-sm font-medium">
+              Center Map
+            </Text>
           </TouchableOpacity>
         )}
       </View>
