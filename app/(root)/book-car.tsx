@@ -56,16 +56,27 @@ const BookCar = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  const { carId, carType, carImage, carMake, carModel, pricePerHour, year } =
-    useLocalSearchParams<{
-      carId: string;
-      carType: string;
-      carImage: string;
-      carMake: string;
-      carModel: string;
-      pricePerHour: string;
-      year?: string;
-    }>();
+  const {
+    carId,
+    carType,
+    carImage,
+    carMake,
+    carModel,
+    pricePerHour,
+    year,
+    carLocation,
+  } = useLocalSearchParams<{
+    carId: string;
+    carType: string;
+    carImage: string;
+    carMake: string;
+    carModel: string;
+    carLocation: string;
+    pricePerHour: string;
+    year?: string;
+  }>();
+
+  const parsedLocation = JSON.parse(carLocation);
 
   useEffect(() => {
     if (!carId) return;
@@ -134,7 +145,7 @@ const BookCar = () => {
     if (carId && pickupDate && returnDate) {
       checkCarAvailability(pickupDate, returnDate);
     }
-  }, [carId]); 
+  }, [carId]);
 
   // Check availability whenever dates change
   useEffect(() => {
@@ -156,20 +167,20 @@ const BookCar = () => {
   const platformFee = subtotal * PLATFORM_FEE_PERCENTAGE;
   const totalAmount = (subtotal + platformFee).toFixed(2);
 
-  const [location, setLocation] = useState<{
-    address: string;
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+  // const [location, setLocation] = useState<{
+  //   address: string;
+  //   latitude: number;
+  //   longitude: number;
+  // } | null>(null);
 
-  const handlePress = (loc: {
-    address: string;
-    latitude: number;
-    longitude: number;
-  }) => {
-    setLocation(loc);
-    setShowLocationSnackbar(false);
-  };
+  // const handlePress = (loc: {
+  //   address: string;
+  //   latitude: number;
+  //   longitude: number;
+  // }) => {
+  //   setLocation(loc);
+  //   setShowLocationSnackbar(false);
+  // };
 
   useEffect(() => {
     if (!location) {
@@ -280,12 +291,12 @@ const BookCar = () => {
                 />
               </View>
 
-              <View className="mb-4" style={{ zIndex: 1000 }}>
+              {/* <View className="mb-4" style={{ zIndex: 1000 }}>
                 <Text className="text-[16px] font-JakartaMedium my-6">
                   Pickup & Return location
                 </Text>
                 <GoogleTextInput icon={icons.pin} handlePress={handlePress} />
-              </View>
+              </View> */}
 
               {/* Availability Status Indicator */}
               {checkingAvailability && (
@@ -378,7 +389,7 @@ const BookCar = () => {
               year: year,
               dailyRate: dailyRate,
             }}
-            location={location}
+            location={parsedLocation}
             disabled={carNotAvailable || checkingAvailability}
           />
         </View>

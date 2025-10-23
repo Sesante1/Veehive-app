@@ -12,10 +12,12 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Modal,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import CarLocationMap from "./CarLocationMap";
 import { StaticCarLocationMap } from "./MapComponents";
 
 interface BookingCardProps {
@@ -32,6 +34,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
   const [guestData, setGuestData] = useState<UserData | null>(null);
   const [carData, setCarData] = useState<CarData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showMap, setShowMap] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -140,9 +143,11 @@ const BookingCard: React.FC<BookingCardProps> = ({
       <View className="mt-6">
         <View className="flex-row justify-between mb-6">
           <Text className="font-JakartaSemiBold">Car location</Text>
-          <Text className="font-JakartaSemiBold text-primary-500">
-            Navigate
-          </Text>
+          <TouchableOpacity onPress={() => setShowMap(true)}>
+            <Text className="font-JakartaSemiBold text-primary-500">
+              Navigate
+            </Text>
+          </TouchableOpacity>
         </View>
         {/* <Image
           source={{
@@ -226,6 +231,22 @@ const BookingCard: React.FC<BookingCardProps> = ({
           </>
         )}
       </View>
+      <Modal visible={showMap} animationType="slide">
+        <CarLocationMap
+          carLocation={{
+            latitude: carData?.location?.coordinates?.latitude ?? 0,
+            longitude: carData?.location?.coordinates?.longitude ?? 0,
+            address: carData?.location?.address ?? "",
+          }}
+          carDetails={{
+            make: carData?.make ?? "",
+            model: carData?.model ?? "",
+            year: String(carData?.year ?? ""),
+            dailyRate: carData?.dailyRate ?? 0, // ✅ matches number type
+          }}
+          onClose={() => setShowMap(false)}
+        />
+      </Modal>
     </View>
   );
 };

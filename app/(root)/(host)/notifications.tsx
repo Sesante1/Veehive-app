@@ -170,7 +170,7 @@ const Notifications = () => {
                 !item.read ? "bg-blue-50" : "bg-white"
               }`}
             >
-              <View className="flex-row">
+              <View className="flex-row items-center gap-4">
                 <View className="bg-primary-500 p-3 rounded-full shadow-md flex justify-center items-center h-16 w-16">
                   <Image
                     source={icons.notification}
