@@ -73,7 +73,7 @@ const UserListing = () => {
   }, [user?.uid]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white px-4">
+    <SafeAreaView className="flex-1 bg-white px-4 -mb-14">
       <View className="h-20">
         <Text className="text-2xl font-JakartaSemiBold mt-6 ">
           Your listing
@@ -135,7 +135,7 @@ const UserListing = () => {
             colors={["#007DFC"]}
           />
         }
-        contentContainerStyle={{ paddingBottom: 90 }}
+        contentContainerStyle={{ paddingBottom: 10 }}
       />
     </SafeAreaView>
   );

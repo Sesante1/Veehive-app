@@ -201,38 +201,38 @@ const Favorites = () => {
             )}
           </View>
         )}
-        ListHeaderComponent={
-          <View className="px-4">
-            <ScrollView
-              className="my-6"
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-              }}
-            >
-              {options.map((option) => (
-                <Pressable
-                  key={option}
-                  onPress={() => setActive(option)}
-                  className={`px-5 py-3 rounded-full ${
-                    active === option ? "bg-primary-500" : "bg-secondary-400"
-                  }`}
-                >
-                  <Text
-                    className={`font-JakartaMedium ${
-                      active === option ? "text-white" : "text-black"
-                    }`}
-                  >
-                    {option}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        }
+        // ListHeaderComponent={
+        //   <View className="px-4">
+        //     <ScrollView
+        //       className="my-6"
+        //       horizontal
+        //       showsHorizontalScrollIndicator={false}
+        //       contentContainerStyle={{
+        //         flexDirection: "row",
+        //         alignItems: "center",
+        //         gap: 10,
+        //       }}
+        //     >
+        //       {options.map((option) => (
+        //         <Pressable
+        //           key={option}
+        //           onPress={() => setActive(option)}
+        //           className={`px-5 py-3 rounded-full ${
+        //             active === option ? "bg-primary-500" : "bg-secondary-400"
+        //           }`}
+        //         >
+        //           <Text
+        //             className={`font-JakartaMedium ${
+        //               active === option ? "text-white" : "text-black"
+        //             }`}
+        //           >
+        //             {option}
+        //           </Text>
+        //         </Pressable>
+        //       ))}
+        //     </ScrollView>
+        //   </View>
+        // }
       />
     </SafeAreaView>
   );

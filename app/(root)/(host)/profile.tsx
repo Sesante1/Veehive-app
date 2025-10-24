@@ -38,7 +38,7 @@ export default function Profile() {
 
   if (!userData) {
     return (
-      <SafeAreaView className="flex-1 bg-white p-4">
+      <SafeAreaView className="flex-1 bg-white p-4 -mb-14">
         <Text className="text-2xl font-JakartaBold">Account</Text>
         <Text className="my-5 font-Jakarta">
           Log in and start planning your next booking.
@@ -68,9 +68,9 @@ export default function Profile() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white -mb-14">
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
         <Text className="text-2xl font-JakartaBold mt-6 px-4">Account</Text>
@@ -168,7 +168,7 @@ export default function Profile() {
         </View>
       </ScrollView>
       <Pressable
-        className="flex-row justify-center gap-2 items-center absolute bottom-40 left-1/2 -translate-x-1/2 bg-black/70 rounded-full px-4 py-3"
+        className="flex-row justify-center gap-2 items-center absolute bottom-16 left-1/2 -translate-x-1/2 bg-black/70 rounded-full px-4 py-3"
         onPress={handleToggle}
       >
         <Image source={icons.arrow} style={{ width: 15, height: 15 }} />

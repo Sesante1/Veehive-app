@@ -1,4 +1,4 @@
-import { icons, images } from "@/constants";
+import { icons } from "@/constants";
 import {
   deleteNotification,
   markAllAsRead,
@@ -7,6 +7,7 @@ import {
 } from "@/hooks/useNotifcation";
 import { useAuth } from "@/hooks/useUser";
 import { router } from "expo-router";
+import LottieView from "lottie-react-native";
 import React from "react";
 import {
   ActivityIndicator,
@@ -106,14 +107,14 @@ const Notifications = () => {
   if (notifications.length === 0) {
     return (
       <SafeAreaView className="flex-1 bg-white px-4">
-        <ScrollView contentContainerStyle={{ flexGrow: 1}}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <Text className="text-2xl mt-6 font-JakartaBold">Notifications</Text>
           <View className="flex-1 justify-center items-center">
-            <Image
-              source={images.message}
-              accessibilityLabel="Message illustration"
-              className="w-full h-40"
-              resizeMode="contain"
+            <LottieView
+              source={require("../../../assets/animations/animatedNotification.json")}
+              loop={true}
+              autoPlay
+              style={{ width: 150, height: 150 }}
             />
             <Text className="text-3xl font-JakartaBold mt-3">
               No Notifications yet
@@ -128,7 +129,7 @@ const Notifications = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white -mb-14">
       <View className="flex-1">
         {/* Header */}
         <View className="px-4 py-4 border-b border-gray-200">
@@ -202,7 +203,7 @@ const Notifications = () => {
               </View>
             </TouchableOpacity>
           )}
-          contentContainerStyle={{ paddingBottom: 90 }}
+          contentContainerStyle={{ paddingBottom: 10 }}
         />
       </View>
     </SafeAreaView>
