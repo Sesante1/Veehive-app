@@ -129,7 +129,7 @@ const Notifications = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white -mb-14 -mb-14">
+    <SafeAreaView className="flex-1 bg-white -mb-14">
       <View className="flex-1">
         {/* Header */}
         <View className="px-4 py-4 border-b border-gray-200">

@@ -1,27 +1,33 @@
+import { useNotifications } from "@/hooks/useNotifcation";
+import { useAuth, useUserData } from "@/hooks/useUser";
 import { Feather } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
-import { Pressable } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Layout() {
   const insets = useSafeAreaInsets();
+  const { userData, loading } = useUserData();
+  const { user } = useAuth();
+  const userId = user?.uid || null;
+  const { unreadCount } = useNotifications(userId, "hoster");
 
   const TabPressable = React.forwardRef<
-      any,
-      React.ComponentProps<typeof Pressable>
-    >((props, ref) => {
-      return (
-        <Pressable
-          {...props}
-          ref={ref as any}
-          android_ripple={{
-            color: "#d7e9f7ff",
-            borderless: true,
-          }}
-        />
-      );
-    });
+    any,
+    React.ComponentProps<typeof Pressable>
+  >((props, ref) => {
+    return (
+      <Pressable
+        {...props}
+        ref={ref as any}
+        android_ripple={{
+          color: "#d7e9f7ff",
+          borderless: true,
+        }}
+      />
+    );
+  });
 
   return (
     <Tabs
@@ -58,7 +64,37 @@ export default function Layout() {
           title: "Notifications",
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Feather name="bell" size={size} color={color} />
+            <View style={{ position: "relative" }}>
+              <Feather name="bell" size={size} color={color} />
+              {unreadCount > 0 && (
+                <View
+                  style={{
+                    position: "absolute",
+                    top: -4,
+                    right: -8,
+                    backgroundColor: "#EF4444",
+                    borderRadius: 10,
+                    minWidth: 18,
+                    height: 18,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    paddingHorizontal: 4,
+                    borderWidth: 2,
+                    borderColor: "#fff",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontSize: 10,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           ),
         }}
       />
@@ -77,9 +113,32 @@ export default function Layout() {
         options={{
           title: "Profile",
           headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="user" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, focused }) => {
+            if (loading || !userData?.profileImage) {
+              return <Feather name="user" size={24} color={color} />;
+            }
+
+            return (
+              <View
+                style={{
+                  borderWidth: focused ? 1 : 0,
+                  borderColor: "#e5e9ecff",
+                  borderRadius: 15,
+                  padding: 2,
+                }}
+              >
+                <Image
+                  source={{ uri: userData.profileImage }}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 12,
+                  }}
+                  resizeMode="cover"
+                />
+              </View>
+            );
+          },
         }}
       />
     </Tabs>
