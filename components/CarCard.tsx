@@ -19,6 +19,8 @@ type CarProps = {
   seats: number;
   imageUrl: string | null;
   isWishlisted: boolean;
+  averageRating?: string;
+  reviewCount?: number;
   onToggleWishlist?: (carId: string, isWishlisted: boolean) => void;
 };
 
@@ -32,6 +34,8 @@ const CarCard: React.FC<CarProps> = ({
   seats,
   imageUrl,
   isWishlisted,
+  averageRating,
+  reviewCount,
   onToggleWishlist,
 }) => {
   const { user } = useAuth();
@@ -57,12 +61,14 @@ const CarCard: React.FC<CarProps> = ({
           <View className="w-full h-40 bg-gray-200 rounded-md" />
         )}
         <View className="absolute top-2 flex-row justify-between items-center w-full px-2">
-          <View className="bg-white flex flex-row justify-center items-center gap-2 p-1 px-2 rounded-[5px]">
-            <AntDesign name="star" size={16} color="#FFD700" />
-            {/* <Text className="color-secondary-700">{avgRating ?? "N/A"}</Text> */}
-            {/* TODO: Replace with actual rating once data is available */}
-            <Text className="color-secondary-700">4.7</Text>
-          </View>
+          {Number(averageRating) > 0 ? (
+            <View className="bg-white flex flex-row justify-center items-center gap-2 p-1 px-2 rounded-[5px]">
+              <AntDesign name="star" size={16} color="#FFD700" />
+              <Text className="color-secondary-700">{averageRating}</Text>
+            </View>
+          ) : (
+            <View />
+          )}
 
           {/* wishlist only show if not user is logged in */}
           {user && (

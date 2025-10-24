@@ -3,7 +3,14 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
 
-type CarStatus = "pending" | "snoozed" | "active" | "on a trip" | "draft" | "rejected" | "reserved";
+type CarStatus =
+  | "pending"
+  | "snoozed"
+  | "active"
+  | "on a trip"
+  | "draft"
+  | "rejected"
+  | "reserved";
 
 type CarProps = {
   id: string;
@@ -17,6 +24,10 @@ type CarProps = {
   year: number;
   available: boolean;
   status: CarStatus;
+  totalTrips: number;
+  averageRating?: string | number;
+  reviewCount?: number;
+  tripDate?: string;
 
   onToggleAvailability?: (
     id: string,
@@ -28,8 +39,8 @@ type CarProps = {
 const statusConfig: Record<CarStatus, { label: string; color: string }> = {
   active: { label: "Listed", color: "#22c55e" },
   snoozed: { label: "Snoozed", color: "#f97316" },
-  "on a trip": { label: "On a trip", color: "#3b82f6" }, 
-  pending: { label: "On review", color: "#eab308" }, 
+  "on a trip": { label: "On a trip", color: "#3b82f6" },
+  pending: { label: "On review", color: "#eab308" },
   draft: { label: "Action required", color: "#e4321aff" },
   rejected: { label: "Rejected", color: "#e4321aff" },
   reserved: { label: "Reserved", color: "#22c55e" },
@@ -44,7 +55,10 @@ const CarManagementCard: React.FC<CarProps> = ({
   fuel,
   seats,
   images,
+  tripDate,
+  averageRating,
   year,
+  totalTrips,
   available,
   status,
   onToggleAvailability,
@@ -99,27 +113,39 @@ const CarManagementCard: React.FC<CarProps> = ({
           {type}
         </Text>
 
-        <View className="flex-row justify-between items-center w-full my-2">
-          <View className="bg-white flex flex-row justify-center items-center gap-2">
-            <Text className="color-secondary-700 text-[16px] font-bold">
-              4.97
-            </Text>
-            <AntDesign name="star" size={18} color="#FFD700" />
-            <Text
-              className="color-secondary-700 font-Jakarta flex-wrap"
-              style={{ flexShrink: 1 }}
-            >
-              (99 trips)
-            </Text>
-          </View>
-        </View>
+        {totalTrips > 0 ? (
+          <>
+            <View className="flex-row justify-between items-center w-full my-2">
+              <View className="bg-white flex flex-row justify-center items-center gap-2">
+                <Text className="color-secondary-700 text-[16px] font-bold">
+                  {averageRating ?? "0.0"}
+                </Text>
+                <AntDesign name="star" size={18} color="#FFD700" />
+                <Text
+                  className="color-secondary-700 font-Jakarta flex-wrap"
+                  style={{ flexShrink: 1 }}
+                >
+                  ( {totalTrips} trips )
+                </Text>
+              </View>
+            </View>
 
-        <Text
-          className="color-secondary-500 text-lg font-Jakarta flex-wrap"
-          style={{ flexShrink: 1 }}
-        >
-          On a trip: 28 Jun - 6 Jul
-        </Text>
+            {tripDate && (
+              <Text
+                className="color-secondary-500 text-lg font-Jakarta flex-wrap"
+                style={{ flexShrink: 1 }}
+              >
+                {status === "on a trip"
+                  ? `On a trip: ${new Date(tripDate).toLocaleDateString()}`
+                  : `Last trip: ${new Date(tripDate).toLocaleDateString()}`}
+              </Text>
+            )}
+          </>
+        ) : (
+          <Text className="color-secondary-500 text-lg font-Jakarta flex-wrap mt-3">
+            No trips
+          </Text>
+        )}
       </View>
     </Pressable>
   );

@@ -15,26 +15,55 @@ import { db } from "../FirebaseConfig";
 export const fetchAllCars = async () => {
   try {
     const querySnapshot = await getDocs(collection(db, "cars"));
-    const cars = querySnapshot.docs.map((doc) => {
-      const data = doc.data();
 
-      return {
-        id: doc.id,
-        name: `${data.make} ${data.model}`,
-        type: data.carType,
-        pricePerHour: data.dailyRate,
-        seats: data.seats,
-        transmission: data.transmission || "Automatic",
-        fuel: data.fuel || "Gasoline",
-        imageUrl:
-          Array.isArray(data.images) && data.images.length > 0
-            ? data.images[0].url
-            : null,
-        status: data.status,
-      };
+    const cars = await Promise.all(
+      querySnapshot.docs.map(async (docSnap) => {
+        const data = docSnap.data();
+
+        const reviewsRef = collection(db, "reviews");
+        const reviewsQuery = query(
+          reviewsRef,
+          where("carId", "==", docSnap.id),
+          where("reviewType", "==", "guest_to_car")
+        );
+        const reviewsSnapshot = await getDocs(reviewsQuery);
+
+        const reviews = reviewsSnapshot.docs.map((r) => r.data());
+
+        const averageRating =
+          reviews.length > 0
+            ? (
+                reviews.reduce((sum, review) => sum + (review.rating || 0), 0) /
+                reviews.length
+              ).toFixed(1)
+            : "0.0";
+
+        return {
+          id: docSnap.id,
+          name: `${data.make} ${data.model}`,
+          type: data.carType,
+          pricePerHour: data.dailyRate,
+          seats: data.seats,
+          transmission: data.transmission || "Automatic",
+          fuel: data.fuel || "Gasoline",
+          imageUrl:
+            Array.isArray(data.images) && data.images.length > 0
+              ? data.images[0].url
+              : null,
+          status: data.status,
+          averageRating,
+          reviewCount: reviews.length,
+        };
+      })
+    );
+
+    // Sort by average rating (highest first), then by review count as tiebreaker
+    return cars.sort((a, b) => {
+      const ratingDiff =
+        parseFloat(b.averageRating) - parseFloat(a.averageRating);
+      if (ratingDiff !== 0) return ratingDiff;
+      return b.reviewCount - a.reviewCount; // If ratings are equal, prioritize more reviews
     });
-
-    return cars;
   } catch (error) {
     console.error("Error fetching cars:", error);
     throw error;
@@ -107,31 +136,58 @@ export const fetchWishlistCars = async (userId: string) => {
 export const fetchCarsByOwner = async (ownerId: string) => {
   try {
     const carsRef = collection(db, "cars");
-
     const q = query(carsRef, where("ownerId", "==", ownerId));
     const querySnapshot = await getDocs(q);
 
-    const cars = querySnapshot.docs.map((doc) => {
-      const data = doc.data();
+    const cars = await Promise.all(
+      querySnapshot.docs.map(async (docSnap) => {
+        const data = docSnap.data();
 
-      return {
-        id: doc.id,
-        name: `${data.make} ${data.model}`,
-        type: data.carType,
-        pricePerHour: data.dailyRate,
-        seats: data.seats,
-        transmission: data.transmission || "Automatic",
-        fuel: data.fuel || "Gasoline",
-        year: data.year,
-        images:
-          Array.isArray(data.images) && data.images.length > 0
-            ? data.images.map((img) => img.url)
-            : [],
-        status: data.status,
-        ownerId: data.ownerId,
-        available: data.isActive,
-      };
-    });
+        // 🔹 Fetch reviews for this car
+        const reviewsQuery = query(
+          collection(db, "reviews"),
+          where("carId", "==", docSnap.id),
+          where("reviewType", "==", "guest_to_car")
+        );
+        const reviewsSnapshot = await getDocs(reviewsQuery);
+
+        const reviews = reviewsSnapshot.docs.map((r) => ({
+          id: r.id,
+          ...r.data(),
+        }));
+
+        const averageRating =
+          reviews.length > 0
+            ? (
+                reviews.reduce((sum, review: any) => sum + review.rating, 0) /
+                reviews.length
+              ).toFixed(1)
+            : "0.0";
+
+        return {
+          id: docSnap.id,
+          name: `${data.make} ${data.model}`,
+          type: data.carType,
+          pricePerHour: data.dailyRate,
+          seats: data.seats,
+          transmission: data.transmission || "Automatic",
+          fuel: data.fuel || "Gasoline",
+          year: data.year,
+          images:
+            Array.isArray(data.images) && data.images.length > 0
+              ? data.images.map((img) => img.url)
+              : [],
+          totalTrips: data.totalTrips ?? 0,
+          status: data.status,
+          ownerId: data.ownerId,
+          available: data.isActive,
+          tripDate: data?.tripDate ?? null,
+          reviews,
+          averageRating,
+          reviewCount: reviews.length,
+        };
+      })
+    );
 
     return cars;
   } catch (error) {
@@ -167,24 +223,28 @@ export const getCarWithOwner = async (carId: string) => {
       };
     }
 
-    // ✅ Fetch reviews for this car
     const reviewsQuery = query(
       collection(db, "reviews"),
       where("carId", "==", carId),
       where("reviewType", "==", "guest_to_car"),
       orderBy("createdAt", "desc")
     );
-    
+
     const reviewsSnapshot = await getDocs(reviewsQuery);
-    const reviews = reviewsSnapshot.docs.map(doc => ({
+    const reviews = reviewsSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
 
-    // ✅ Calculate average rating
-    const averageRating = reviews.length > 0
-      ? (reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / reviews.length).toFixed(1)
-      : "0.0";
+    const averageRating =
+      reviews.length > 0
+        ? (
+            reviews.reduce(
+              (sum: number, review: any) => sum + review.rating,
+              0
+            ) / reviews.length
+          ).toFixed(1)
+        : "0.0";
 
     return {
       id: carSnap.id,

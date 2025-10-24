@@ -10,6 +10,7 @@ import {
   getCarWithOwner,
   toggleWishlist,
 } from "@/services/firestore";
+import { addRecentlyViewedCar } from "@/utils/recentlyViewed";
 import {
   AntDesign,
   FontAwesome,
@@ -151,6 +152,23 @@ const CarDetails = () => {
 
   const [showMap, setShowMap] = useState(false);
   const { openDirectConversation } = useDirectConversation();
+
+  useEffect(() => {
+    if (car) {
+      addRecentlyViewedCar({
+        id: car.id,
+        name: `${car.year} ${car.make} ${car.model}`,
+        type: car.type,
+        pricePerHour: car.pricePerHour,
+        transmission: car.transmission,
+        fuel: car.fuel,
+        seats: car.seats,
+        imageUrl: car.images?.[0]?.url || null,
+        averageRating: car.averageRating || undefined,
+        reviewCount: car.reviews?.length || 0,
+      });
+    }
+  }, [car]);
 
   useEffect(() => {
     if (!id) return;
@@ -337,10 +355,14 @@ const CarDetails = () => {
             </View>
 
             <View className="flex flex-row justify-center items-center gap-2 rounded-[5px]">
-              <AntDesign name="star" size={16} color="#FFD700" />
-              <Text className="color-secondary-700">
-                {car.averageRating || "No ratings"}
-              </Text>
+              {car.averageRating && parseFloat(car.averageRating) > 0 ? (
+                <>
+                  <AntDesign name="star" size={16} color="#FFD700" />
+                  <Text className="color-secondary-700">
+                    {car.averageRating}
+                  </Text>
+                </>
+              ) : null}
             </View>
           </View>
 
@@ -462,7 +484,7 @@ const CarDetails = () => {
             <View className="flex-row items-center gap-2">
               <AntDesign name="star" size={16} color="#FFD700" />
               <Text className="font-JakartaSemiBold">
-                {car.averageRating || "0.0"} · {car.reviewCount || 0} reviews
+                {car.averageRating || "0.0"} reviews
               </Text>
             </View>
 

@@ -1,3 +1,4 @@
+import CustomButton from "@/components/CustomButton";
 import { icons } from "@/constants";
 import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import { useAuth } from "@/hooks/useUser";
@@ -6,11 +7,15 @@ import {
   fetchWishlistCars,
   toggleWishlist,
 } from "@/services/firestore";
-import { router } from "expo-router";
-import LottieView from "lottie-react-native";
-import React, { useEffect, useState } from "react";
+import {
+  getRecentlyViewedCars,
+  RecentlyViewedCar,
+} from "@/utils/recentlyViewed";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   Image,
   Pressable,
@@ -24,8 +29,14 @@ import CarCard from "../../components/CarCard";
 const Favorites = () => {
   const { user } = useAuth();
 
+  const screenHeight = Dimensions.get("window").height;
+  const screenWidth = Dimensions.get("window").width;
+
   const [wishlistCars, setWishlistCars] = useState<any[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [recentlyViewedCars, setRecentlyViewedCars] = useState<
+    RecentlyViewedCar[]
+  >([]);
 
   const [active, setActive] = useState("All");
   const [loading, setLoading] = useState(true);
@@ -74,14 +85,23 @@ const Favorites = () => {
     };
   }, [user]);
 
+  // Load recently viewed cars when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      const loadRecentlyViewed = async () => {
+        const cars = await getRecentlyViewedCars();
+        setRecentlyViewedCars(cars);
+      };
+      loadRecentlyViewed();
+    }, [])
+  );
+
   const handleToggleWishlist = async (
     carId: string,
     isWishlistedFromCard?: boolean
   ) => {
     const user = FIREBASE_AUTH.currentUser;
     if (!user) {
-      // Optionally navigate to sign-in
-      // router.push("/sign-in");
       return;
     }
     const isWishlisted = isWishlistedFromCard ?? wishlist.includes(carId);
@@ -97,11 +117,12 @@ const Favorites = () => {
       console.error("Failed to toggle wishlist:", e);
     }
   };
+
   return (
-    <SafeAreaView className="flex-1 bg-white px-4">
-      <View className="flex bg-gray items-center py-4">
+    <SafeAreaView className="flex-1 bg-white">
+      <View className="flex bg-gray items-center py-4 px-4">
         <Pressable
-          className="bg-white rounded-full p-1 absolute left-0 top-2"
+          className="bg-white rounded-full p-1 absolute left-4 top-2"
           onPress={() => {
             router.back();
           }}
@@ -116,33 +137,72 @@ const Favorites = () => {
         data={wishlistCars}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <CarCard
-            {...item}
-            isWishlisted={wishlist.includes(item.id)}
-            onToggleWishlist={handleToggleWishlist}
-          />
+          <View className="px-4">
+            <CarCard
+              {...item}
+              isWishlisted={wishlist.includes(item.id)}
+              onToggleWishlist={handleToggleWishlist}
+            />
+          </View>
         )}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={() => (
-          <View className="flex flex-col items-center justify-center">
-            {!loading ? (
-              <>
-                <LottieView
-                  source={require("../../assets/animations/EmptySearch.json")}
-                  loop={true}
-                  autoPlay
-                  style={{ width: 400, height: 500 }}
-                />
-                <Text className="text-2xl font-Jakarta">No cars found</Text>
-              </>
-            ) : (
-              <ActivityIndicator size="large" color="#007DFC" />
+          <View>
+            <View
+              className="items-center justify-center px-4"
+              style={{ minHeight: screenHeight * 0.4 }}
+            >
+              {!loading ? (
+                <View className="justify-center">
+                  <Text className="font-JakartaSemiBold mb-3 text-lg">
+                    Get Started with favorites
+                  </Text>
+                  <Text className="font-JakartaMedium mb-6 text-gray-600">
+                    Tap the heart icon to save your favorite vehicles to a list
+                  </Text>
+                  <View>
+                    <CustomButton
+                      title={"Find new favorites"}
+                      onPress={() => router.push("/(root)/(tabs)/home")}
+                    />
+                  </View>
+                </View>
+              ) : (
+                <ActivityIndicator size="large" color="#007DFC" />
+              )}
+            </View>
+
+            {/* Show recently viewed only when wishlist is empty */}
+            {recentlyViewedCars.length > 0 && !loading && (
+              <View className="px-4 mt-4">
+                <Text className="text-xl font-JakartaBold mb-4">
+                  Recently viewed
+                </Text>
+
+                {recentlyViewedCars.map((item) => (
+                  <CarCard
+                    key={item.id}
+                    id={item.id}
+                    name={item.name}
+                    type={item.type}
+                    pricePerHour={item.pricePerHour}
+                    transmission={item.transmission}
+                    fuel={item.fuel}
+                    seats={item.seats}
+                    imageUrl={item.imageUrl}
+                    isWishlisted={wishlist.includes(item.id)}
+                    averageRating={item.averageRating}
+                    reviewCount={item.reviewCount}
+                    onToggleWishlist={handleToggleWishlist}
+                  />
+                ))}
+              </View>
             )}
           </View>
         )}
         ListHeaderComponent={
-          <>
+          <View className="px-4">
             <ScrollView
               className="my-6"
               horizontal
@@ -171,7 +231,7 @@ const Favorites = () => {
                 </Pressable>
               ))}
             </ScrollView>
-          </>
+          </View>
         }
       />
     </SafeAreaView>
