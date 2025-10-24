@@ -7,10 +7,10 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
+  FlatList,
   Image,
   Modal,
   Pressable,
-  ScrollView,
   StatusBar,
   Text,
   TouchableOpacity,
@@ -352,13 +352,18 @@ const TripPhotosReviewScreen = () => {
         </View>
 
         {/* Content */}
-        <ScrollView
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
+        <FlatList
+          data={sections}
+          keyExtractor={(item) => item.title}
+          renderItem={({ item }) => renderPhotoSection(item)}
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 24 }}
-        >
-          {sections.map((section) => renderPhotoSection(section))}
-        </ScrollView>
+          showsVerticalScrollIndicator={false}
+          initialNumToRender={2} // Render only first few sections
+          windowSize={5} // Keep 5 screens worth in memory
+          removeClippedSubviews={true} // Unmount offscreen items
+          maxToRenderPerBatch={3} // Limit how many render at once
+          updateCellsBatchingPeriod={100} // Small delay for smoother render
+        />
 
         {/* Photo Modal */}
         <PhotoViewerModal

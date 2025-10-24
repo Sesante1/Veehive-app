@@ -55,7 +55,7 @@ const CustomButton = ({
       // className={`w-full rounded-full p-4 flex flex-row justify-center items-center shadow-md shadow-neutral-400/70 ${getBgVariantStyle(bgVariant)} ${className}`}
       // {...props}
       className={clsx(
-        "rounded-full p-4 flex flex-row justify-center items-center",
+        "rounded-lg p-4 flex flex-row justify-center items-center",
         getBgVariantStyle(bgVariant),
         className ?? "w-full"
       )}

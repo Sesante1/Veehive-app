@@ -144,7 +144,7 @@ const UserProfile = () => {
                 pathname: "/driversLicenseVerification",
                 params: {
                   documents: btoa(
-                    JSON.stringify(userData?.driversLicense)
+                    JSON.stringify(userData?.driversLicense || {})
                   ),
                   userId: user?.uid,
                 },
