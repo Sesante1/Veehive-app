@@ -1,7 +1,7 @@
 // components/ChatComponent.tsx
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -15,7 +15,8 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-import { images } from "@/constants";
+import { db } from "@/FirebaseConfig";
+import MessageSkeleton from "@/components/MessageSkeleton";
 import { useAuth } from "@/hooks/useUser";
 import {
   collection,
@@ -24,8 +25,7 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { db } from "@/FirebaseConfig";
-import MessageSkeleton from "@/components/MessageSkeleton";
+import LottieView from "lottie-react-native";
 
 // Types
 export type ConversationType = {
@@ -155,7 +155,7 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white -mb-14">
       {/* HEADER */}
       <View className="flex-row items-center justify-between px-4 pb-3 mt-6">
         <Text className="text-2xl font-JakartaBold">Messages</Text>
@@ -219,14 +219,17 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
         })}
 
         {conversationsList.length === 0 && (
-          <View className="flex-1 h-full justify-center items-center">
-            <Image
-              source={images.message}
-              accessibilityLabel="Message illustration"
-              className="w-full h-40"
-              resizeMode="contain"
+          <View
+            className="justify-center items-center px-4"
+            style={{ minHeight: 500 }}
+          >
+            <LottieView
+              source={require("../../../assets/animations/animatedMessage.json")}
+              loop={true}
+              autoPlay
+              style={{ width: 220, height: 220 }}
             />
-            <Text className="text-3xl font-JakartaBold mt-3">
+            <Text className="text-3xl font-JakartaBold">
               No Messages, yet!
             </Text>
             <Text className="text-base mt-2 font-Jakarta text-center px-7">
@@ -237,7 +240,7 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
       </ScrollView>
 
       {/* Quick Actions */}
-      <View className="px-4 py-2 border-t mb-10 border-gray-100 bg-white-50">
+      <View className="px-4 py-2 border-t mb-5 border-gray-100 bg-white-50">
         <Text className="text-xs text-gray-500 text-center font-JakartaRegular">
           Tap to open conversation
         </Text>

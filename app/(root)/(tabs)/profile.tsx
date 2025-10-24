@@ -7,7 +7,6 @@ import {
   SimpleLineIcons,
 } from "@expo/vector-icons";
 import { router } from "expo-router";
-import LottieView from "lottie-react-native";
 import React from "react";
 import {
   Image,
@@ -68,9 +67,9 @@ export default function Profile() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white -mb-14">
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
         <Text className="text-2xl font-JakartaBold mt-6 px-4">Account</Text>
@@ -91,24 +90,41 @@ export default function Profile() {
         </View>
 
         <View className="flex-1">
-          <Pressable
-            className="px-6"
-            onPress={() => router.push("/(root)/OnboardingListing")}
-          >
-            <View className="bg-white h-[110px] mb-8 rounded-lg flex-row items-center justify-center gap-2 shadow-md shadow-black-400">
-              <LottieView
-                source={require("../../../assets/animations/host-animation.json")}
-                loop={true}
-                autoPlay
-                style={{ width: 80, height: 80 }}
-              />
-              <View className="flex-col gap-1 ">
-                <Text className="text-lg font-JakartaSemiBold">
-                  Become a host
-                </Text>
-                <Text className="text-sm font-Jakarta">
-                  It's easy to start hosting and earn extra income
-                </Text>
+          <Pressable className="px-6">
+            <View className="bg-gray-700 h-[230px] mb-8 rounded-2xl overflow-hidden shadow-lg">
+              <View className="flex-row h-full">
+                <View className="flex-1 p-6 justify-between">
+                  <View>
+                    <Text className="text-white font-JakartaBold mb-4">
+                      Become a host
+                    </Text>
+                    <Text className="text-white font-Jakarta text-base leading-6">
+                      Join thousands of hosts building businesses and earning
+                      meaningful income on Veehive.
+                    </Text>
+                  </View>
+
+                  {/* Become a host button */}
+                  <Pressable
+                    className="bg-primary-500 rounded-xl py-4 px-6 self-start"
+                    onPress={() => router.push("/(root)/OnboardingListing")}
+                  >
+                    <Text className="text-white font-semibold">
+                      Become a host
+                    </Text>
+                  </Pressable>
+                </View>
+
+                {/* Right side - Image */}
+                <View className="w-[45%]">
+                  <Image
+                    source={{
+                      uri: "https://millennialmoney.com/wp-content/uploads/2021/06/Turo-Review-500x500.jpeg",
+                    }}
+                    className="w-full h-full"
+                    resizeMode="cover"
+                  />
+                </View>
               </View>
             </View>
           </Pressable>
@@ -190,7 +206,7 @@ export default function Profile() {
         </View>
       </ScrollView>
       <Pressable
-        className="flex-row justify-center gap-2 items-center absolute bottom-40 left-1/2 -translate-x-1/2 bg-black/70 rounded-full px-4 py-3"
+        className="flex-row justify-center gap-2 items-center absolute bottom-16 left-1/2 -translate-x-1/2 bg-black/70 rounded-full px-4 py-3"
         onPress={handleToggle}
       >
         <Image source={icons.arrow} style={{ width: 15, height: 15 }} />

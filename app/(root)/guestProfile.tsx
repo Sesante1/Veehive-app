@@ -6,6 +6,7 @@ import { router } from "expo-router";
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { encode as btoa } from "base-64";
 
 const UserProfile = () => {
   const { userData, loading } = useUserData();

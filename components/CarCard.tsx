@@ -42,7 +42,7 @@ const CarCard: React.FC<CarProps> = ({
 
   return (
     <Pressable
-      className="flex-col mt-5 mb-2 bg-secondary-400 p-3 rounded-[10px]"
+      className="flex-col mt-5 mb-2 bg-secondary-100 p-3 rounded-[10px]"
       onPress={() =>
         router.push({
           pathname: "/car-details/[id]",

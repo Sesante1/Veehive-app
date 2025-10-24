@@ -124,7 +124,7 @@ const Home = () => {
   }, [cars, search, active]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white px-4">
+    <SafeAreaView className="flex-1 bg-white px-4 -mb-14">
       <FlatList
         data={filteredCars}
         keyExtractor={(item) => item.id.toString()}
@@ -137,7 +137,7 @@ const Home = () => {
         )}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: 80 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
         ListEmptyComponent={() => (
           <View className="flex flex-col items-center justify-center">
             {!loading ? (
