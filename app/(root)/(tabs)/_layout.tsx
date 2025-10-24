@@ -22,7 +22,7 @@ export default function Layout() {
         {...props}
         ref={ref as any}
         android_ripple={{
-          color: "#E3F2FD",
+          color: "#d7e9f7ff",
           borderless: true,
         }}
       />
