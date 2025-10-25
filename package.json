@@ -87,13 +87,9 @@
     "@types/react": "~19.1.10",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
-    "typescript": "~5.9.2",
-    "react-native-safe-area-context": "5.6.1"
+    "typescript": "~5.9.2"
   },
   "private": true,
-  "resolutions": {
-    "react-native-safe-area-context": "5.6.1"
-  },
   "overrides": {
     "react-native-safe-area-context": "5.6.1"
   }
