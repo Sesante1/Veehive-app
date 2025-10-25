@@ -397,21 +397,15 @@ const CarDetails = () => {
               )}
             </View>
 
-            <Pressable
-              // onPress={() => {
-              //   if (car?.owner?.id) {
-              //     console.log(car?.owner?.id)
-              //     openChatModal(car.owner.id);
-              //   }
-              // }}
-              onPress={handleChatPress}
-            >
-              <Ionicons
-                name="chatbubble-ellipses-sharp"
-                size={32}
-                color="#007DFC"
-              />
-            </Pressable>
+            {user?.uid !== car.owner?.id && (
+              <Pressable onPress={handleChatPress}>
+                <Ionicons
+                  name="chatbubble-ellipses-sharp"
+                  size={32}
+                  color="#007DFC"
+                />
+              </Pressable>
+            )}
           </View>
 
           {/* Car description */}

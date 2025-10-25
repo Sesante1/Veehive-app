@@ -5,7 +5,12 @@ import {
   getActiveFilterCount,
 } from "@/components/FilterComponents";
 import GoogleTextInput from "@/components/GoogleTextInput";
-import { fetchAllCars } from "@/services/firestore";
+import { FIREBASE_AUTH } from "@/FirebaseConfig";
+import {
+  fetchAllCars,
+  fetchUserWishlist,
+  toggleWishlist,
+} from "@/services/firestore";
 import { AntDesign, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { router } from "expo-router";
@@ -123,6 +128,8 @@ const CarMarker = React.memo(
 );
 
 const SearchScreen = () => {
+  const currentUser = FIREBASE_AUTH.currentUser;
+
   const [cars, setCars] = useState<Car[]>([]);
   const [filteredCars, setFilteredCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,6 +147,9 @@ const SearchScreen = () => {
     latitudeDelta: 0.5,
     longitudeDelta: 0.5,
   });
+
+  // Wishlist state
+  const [wishlist, setWishlist] = useState<string[]>([]);
 
   // Filter state
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -160,7 +170,6 @@ const SearchScreen = () => {
     new Animated.Value(height - BOTTOM_SHEET_MIN_HEIGHT)
   ).current;
   const carCardY = useRef(new Animated.Value(height)).current;
-  const [wishlistedCars, setWishlistedCars] = useState<Set<string>>(new Set());
   const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(false);
   const isMountedRef = useRef(true);
 
@@ -222,25 +231,43 @@ const SearchScreen = () => {
     };
   }, []);
 
-  const handleToggleWishlist = useCallback(
-    (carId: string, isWishlisted: boolean) => {
-      setWishlistedCars((prev) => {
-        const newSet = new Set(prev);
-        if (isWishlisted) {
-          newSet.delete(carId);
-        } else {
-          newSet.add(carId);
-        }
-        return newSet;
-      });
-    },
-    []
-  );
+  // Load wishlist function
+  const loadWishlist = useCallback(async () => {
+    if (!currentUser) {
+      setWishlist([]);
+      return;
+    }
+    try {
+      const data = await fetchUserWishlist(currentUser.uid);
+      setWishlist(data);
+    } catch (e) {
+      console.error("Failed to load wishlist", e);
+    }
+  }, [currentUser]);
+
+  // Handle toggle wishlist function
+  const handleToggleWishlist = async (carId: string) => {
+    const user = FIREBASE_AUTH.currentUser;
+
+    if (!user) {
+      console.log("User not found");
+      return;
+    }
+
+    const isWishlisted = wishlist.includes(carId);
+
+    await toggleWishlist(user.uid, carId, isWishlisted);
+
+    setWishlist((prev) =>
+      isWishlisted ? prev.filter((id) => id !== carId) : [...prev, carId]
+    );
+  };
 
   useEffect(() => {
     loadCars();
+    loadWishlist();
     getCurrentLocation();
-  }, []);
+  }, [currentUser]);
 
   const loadCars = async () => {
     try {
@@ -474,13 +501,13 @@ const SearchScreen = () => {
         fuel={item.fuel}
         seats={item.seats}
         imageUrl={item.imageUrl}
-        isWishlisted={wishlistedCars.has(item.id)}
+        isWishlisted={wishlist.includes(item.id)}
         averageRating={item.averageRating}
         reviewCount={item.reviewCount}
         onToggleWishlist={handleToggleWishlist}
       />
     ),
-    [wishlistedCars, handleToggleWishlist]
+    [wishlist, handleToggleWishlist]
   );
 
   const keyExtractor = useCallback((item: Car) => item.id, []);
