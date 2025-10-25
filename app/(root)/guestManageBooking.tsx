@@ -1,5 +1,5 @@
 import BottomSheet from "@/components/BottomSheet";
-import ConfirmationModal from "@/components/ConfirmationModal";
+import { useCustomAlert } from "@/components/CustomAlert";
 import { icons } from "@/constants";
 import { db } from "@/FirebaseConfig";
 import { UserData } from "@/hooks/useUser";
@@ -23,7 +23,6 @@ import {
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -42,6 +41,9 @@ const GuestBooking = () => {
     initialBooking = null;
   }
 
+  // Custom Alert Hook
+  const { showAlert, AlertComponent } = useCustomAlert();
+
   // Create state for real-time booking data
   const [bookingData, setBookingData] = useState<any>(initialBooking);
 
@@ -52,10 +54,6 @@ const GuestBooking = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [actionLoading, setActionLoading] = useState<boolean>(false);
   const [GuestData, setOwnerData] = useState<UserData | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalTitle, setModalTitle] = useState("");
-  const [modalMessage, setModalMessage] = useState("");
-  const [onConfirmAction, setOnConfirmAction] = useState<() => void>(() => {});
 
   //BottomSheet states
   const [isTripBottomSheetVisible, setIsTripBottomSheetVisible] =
@@ -167,10 +165,13 @@ const GuestBooking = () => {
 
     // ✅ Block early check-in (more than 10 minutes before pickup)
     if (hoursUntilPickup > 0.1667) {
-      Alert.alert(
-        "Too Early",
-        "Check-in is available 10 minutes before pickup time."
-      );
+      showAlert({
+        title: "Too Early",
+        message: "Check-in is available 10 minutes before pickup time.",
+        icon: "time-outline",
+        iconColor: "#F59E0B",
+        buttons: [{ text: "OK", style: "default" }],
+      });
       return;
     }
 
@@ -204,10 +205,14 @@ const GuestBooking = () => {
 
     // Prevent early checkout (before return time)
     if (now < returnDateTime) {
-      Alert.alert(
-        "Too Early",
-        "Check-out is available only once your return time has arrived."
-      );
+      showAlert({
+        title: "Too Early",
+        message:
+          "Check-out is available only once your return time has arrived.",
+        icon: "time-outline",
+        iconColor: "#F59E0B",
+        buttons: [{ text: "OK", style: "default" }],
+      });
       return;
     }
 
@@ -216,7 +221,6 @@ const GuestBooking = () => {
       (now.getTime() - returnDateTime.getTime()) / (1000 * 60 * 60);
     const isLate = hoursSinceReturn > 1; // > 1 hour late
     const lateHours = isLate ? Math.ceil(hoursSinceReturn - 1) : 0;
-    // const lateFee = lateHours * 100;
     const LATE_FEE_PER_HOUR_CENTAVOS = 100 * 100; // ₱100/hr in centavos
     const lateFee = lateHours * LATE_FEE_PER_HOUR_CENTAVOS;
 
@@ -238,6 +242,76 @@ const GuestBooking = () => {
         model: carData?.model ?? "",
       }
     );
+  };
+
+  const handleAddPhotos = () => {
+    const now = new Date();
+    const pickupDateTime = new Date(bookingData.pickupTime);
+    const returnDateTime = new Date(bookingData.returnTime);
+
+    const hoursUntilPickup =
+      (pickupDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const hoursSinceReturn =
+      (now.getTime() - returnDateTime.getTime()) / (1000 * 60 * 60);
+
+    const isConfirmed = bookingData.bookingStatus === "confirmed";
+
+    // ✅ Allow check-in photos only within 30 minutes before pickup time
+    const canCheckIn =
+      isConfirmed && hoursUntilPickup <= 0.5 && now < pickupDateTime;
+
+    // ✅ Allow check-out photos only after return time (within 24 hours)
+    const canCheckOut =
+      isConfirmed && now >= returnDateTime && hoursSinceReturn <= 24;
+
+    if (!canCheckIn && !canCheckOut) {
+      if (!isConfirmed) {
+        showAlert({
+          title: "Not Available",
+          message: "Trip photos are only available for confirmed bookings.",
+          icon: "information-circle",
+          iconColor: "#F59E0B",
+          buttons: [{ text: "OK", style: "default" }],
+        });
+      } else if (hoursUntilPickup > 0.5) {
+        showAlert({
+          title: "Too Early",
+          message:
+            "Check-in photos can be added starting 30 minutes before your trip starts.",
+          icon: "time-outline",
+          iconColor: "#3B82F6",
+          buttons: [{ text: "OK", style: "default" }],
+        });
+      } else if (now >= pickupDateTime && now < returnDateTime) {
+        showAlert({
+          title: "Trip In Progress",
+          message:
+            "Check-in photos can only be added before the trip starts. Check-out photos will be available after the trip ends.",
+          icon: "alert-circle",
+          iconColor: "#F59E0B",
+          buttons: [{ text: "Got it", style: "default" }],
+        });
+      } else if (hoursSinceReturn > 24) {
+        showAlert({
+          title: "Time Expired",
+          message: "The 24-hour window to submit check-out photos has passed.",
+          icon: "close-circle",
+          iconColor: "#EF4444",
+          buttons: [{ text: "OK", style: "default" }],
+        });
+      }
+      return;
+    }
+
+    const photoType = canCheckIn ? "checkin" : "checkout";
+    router.push({
+      pathname: "/TripPhotosScreen",
+      params: {
+        bookingId: bookingData.id,
+        photoType,
+        userRole: "guest",
+      },
+    });
   };
 
   if (loading) {
@@ -538,73 +612,16 @@ const GuestBooking = () => {
                   VIEW ALL
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  const now = new Date();
-                  const pickupDateTime = new Date(bookingData.pickupTime);
-                  const returnDateTime = new Date(bookingData.returnTime);
 
-                  const hoursUntilPickup =
-                    (pickupDateTime.getTime() - now.getTime()) /
-                    (1000 * 60 * 60);
-                  const hoursSinceReturn =
-                    (now.getTime() - returnDateTime.getTime()) /
-                    (1000 * 60 * 60);
-
-                  const isConfirmed = bookingData.bookingStatus === "confirmed";
-
-                  // ✅ Allow check-in photos only within 30 minutes before pickup time
-                  const canCheckIn =
-                    isConfirmed &&
-                    hoursUntilPickup <= 0.5 &&
-                    now < pickupDateTime;
-
-                  // ✅ Allow check-out photos only after return time (within 24 hours)
-                  const canCheckOut =
-                    isConfirmed &&
-                    now >= returnDateTime &&
-                    hoursSinceReturn <= 24;
-
-                  if (!canCheckIn && !canCheckOut) {
-                    if (!isConfirmed) {
-                      Alert.alert(
-                        "Not Available",
-                        "Trip photos are only available for confirmed bookings."
-                      );
-                    } else if (hoursUntilPickup > 0.5) {
-                      Alert.alert(
-                        "Too Early",
-                        "Check-in photos can be added starting 30 minutes before your trip starts."
-                      );
-                    } else if (now >= pickupDateTime && now < returnDateTime) {
-                      Alert.alert(
-                        "Trip In Progress",
-                        "Check-in photos can only be added before the trip starts. Check-out photos will be available after the trip ends."
-                      );
-                    } else if (hoursSinceReturn > 24) {
-                      Alert.alert(
-                        "Time Expired",
-                        "The 24-hour window to submit check-out photos has passed."
-                      );
-                    }
-                    return;
-                  }
-
-                  const photoType = canCheckIn ? "checkin" : "checkout";
-                  router.push({
-                    pathname: "/TripPhotosScreen",
-                    params: {
-                      bookingId: bookingData.id,
-                      photoType,
-                      userRole: "guest",
-                    },
-                  });
-                }}
-              >
-                <Text className="font-JakartaSemiBold text-primary-500">
-                  ADD PHOTOS
-                </Text>
-              </TouchableOpacity>
+              {bookingData.bookingStatus !== "completed" &&
+                bookingData.bookingStatus !== "cancelled" &&
+                bookingData.bookingStatus !== "declined" && (
+                  <TouchableOpacity onPress={handleAddPhotos}>
+                    <Text className="font-JakartaSemiBold text-primary-500">
+                      ADD PHOTOS
+                    </Text>
+                  </TouchableOpacity>
+                )}
             </View>
           </View>
           <View className="py-5 border-b border-gray-200 flex-row justify-between items-center">
@@ -619,20 +636,24 @@ const GuestBooking = () => {
               </Text>
             </View>
 
-            <TouchableOpacity
-              className="font-JakartaSemiBold text-primary-500"
-              onPress={() => {
-                router.push({
-                  pathname: "/receiptScreen",
-                  params: {
-                    booking: JSON.stringify(bookingData),
-                    userRole: "guest",
-                  },
-                });
-              }}
-            >
-              <Text>VIEW RECEIPT</Text>
-            </TouchableOpacity>
+            {bookingData.bookingStatus === "declined" ? (
+              <View />
+            ) : (
+              <TouchableOpacity
+                className="font-JakartaSemiBold text-primary-500"
+                onPress={() => {
+                  router.push({
+                    pathname: "/receiptScreen",
+                    params: {
+                      booking: JSON.stringify(bookingData),
+                      userRole: "guest",
+                    },
+                  });
+                }}
+              >
+                <Text>VIEW RECEIPT</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View className="py-5 border-b border-gray-200 flex-row justify-between items-center">
@@ -648,15 +669,6 @@ const GuestBooking = () => {
           </View>
         </View>
       </ScrollView>
-      <ConfirmationModal
-        visible={modalVisible}
-        title={modalTitle}
-        message={modalMessage}
-        confirmText="OK"
-        cancelText="Cancel"
-        onConfirm={onConfirmAction}
-        onCancel={() => setModalVisible(false)}
-      />
 
       <BottomSheet
         visible={isTripBottomSheetVisible}
@@ -725,6 +737,9 @@ const GuestBooking = () => {
           </View>
         </View>
       </BottomSheet>
+
+      {/* Custom Alert Component */}
+      <AlertComponent />
     </SafeAreaView>
   );
 };
