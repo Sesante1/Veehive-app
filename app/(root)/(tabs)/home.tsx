@@ -11,8 +11,8 @@ import {
 } from "react-native";
 
 import CarCard from "@/components/CarCard";
-import InputField from "@/components/InputField";
 import { icons, images } from "@/constants";
+import { router } from "expo-router";
 import { useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FIREBASE_AUTH } from "../../../FirebaseConfig";
@@ -169,24 +169,17 @@ const Home = () => {
               <Text className="text-2xl font-JakartaMedium mt-6">
                 Explore new {"\n"}Destinations with ease!
               </Text>
-              {/* <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Add car"
-                hitSlop={8}
-                onPress={() => router.push("/create-car")}
-              >
-                <MaterialIcons name="add-box" size={40} color="#007DFC" />
-              </Pressable> */}
             </View>
 
-            <InputField
-              label=""
-              placeholder="Search cars"
-              icon={icons.search}
-              textContentType="emailAddress"
-              value={search}
-              onChangeText={setSearch}
-            />
+            <Pressable
+              className="flex-row gap-6 bg-secondary-100 py-5 px-4 rounded-lg mt-8"
+              onPress={() => router.push("/searchScreen")}
+            >
+              <Image source={icons.search} className="h-6 w-6" />
+              <Text className="font-JakartaSemiBold text-secondary-700">
+                Search car
+              </Text>
+            </Pressable>
 
             <Text className="font-JakartaMedium mt-6">
               Select by transmission

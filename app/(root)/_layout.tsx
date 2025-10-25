@@ -170,6 +170,10 @@ export default function Layout() {
         name="HostReviewGuestScreen"
         options={{ headerShown: false, animation: "slide_from_right" }}
       />
+      <Stack.Screen
+        name="searchScreen"
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
     </Stack>
   );
 }

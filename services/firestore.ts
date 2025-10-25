@@ -38,6 +38,22 @@ export const fetchAllCars = async () => {
               ).toFixed(1)
             : "0.0";
 
+        // Ensure location data is properly formatted
+        let location = null;
+        if (data.location?.coordinates) {
+          const coords = data.location.coordinates;
+          if (
+            typeof coords.latitude === "number" &&
+            typeof coords.longitude === "number"
+          ) {
+            location = {
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+              address: data.location.address || "Location not specified",
+            };
+          }
+        }
+
         return {
           id: docSnap.id,
           name: `${data.make} ${data.model}`,
@@ -53,6 +69,7 @@ export const fetchAllCars = async () => {
           status: data.status,
           averageRating,
           reviewCount: reviews.length,
+          location, // Include location data
         };
       })
     );
@@ -62,7 +79,7 @@ export const fetchAllCars = async () => {
       const ratingDiff =
         parseFloat(b.averageRating) - parseFloat(a.averageRating);
       if (ratingDiff !== 0) return ratingDiff;
-      return b.reviewCount - a.reviewCount; // If ratings are equal, prioritize more reviews
+      return b.reviewCount - a.reviewCount;
     });
   } catch (error) {
     console.error("Error fetching cars:", error);
