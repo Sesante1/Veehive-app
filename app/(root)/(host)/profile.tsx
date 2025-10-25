@@ -40,13 +40,13 @@ export default function Profile() {
     return (
       <SafeAreaView className="flex-1 bg-white p-4 -mb-14">
         <Text className="text-2xl font-JakartaBold">Account</Text>
-        <Text className="my-5 font-Jakarta">
+        <Text className="my-5 font-JakartaMedium">
           Log in and start planning your next booking.
         </Text>
 
         <TouchableOpacity
           className="mt-5 p-4 bg-black rounded-lg"
-          onPress={() => router.push("/(auth)/sign-in")}
+          onPress={() => router.push("/(auth)/signInOrSignUpScreen")}
         >
           <Text className="text-white text-center font-JakartaSemiBold">
             Log In or Sign Up

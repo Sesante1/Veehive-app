@@ -104,6 +104,34 @@ const Notifications = () => {
     );
   }
 
+  if (!user) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="px-4 py-4">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-2xl font-JakartaBold">Notifications</Text>
+          </View>
+
+          <View className="mt-14">
+            <Text className="font-JakartaSemiBold text-lg">
+              Log in to view your notifications
+            </Text>
+            <Text className="font-JakartaMedium">Don't miss any updates!</Text>
+
+            <TouchableOpacity
+              className="mt-10 p-4 bg-black rounded-lg"
+              onPress={() => router.push("/(auth)/signInOrSignUpScreen")}
+            >
+              <Text className="text-white text-center font-JakartaSemiBold">
+                Log In or Sign Up
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (notifications.length === 0) {
     return (
       <SafeAreaView className="flex-1 bg-white px-4">

@@ -69,7 +69,11 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
 
   // Fetch conversations
   useEffect(() => {
-    if (!currentUserId) return;
+    if (!currentUserId) {
+      setLoading(false);
+      setConversationsList([]);
+      return;
+    }
 
     const conversationsRef = collection(db, "conversations");
     const q = query(
@@ -154,6 +158,34 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
     return <MessageSkeleton />;
   }
 
+  if (!user) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="px-4 py-4">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-2xl font-JakartaBold">Messages</Text>
+          </View>
+
+          <View className="mt-14">
+            <Text className="font-JakartaSemiBold text-lg">
+              Log in to view your messages
+            </Text>
+            <Text className="font-JakartaMedium">Don't miss any updates!</Text>
+
+            <TouchableOpacity
+              className="mt-10 p-4 bg-black rounded-lg"
+              onPress={() => router.push("/(auth)/signInOrSignUpScreen")}
+            >
+              <Text className="text-white text-center font-JakartaSemiBold">
+                Log In or Sign Up
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-white -mb-14">
       {/* HEADER */}
@@ -229,9 +261,7 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
               autoPlay
               style={{ width: 220, height: 220 }}
             />
-            <Text className="text-3xl font-JakartaBold">
-              No Messages, yet!
-            </Text>
+            <Text className="text-3xl font-JakartaBold">No Messages, yet!</Text>
             <Text className="text-base mt-2 font-Jakarta text-center px-7">
               No messages in your inbox, yet!
             </Text>

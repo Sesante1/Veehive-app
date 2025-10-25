@@ -250,7 +250,10 @@ const GuestBooking = () => {
 
   const isPending = bookingData.bookingStatus === "pending";
   const isConfirmed = bookingData.bookingStatus === "confirmed";
-  const isCancelled = bookingData.bookingStatus === "cancelled";
+  const isCancelled =
+    bookingData.bookingStatus === "cancelled" ||
+    bookingData.bookingStatus === "declined";
+  const isCompleted = bookingData.bookingStatus === "completed";
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -389,7 +392,7 @@ const GuestBooking = () => {
           </Text>
         </View>
 
-        {!isCancelled && (
+        {!isCancelled && !isCompleted && (
           <View className="mt-10 p-4 border border-gray-300 rounded-lg">
             {isConfirmed && (
               <Text className="mb-6 font-JakartaSemiBold text-secondary-700">
@@ -434,7 +437,6 @@ const GuestBooking = () => {
                   bookingData.tripStatus === "not_started") && (
                   <TouchableOpacity
                     className="w-full bg-primary-500 rounded-lg py-4 items-center"
-                    // onPress={() => openTripModal("checkin")}
                     onPress={() => openTripBottomSheet("checkin")}
                     disabled={actionLoading}
                   >
@@ -452,7 +454,6 @@ const GuestBooking = () => {
                 {bookingData.tripStatus === "in_progress" && (
                   <TouchableOpacity
                     className="w-full bg-primary-500 rounded-lg py-4 items-center"
-                    // onPress={() => openTripModal("checkout")}
                     onPress={() => openTripBottomSheet("checkout")}
                     disabled={actionLoading}
                   >
