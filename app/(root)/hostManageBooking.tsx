@@ -1,4 +1,5 @@
 import BottomSheet from "@/components/BottomSheet";
+import { useCustomAlert } from "@/components/CustomAlert";
 import { icons } from "@/constants";
 import { db, FIREBASE_AUTH } from "@/FirebaseConfig";
 import { UserData } from "@/hooks/useUser";
@@ -25,7 +26,6 @@ import {
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -44,6 +44,9 @@ const HostBooking = () => {
     initialBooking = null;
   }
 
+  // Custom Alert Hook
+  const { showAlert, AlertComponent } = useCustomAlert();
+
   // Create state for real-time booking data
   const [bookingData, setBookingData] = useState<any>(initialBooking);
 
@@ -54,19 +57,6 @@ const HostBooking = () => {
   const [actionLoading, setActionLoading] = useState<boolean>(false);
   const [ownerData, setOwnerData] = useState<UserData | null>(null);
   const router = useRouter();
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalConfig, setModalConfig] = useState<{
-    title: string;
-    message: string;
-    confirmText: string;
-    confirmColor?: string;
-    onConfirm: () => void;
-  }>({
-    title: "",
-    message: "",
-    confirmText: "",
-    onConfirm: () => {},
-  });
 
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const [bottomSheetType, setBottomSheetType] = useState<
@@ -157,18 +147,6 @@ const HostBooking = () => {
     );
   }
 
-  // const handleAccept = () => {
-  //   setModalConfig({
-  //     title: "Accept Booking",
-  //     message:
-  //       "Are you sure you want to accept this booking? The guest will be charged.",
-  //     confirmText: "Accept",
-  //     confirmColor: "#007bff",
-  //     onConfirm: handleAcceptConfirm,
-  //   });
-  //   setModalVisible(true);
-  // };
-
   const handleAcceptConfirm = async () => {
     closeBottomSheet();
     setActionLoading(true);
@@ -198,12 +176,12 @@ const HostBooking = () => {
         updatedAt: serverTimestamp(),
       });
 
-      if (bookingData.carId) {
-        await updateDoc(doc(db, "cars", bookingData.carId), {
-          status: "reserved",
-          lastBookedAt: serverTimestamp(),
-        });
-      }
+      // if (bookingData.carId) {
+      //   await updateDoc(doc(db, "cars", bookingData.carId), {
+      //     status: "reserved",
+      //     lastBookedAt: serverTimestamp(),
+      //   });
+      // }
 
       // Notify guest
       await notifyGuestBookingSuccess(
@@ -213,9 +191,19 @@ const HostBooking = () => {
         bookingData.pickupDate
       );
 
-      Alert.alert("Success", "Booking accepted and payment captured!", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
+      showAlert({
+        title: "Success",
+        message: "Booking accepted!",
+        icon: "checkmark-circle",
+        iconColor: "#10B981",
+        buttons: [
+          {
+            text: "OK",
+            style: "default",
+            onPress: () => router.back(),
+          },
+        ],
+      });
     } catch (error) {
       console.error("Error accepting booking:", error);
       const errorMessage =
@@ -223,23 +211,17 @@ const HostBooking = () => {
           ? error.message
           : "Failed to accept booking. Please try again.";
 
-      Alert.alert("Error", errorMessage);
+      showAlert({
+        title: "Error",
+        message: errorMessage,
+        icon: "close-circle",
+        iconColor: "#EF4444",
+        buttons: [{ text: "OK", style: "default" }],
+      });
     } finally {
       setActionLoading(false);
     }
   };
-
-  // const handleDecline = () => {
-  //   setModalConfig({
-  //     title: "Decline Booking Request",
-  //     message:
-  //       "Are you sure you want to decline this booking request? The renter will not be charged and the payment authorization will be released.",
-  //     confirmText: "Decline",
-  //     confirmColor: "#dc2626",
-  //     onConfirm: handleDeclineConfirm,
-  //   });
-  //   setModalVisible(true);
-  // };
 
   const handleDeclineConfirm = async () => {
     closeBottomSheet();
@@ -285,9 +267,19 @@ const HostBooking = () => {
           { make: carData?.make || "", model: carData?.model || "" }
         );
 
-        Alert.alert("Booking Declined", "The guest was not charged.", [
-          { text: "OK", onPress: () => router.back() },
-        ]);
+        showAlert({
+          title: "Booking Declined",
+          message: "The guest was not charged.",
+          icon: "information-circle",
+          iconColor: "#3B82F6",
+          buttons: [
+            {
+              text: "OK",
+              style: "default",
+              onPress: () => router.back(),
+            },
+          ],
+        });
       }
     } catch (error) {
       console.error("Error declining booking:", error);
@@ -296,7 +288,13 @@ const HostBooking = () => {
           ? error.message
           : "Failed to decline booking. Please try again.";
 
-      Alert.alert("Error", errorMessage);
+      showAlert({
+        title: "Error",
+        message: errorMessage,
+        icon: "close-circle",
+        iconColor: "#EF4444",
+        buttons: [{ text: "OK", style: "default" }],
+      });
     } finally {
       setActionLoading(false);
     }
@@ -351,15 +349,102 @@ const HostBooking = () => {
         model: carData?.model ?? "",
       });
 
-      Alert.alert("Success", "Trip completed successfully!");
-      router.back();
+      showAlert({
+        title: "Success",
+        message: "Trip completed successfully!",
+        icon: "checkmark-circle",
+        iconColor: "#10B981",
+        buttons: [
+          {
+            text: "OK",
+            style: "default",
+            onPress: () => router.back(),
+          },
+        ],
+      });
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to complete trip";
-      Alert.alert("Error", errorMessage);
+
+      showAlert({
+        title: "Error",
+        message: errorMessage,
+        icon: "close-circle",
+        iconColor: "#EF4444",
+        buttons: [{ text: "OK", style: "default" }],
+      });
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleAddPhotos = () => {
+    const now = new Date();
+    const pickupDateTime = new Date(bookingData.pickupTime);
+    const returnDateTime = new Date(bookingData.returnTime);
+
+    const hoursUntilPickup =
+      (pickupDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const hoursSinceReturn =
+      (now.getTime() - returnDateTime.getTime()) / (1000 * 60 * 60);
+
+    const isConfirmed = bookingData.bookingStatus === "confirmed";
+
+    const canCheckIn =
+      isConfirmed && hoursUntilPickup <= 24 && now < pickupDateTime;
+
+    const canCheckOut =
+      isConfirmed && now >= returnDateTime && hoursSinceReturn <= 24;
+
+    if (!canCheckIn && !canCheckOut) {
+      if (!isConfirmed) {
+        showAlert({
+          title: "Not Available",
+          message: "Trip photos are only available for confirmed bookings.",
+          icon: "information-circle",
+          iconColor: "#F59E0B",
+          buttons: [{ text: "OK", style: "default" }],
+        });
+      } else if (hoursUntilPickup > 24) {
+        showAlert({
+          title: "Not Available Yet",
+          message:
+            "Check-in photos can be added starting 24 hours before the trip starts.",
+          icon: "time-outline",
+          iconColor: "#3B82F6",
+          buttons: [{ text: "OK", style: "default" }],
+        });
+      } else if (now >= pickupDateTime && now < returnDateTime) {
+        showAlert({
+          title: "Trip In Progress",
+          message:
+            "Check-in photos can only be added before the trip starts. Check-out photos will be available after the trip ends.",
+          icon: "alert-circle",
+          iconColor: "#F59E0B",
+          buttons: [{ text: "Got it", style: "default" }],
+        });
+      } else if (hoursSinceReturn > 24) {
+        showAlert({
+          title: "Time Expired",
+          message: "The 24-hour window to submit check-out photos has passed.",
+          icon: "close-circle",
+          iconColor: "#EF4444",
+          buttons: [{ text: "OK", style: "default" }],
+        });
+      }
+      return;
+    }
+
+    const photoType = canCheckIn ? "checkin" : "checkout";
+
+    router.push({
+      pathname: "/TripPhotosScreen",
+      params: {
+        bookingId: bookingData.id,
+        photoType,
+        userRole: "host",
+      },
+    });
   };
 
   if (loading) {
@@ -651,74 +736,15 @@ const HostBooking = () => {
                   VIEW ALL
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  const now = new Date();
-                  const pickupDateTime = new Date(bookingData.pickupTime);
-                  const returnDateTime = new Date(bookingData.returnTime);
 
-                  const hoursUntilPickup =
-                    (pickupDateTime.getTime() - now.getTime()) /
-                    (1000 * 60 * 60);
-                  const hoursSinceReturn =
-                    (now.getTime() - returnDateTime.getTime()) /
-                    (1000 * 60 * 60);
-
-                  const isConfirmed = bookingData.bookingStatus === "confirmed";
-
-                  // ✅ Only allow check-in BEFORE pickup time, within 24h window
-                  const canCheckIn =
-                    isConfirmed &&
-                    hoursUntilPickup <= 24 &&
-                    now < pickupDateTime;
-
-                  // ✅ Only allow check-out AFTER return time, within 24h window
-                  const canCheckOut =
-                    isConfirmed &&
-                    now >= returnDateTime &&
-                    hoursSinceReturn <= 24;
-
-                  if (!canCheckIn && !canCheckOut) {
-                    if (!isConfirmed) {
-                      Alert.alert(
-                        "Not Available",
-                        "Trip photos are only available for confirmed bookings."
-                      );
-                    } else if (hoursUntilPickup > 24) {
-                      Alert.alert(
-                        "Not Available Yet",
-                        "Check-in photos can be added starting 24 hours before the trip starts."
-                      );
-                    } else if (now >= pickupDateTime && now < returnDateTime) {
-                      Alert.alert(
-                        "Trip In Progress",
-                        "Check-in photos can only be added before the trip starts. Check-out photos will be available after the trip ends."
-                      );
-                    } else if (hoursSinceReturn > 24) {
-                      Alert.alert(
-                        "Time Expired",
-                        "The 24-hour window to submit check-out photos has passed."
-                      );
-                    }
-                    return;
-                  }
-
-                  const photoType = canCheckIn ? "checkin" : "checkout";
-
-                  router.push({
-                    pathname: "/TripPhotosScreen",
-                    params: {
-                      bookingId: bookingData.id,
-                      photoType,
-                      userRole: "host",
-                    },
-                  });
-                }}
-              >
-                <Text className="font-JakartaSemiBold text-primary-500">
-                  ADD PHOTOS
-                </Text>
-              </TouchableOpacity>
+              {bookingData.bookingStatus !== "completed" &&
+                bookingData.bookingStatus !== "cancelled" && (
+                  <TouchableOpacity onPress={handleAddPhotos}>
+                    <Text className="font-JakartaSemiBold text-primary-500">
+                      ADD PHOTOS
+                    </Text>
+                  </TouchableOpacity>
+                )}
             </View>
           </View>
 
@@ -734,21 +760,25 @@ const HostBooking = () => {
               </Text>
             </View>
 
-            <TouchableOpacity
-              onPress={() => {
-                router.push({
-                  pathname: "/receiptScreen",
-                  params: {
-                    booking: JSON.stringify(bookingData),
-                    userRole: "host",
-                  },
-                });
-              }}
-            >
-              <Text className="font-JakartaSemiBold text-primary-500">
-                VIEW RECEIPT
-              </Text>
-            </TouchableOpacity>
+            {bookingData.bookingStatus === "pending" ? (
+              <View />
+            ) : (
+              <TouchableOpacity
+                onPress={() => {
+                  router.push({
+                    pathname: "/receiptScreen",
+                    params: {
+                      booking: JSON.stringify(bookingData),
+                      userRole: "host",
+                    },
+                  });
+                }}
+              >
+                <Text className="font-JakartaSemiBold text-primary-500">
+                  VIEW RECEIPT
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View className="py-5 border-b border-gray-200 flex-row justify-between items-center">
@@ -764,6 +794,7 @@ const HostBooking = () => {
           </View>
         </View>
       </ScrollView>
+
       <BottomSheet
         visible={isBottomSheetVisible}
         onClose={closeBottomSheet}
@@ -776,17 +807,14 @@ const HostBooking = () => {
         backgroundColor="#FFFFFF"
       >
         <View className="px-6 pt-2 pb-6">
-          {/* Title */}
           <Text className="text-2xl font-JakartaBold text-gray-900 text-center mb-4">
             {bottomSheetType === "accept"
               ? "Accept Booking"
               : "Decline Booking Request"}
           </Text>
 
-          {/* Booking Info Card */}
           <View className="overflow-hidden mb-4">
             <View className="flex-row gap-8">
-              {/* Car Image - Left Side */}
               <View className="w-32 h-full">
                 <Image
                   source={
@@ -804,9 +832,7 @@ const HostBooking = () => {
                 />
               </View>
 
-              {/* Info - Right Side */}
               <View className="flex-1 p-4">
-                {/* Car Info */}
                 <View className="mb-3">
                   <Text className="font-JakartaBold text-base text-gray-900">
                     {carData?.make} {carData?.model}
@@ -816,16 +842,7 @@ const HostBooking = () => {
                   </Text>
                 </View>
 
-                {/* Dates */}
                 <View className="flex-row justify-between pt-2 border-t border-gray-200">
-                  <View>
-                    <Text className="font-JakartaMedium text-xs text-gray-500">
-                      Pickup
-                    </Text>
-                    <Text className="font-JakartaSemiBold text-xs text-gray-900">
-                      {formatDate(bookingData.pickupDate)}
-                    </Text>
-                  </View>
                   <View>
                     <Text className="font-JakartaMedium text-xs text-gray-500">
                       Return
@@ -839,7 +856,6 @@ const HostBooking = () => {
             </View>
           </View>
 
-          {/* Message */}
           <View
             className={`rounded-lg p-4 mb-6 ${
               bottomSheetType === "accept"
@@ -855,13 +871,12 @@ const HostBooking = () => {
               />
               <Text className="flex-1 ml-2 font-JakartaMedium text-gray-700 leading-5">
                 {bottomSheetType === "accept"
-                  ? "Are you sure you want to accept this booking? The guest will be charged."
-                  : "Are you sure you want to decline this booking request? The renter will not be charged and the payment authorization will be released."}
+                  ? "Are you sure you want to accept this booking?"
+                  : "Are you sure you want to decline this booking request?"}
               </Text>
             </View>
           </View>
 
-          {/* Buttons */}
           <View className="gap-3">
             <TouchableOpacity
               className={`w-full rounded-lg py-4 items-center ${
@@ -897,6 +912,9 @@ const HostBooking = () => {
           </View>
         </View>
       </BottomSheet>
+
+      {/* Custom Alert Component */}
+      <AlertComponent />
     </SafeAreaView>
   );
 };
