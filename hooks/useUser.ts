@@ -26,6 +26,7 @@ export interface UserData {
     frontId?: IdentityFile;
     backId?: IdentityFile;
     selfieWithId?: IdentityFile;
+    verificationStatus?: "approved" | "pending" | "rejected" | string;
   };
   [key: string]: any;
 }
@@ -93,4 +94,55 @@ export function useAuth() {
   }, []);
 
   return { user, loading };
+}
+
+export function isDriverLicenseApproved(userData: UserData | null): boolean {
+  if (!userData?.driversLicense) {
+    return false;
+  }
+
+  return userData.driversLicense.verificationStatus === "approved";
+}
+
+export function getDriverLicenseStatus(userData: UserData | null): {
+  isApproved: boolean;
+  isPending: boolean;
+  isNotSubmitted: boolean;
+  message: string;
+} {
+  if (!userData?.driversLicense?.verificationStatus) {
+    return {
+      isApproved: false,
+      isPending: false,
+      isNotSubmitted: true,
+      message: "Please submit your driver's license for verification",
+    };
+  }
+
+  const status = userData.driversLicense.verificationStatus;
+
+  if (status === "approved") {
+    return {
+      isApproved: true,
+      isPending: false,
+      isNotSubmitted: false,
+      message: "Driver's license verified",
+    };
+  }
+
+  if (status === "pending") {
+    return {
+      isApproved: false,
+      isPending: true,
+      isNotSubmitted: false,
+      message: "Your driver's license verification is pending",
+    };
+  }
+
+  return {
+    isApproved: false,
+    isPending: false,
+    isNotSubmitted: false,
+    message: "Your driver's license verification was rejected. Please resubmit",
+  };
 }

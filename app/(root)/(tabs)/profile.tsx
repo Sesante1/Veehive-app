@@ -1,11 +1,6 @@
 import { icons } from "@/constants";
 import { useSignOut } from "@/hooks/useSignOut";
-import {
-  AntDesign,
-  Feather,
-  MaterialIcons,
-  SimpleLineIcons,
-} from "@expo/vector-icons";
+import { Feather, MaterialIcons, SimpleLineIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
 import {
@@ -178,7 +173,7 @@ export default function Profile() {
               className="flex flex-row items-center gap-3 py-4 px-6"
               onPress={() => {}}
             >
-              <AntDesign name="questioncircleo" size={20} color="#00000" />
+              <Feather name="shield" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">Privacy Policy</Text>
               <MaterialIcons
                 className="absolute right-0"

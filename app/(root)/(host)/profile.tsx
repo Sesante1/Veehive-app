@@ -140,7 +140,7 @@ export default function Profile() {
               className="flex flex-row items-center gap-3 py-4 px-6"
               onPress={() => {}}
             >
-              <AntDesign name="questioncircleo" size={20} color="#00000" />
+              <Feather name="shield" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">Privacy Policy</Text>
               <MaterialIcons
                 className="absolute right-0"
