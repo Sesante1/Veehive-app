@@ -124,7 +124,7 @@ export const uploadCarListing = async (
         displayName: currentUser.displayName || null,
         photoURL: currentUser.photoURL || null,
       },
-      status: carStatus,
+      status: "pending",
       totalTrips: 0, 
       isActive: false,
       isDeleted: false,

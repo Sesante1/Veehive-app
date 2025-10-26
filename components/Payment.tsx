@@ -288,7 +288,8 @@ const Payment = ({
     const { error } = await presentPaymentSheet();
 
     if (error) {
-      Alert.alert(`Error code: ${error.code}`, error.message);
+      // Alert.alert(`Error code: ${error.code}`, error.message);
+      console.log("=== Payment sheet error ===", error);
     } else {
       console.log("=== Payment authorized successfully ===");
       setSuccess(true);

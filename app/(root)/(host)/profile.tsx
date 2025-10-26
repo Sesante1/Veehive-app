@@ -1,7 +1,6 @@
 import { icons } from "@/constants";
 import { useSignOut } from "@/hooks/useSignOut";
 import {
-  AntDesign,
   Feather,
   FontAwesome6,
   MaterialIcons,
@@ -20,13 +19,45 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import ProfileSkeleton from "../../../components/ProfileSkeleton";
 import { useRole } from "../../../context/RoleContext";
-import { useUserData } from "../../../hooks/useUser";
+import { UserData, useUserData } from "../../../hooks/useUser";
 
 export default function Profile() {
   const { userData, loading } = useUserData();
   const { SignOutModal, setVisible } = useSignOut();
 
   const { role, toggleRole, setRole } = useRole();
+
+  const needsRequiredSteps = (userData: UserData | null) => {
+    if (!userData) {
+      console.log("No userData - showing banner");
+      return true;
+    }
+
+    const hasPhone =
+      !!userData.phoneNumber && userData.phoneNumber.trim() !== "";
+
+    const hasFrontId = !!userData.identityVerification?.frontId?.url;
+    const hasBackId = !!userData.identityVerification?.backId?.url;
+    const hasSelfieWithId = !!userData.identityVerification?.selfieWithId?.url;
+
+    const hasCompleteIdentity = hasFrontId && hasBackId && hasSelfieWithId;
+
+    // Check if identity verification (host identification) is approved
+    const isIdentityApproved =
+      (userData.identityVerification as any)?.verificationStatus === "approved";
+
+    const shouldShow = !hasPhone || !hasCompleteIdentity;
+
+    return shouldShow;
+  };
+
+  const handleCreateListing = () => {
+    if (needsRequiredSteps(userData)) {
+      router.push("/completeRequiredSteps");
+    } else {
+      router.push("/create-car");
+    }
+  };
 
   if (loading) {
     return (
@@ -94,7 +125,7 @@ export default function Profile() {
           <View className="border-b border-gray-200 mb-4 pb-4">
             <Pressable
               className="flex flex-row items-center gap-4 py-4 px-6 rounded-lg"
-              onPress={() => router.push("/create-car")}
+              onPress={handleCreateListing}
             >
               <FontAwesome6 name="add" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">Create listing</Text>

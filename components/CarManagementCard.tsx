@@ -10,7 +10,8 @@ type CarStatus =
   | "on a trip"
   | "draft"
   | "rejected"
-  | "reserved";
+  | "reserved"
+  | "suspended";
 
 type CarProps = {
   id: string;
@@ -44,6 +45,7 @@ const statusConfig: Record<CarStatus, { label: string; color: string }> = {
   draft: { label: "Action required", color: "#e4321aff" },
   rejected: { label: "Rejected", color: "#e4321aff" },
   reserved: { label: "Reserved", color: "#22c55e" },
+  suspended: { label: "Suspended", color: "#e4321aff" },
 };
 
 const CarManagementCard: React.FC<CarProps> = ({

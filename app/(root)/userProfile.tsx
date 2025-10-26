@@ -139,17 +139,17 @@ const UserProfile = () => {
 
           <Pressable
             className="p-2"
-            onPress={() =>
+            onPress={() => {
+              const identityData = userData?.identityVerification || {};
+
               router.push({
                 pathname: "/identityVerification",
                 params: {
-                  documents: btoa(
-                    JSON.stringify(userData?.identityVerification)
-                  ),
-                  userId: user?.uid,
+                  documents: btoa(JSON.stringify(identityData)),
+                  userId: user?.uid || "",
                 },
-              })
-            }
+              });
+            }}
           >
             <Text className="text-lg font-JakartaBold underline">
               {allDocsUploaded ? "Edit" : "Start"}

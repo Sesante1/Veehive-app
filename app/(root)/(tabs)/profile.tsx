@@ -85,7 +85,7 @@ export default function Profile() {
         </View>
 
         <View className="flex-1">
-          <Pressable className="px-6">
+          {/* <Pressable className="px-6">
             <View className="bg-gray-700 h-[230px] mb-8 rounded-2xl overflow-hidden shadow-lg">
               <View className="flex-row h-full">
                 <View className="flex-1 p-6 justify-between">
@@ -99,7 +99,6 @@ export default function Profile() {
                     </Text>
                   </View>
 
-                  {/* Become a host button */}
                   <Pressable
                     className="bg-primary-500 rounded-xl py-4 px-6 self-start"
                     onPress={() => router.push("/(root)/OnboardingListing")}
@@ -110,7 +109,6 @@ export default function Profile() {
                   </Pressable>
                 </View>
 
-                {/* Right side - Image */}
                 <View className="w-[45%]">
                   <Image
                     source={{
@@ -122,9 +120,9 @@ export default function Profile() {
                 </View>
               </View>
             </View>
-          </Pressable>
+          </Pressable> */}
 
-          <View className="border-b border-gray-200 mb-4 pb-4">
+          <View className="border-b border-gray-200 mb-4 mt-20 pb-4">
             <Pressable
               className="flex flex-row items-center gap-4 py-4 px-6 rounded-lg"
               onPress={() => router.push("/myBooking")}
