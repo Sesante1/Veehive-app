@@ -85,16 +85,25 @@ export interface IdentityDocuments {
   frontId?: IdentityDocument;
   backId?: IdentityDocument;
   selfieWithId?: IdentityDocument;
+  expirationDate?: string;
+  verificationStatus?: "pending" | "approved" | "declined";
+  submittedAt?: string;
 }
 
 export interface DriversLicenseDocuments {
   frontLicense?: IdentityDocument;
   backLicense?: IdentityDocument;
   selfieWithLicense?: IdentityDocument;
+  expirationDate?: string;
+  verificationStatus?: "pending" | "approved" | "declined";
+  submittedAt?: string;
 }
 
 export type IdentityDocType = "frontId" | "backId" | "selfieWithId";
-export type DriversLicenseDocType = "frontLicense" | "backLicense" | "selfieWithLicense";
+export type DriversLicenseDocType =
+  | "frontLicense"
+  | "backLicense"
+  | "selfieWithLicense";
 
 // IDENTITY VERIFICATION FUNCTIONS
 
@@ -184,6 +193,56 @@ export const removeIdentityDocument = async (
   });
 };
 
+// Submit identity verification with expiration date
+export const submitIdentityVerification = async (
+  userId: string,
+  expirationDate: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const userDocRef = doc(db, "users", userId);
+
+    await updateDoc(userDocRef, {
+      "identityVerification.expirationDate": expirationDate,
+      "identityVerification.verificationStatus": "pending",
+      "identityVerification.submittedAt": new Date().toISOString(),
+      updatedAt: serverTimestamp(),
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error submitting identity verification:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// Update identity verification status (Admin function)
+export const updateIdentityVerificationStatus = async (
+  userId: string,
+  status: "approved" | "declined",
+  adminNote?: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const userDocRef = doc(db, "users", userId);
+
+    const updateData: any = {
+      "identityVerification.verificationStatus": status,
+      "identityVerification.reviewedAt": new Date().toISOString(),
+      updatedAt: serverTimestamp(),
+    };
+
+    if (adminNote) {
+      updateData["identityVerification.adminNote"] = adminNote;
+    }
+
+    await updateDoc(userDocRef, updateData);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating verification status:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
 // DRIVER'S LICENSE VERIFICATION FUNCTIONS
 
 // Upload driver's license document to Firebase Storage and update Firestore
@@ -195,9 +254,6 @@ export const uploadDriversLicenseDocument = async (
   const timestamp = Date.now();
 
   // Generate filename based on document type
-  // const filename = docType === "frontLicense" 
-  //   ? `front_license_${timestamp}.jpg`
-  //   : `back_license_${timestamp}.jpg`;
   let filename: string;
   switch (docType) {
     case "frontLicense":
@@ -243,7 +299,6 @@ export const uploadDriversLicenseDocument = async (
   };
 };
 
-
 // Remove driver's license document from Firebase Storage and Firestore
 export const removeDriversLicenseDocument = async (
   docType: DriversLicenseDocType,
@@ -274,4 +329,57 @@ export const removeDriversLicenseDocument = async (
     [`driversLicense.${docType}`]: deleteField(),
     updatedAt: serverTimestamp(),
   });
+};
+
+// Submit driver's license verification with expiration date
+export const submitDriversLicenseVerification = async (
+  userId: string,
+  expirationDate: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const userDocRef = doc(db, "users", userId);
+
+    await updateDoc(userDocRef, {
+      "driversLicense.expirationDate": expirationDate,
+      "driversLicense.verificationStatus": "pending",
+      "driversLicense.submittedAt": new Date().toISOString(),
+      updatedAt: serverTimestamp(),
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error(
+      "Error submitting driver's license verification:",
+      error.message
+    );
+    return { success: false, error: error.message };
+  }
+};
+
+// Update driver's license verification status (Admin function)
+export const updateDriversLicenseVerificationStatus = async (
+  userId: string,
+  status: "approved" | "declined",
+  adminNote?: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const userDocRef = doc(db, "users", userId);
+
+    const updateData: any = {
+      "driversLicense.verificationStatus": status,
+      "driversLicense.reviewedAt": new Date().toISOString(),
+      updatedAt: serverTimestamp(),
+    };
+
+    if (adminNote) {
+      updateData["driversLicense.adminNote"] = adminNote;
+    }
+
+    await updateDoc(userDocRef, updateData);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating verification status:", error.message);
+    return { success: false, error: error.message };
+  }
 };

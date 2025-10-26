@@ -4,7 +4,7 @@ import CustomButton from "@/components/CustomButton";
 import { StaticCarLocationMap } from "@/components/MapComponents";
 import { icons } from "@/constants";
 import { useDirectConversation } from "@/hooks/useDirectConversation";
-import { useAuth } from "@/hooks/useUser";
+import { getDriverLicenseStatus, useAuth, useUserData } from "@/hooks/useUser";
 import {
   fetchUserWishlist,
   getCarWithOwner,
@@ -34,6 +34,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Snackbar } from "react-native-paper";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -99,9 +100,9 @@ const ReviewCard = ({ item }: { item: any }) => {
     >
       <View className="flex-row items-center mb-4">
         {Array.from({ length: 5 }).map((_, index) => (
-          <AntDesign
+          <MaterialCommunityIcons
             key={index}
-            name={index < item.rating ? "star" : "staro"}
+            name={index < item.rating ? "star" : "star-outline"}
             size={13}
             color="#FFD700"
             style={{ marginRight: 2 }}
@@ -152,6 +153,10 @@ const CarDetails = () => {
 
   const [showMap, setShowMap] = useState(false);
   const { openDirectConversation } = useDirectConversation();
+
+  const { userData, loading: userDataLoading } = useUserData();
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   useEffect(() => {
     if (car) {
@@ -220,6 +225,36 @@ const CarDetails = () => {
     } else {
       Alert.alert("Error", "Owner information not available");
     }
+  };
+
+  const handleBookNow = () => {
+    if (userDataLoading) {
+      return; // Wait for user data to load
+    }
+
+    // Check driver's license verification status
+    const licenseStatus = getDriverLicenseStatus(userData);
+
+    if (!licenseStatus.isApproved) {
+      setSnackbarMessage(licenseStatus.message);
+      setSnackbarVisible(true);
+      return;
+    }
+
+    // If approved, proceed with booking
+    const bookingData = {
+      carId: car!.id,
+      carType: car!.type,
+      carImage: btoa(car!.images[0]?.url || ""),
+      carMake: car!.make,
+      carModel: car!.model,
+      carLocation: JSON.stringify(car!.location),
+    };
+
+    router.push({
+      pathname: "/(root)/book-car",
+      params: bookingData,
+    });
   };
 
   if (loading) return <CarDetailsSkeleton />;
@@ -484,7 +519,7 @@ const CarDetails = () => {
 
             {car.reviews && car.reviews.length > 0 ? (
               <FlatList
-                data={car.reviews}
+                data={car.reviews.slice(0, 6)}
                 renderItem={({ item }) => <ReviewCard item={item} />}
                 keyExtractor={(item) => item.id}
                 horizontal
@@ -503,9 +538,11 @@ const CarDetails = () => {
           </View>
 
           {/* Show all reviews button */}
-          <TouchableOpacity className="bg-gray-100 mt-10 h-12 rounded-[5px] flex items-center justify-center">
-            <Text className="font-JakartaMedium">Show all reviews</Text>
-          </TouchableOpacity>
+          {car.reviews && car.reviews.length > 6 && (
+            <TouchableOpacity className="bg-gray-100 mt-10 h-12 rounded-[5px] flex items-center justify-center">
+              <Text className="font-JakartaMedium">Show all reviews</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
 
@@ -533,25 +570,41 @@ const CarDetails = () => {
         </View>
 
         <View className="w-[180px] ">
-          <CustomButton
-            title="Book Now"
-            onPress={() => {
-              const bookingData = {
-                carId: car.id,
-                carType: car.type,
-                carImage: btoa(car.images[0]?.url || ""),
-                carMake: car.make,
-                carModel: car.model,
-                carLocation: JSON.stringify(car.location),
-              };
-
-              router.push({
-                pathname: "/(root)/book-car",
-                params: bookingData,
-              });
-            }}
-          />
+          {user?.uid !== car.owner?.id && (
+            <CustomButton
+              title="Book Now"
+              onPress={handleBookNow} 
+            />
+          )}
         </View>
+
+        <Snackbar
+          visible={snackbarVisible}
+          onDismiss={() => setSnackbarVisible(false)}
+          duration={4000}
+          action={{
+            label: "Verify",
+            onPress: () => {
+              setSnackbarVisible(false);
+              router.push({
+                pathname: "/driversLicenseVerification",
+                params: {
+                  documents: btoa(
+                    JSON.stringify(userData?.driversLicense || {})
+                  ),
+                  userId: user?.uid,
+                },
+              });
+            },
+          }}
+          style={{
+            backgroundColor: "#4e4e4eff",
+            width: "100%",
+            marginBottom: 80,
+          }}
+        >
+          <Text className="color-white">{snackbarMessage}</Text>
+        </Snackbar>
       </View>
     </>
   );
