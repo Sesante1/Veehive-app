@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Dimensions, Pressable, StatusBar, View } from "react-native";
+import { Dimensions, Modal, Pressable, StatusBar, View } from "react-native";
 import {
   Gesture,
   GestureDetector,
@@ -114,10 +114,14 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
     runOnJS(onClose)();
   };
 
-  if (!visible) return null;
-
   return (
-    <>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      statusBarTranslucent={statusBarTranslucent}
+      onRequestClose={onClose}
+    >
       {statusBarTranslucent && (
         <StatusBar backgroundColor="rgba(0,0,0,0.5)" barStyle="light-content" />
       )}
@@ -125,12 +129,8 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
       {/* Full Screen Container */}
       <View
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 50,
+          flex: 1,
+          position: "relative",
         }}
       >
         {/* Full Height/Width Backdrop */}
@@ -197,7 +197,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                       <View
                         style={{
                           width: 48,
-                          height: 6,
+                          height: 4,
                           backgroundColor: "#D1D5DB",
                           borderRadius: 3,
                         }}
@@ -213,7 +213,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
           </GestureHandlerRootView>
         </View>
       </View>
-    </>
+    </Modal>
   );
 };
 

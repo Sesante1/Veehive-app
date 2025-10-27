@@ -211,7 +211,7 @@ const ReceiptScreen = () => {
           <View className="border-t border-gray-300 pt-3 mt-3">
             <InfoRow
               label="Total Paid"
-              value={`₱${(totalAmount + (bookingData.lateFee || 0 / 100)).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+              value={`₱${(totalAmount + (bookingData.lateFee || 0) / 100).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
               bold
             />
           </View>
@@ -224,16 +224,16 @@ const ReceiptScreen = () => {
             label="Payment Method"
             value={bookingData.paymentMethod || "Card"}
           />
-          <InfoRow
+          {/* <InfoRow
             label="Transaction Date"
             value={getDateString(bookingData.createdAt)}
-          />
+          /> */}
         </View>
       </View>
 
       <View className="bg-blue-50 rounded-lg p-4 mb-6">
         <Text className="text-sm font-JakartaMedium text-secondary-700 text-center">
-          Drive safely and enjoy your trip! 🚗
+          Drive safely and enjoy your trip!
         </Text>
       </View>
     </>

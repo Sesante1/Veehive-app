@@ -1,3 +1,4 @@
+import BottomSheet from "@/components/BottomSheet"; // Adjust path as needed
 import { icons } from "@/constants";
 import {
   deleteNotification,
@@ -8,7 +9,7 @@ import {
 import { useAuth } from "@/hooks/useUser";
 import { router } from "expo-router";
 import LottieView from "lottie-react-native";
-import React from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -29,6 +30,11 @@ const Notifications = () => {
     userId,
     "hoster"
   );
+
+  const [deleteSheetVisible, setDeleteSheetVisible] = useState(false);
+  const [notificationToDelete, setNotificationToDelete] = useState<
+    string | null
+  >(null);
 
   const handleNotificationPress = async (notification: any) => {
     // Mark as read
@@ -51,12 +57,26 @@ const Notifications = () => {
     }
   };
 
-  const handleDelete = async (notificationId: string) => {
+  const openDeleteSheet = (notificationId: string) => {
+    setNotificationToDelete(notificationId);
+    setDeleteSheetVisible(true);
+  };
+
+  const handleDelete = async () => {
+    if (!notificationToDelete) return;
+
     try {
-      await deleteNotification(notificationId);
+      await deleteNotification(notificationToDelete);
+      setDeleteSheetVisible(false);
+      setNotificationToDelete(null);
     } catch (error) {
       Alert.alert("Error", "Failed to delete notification");
     }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteSheetVisible(false);
+    setNotificationToDelete(null);
   };
 
   const getNotificationIcon = (type: string) => {
@@ -157,81 +177,114 @@ const Notifications = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white -mb-14">
-      <View className="flex-1">
-        {/* Header */}
-        <View className="px-4 py-4 border-b border-gray-200">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-2xl font-JakartaBold">Notifications</Text>
+    <>
+      <SafeAreaView className="flex-1 bg-white -mb-14">
+        <View className="flex-1">
+          {/* Header */}
+          <View className="px-4 py-4 border-b border-gray-200">
+            <View className="flex-row items-center justify-between">
+              <Text className="text-2xl font-JakartaBold">Notifications</Text>
+              {unreadCount > 0 && (
+                <TouchableOpacity onPress={handleMarkAllRead}>
+                  <Text className="text-sm text-blue-500 font-JakartaSemiBold">
+                    Mark all read
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
             {unreadCount > 0 && (
-              <TouchableOpacity onPress={handleMarkAllRead}>
-                <Text className="text-sm text-blue-500 font-JakartaSemiBold">
-                  Mark all read
-                </Text>
-              </TouchableOpacity>
+              <Text className="text-sm text-gray-500 font-JakartaMedium mt-1">
+                {unreadCount} unread
+              </Text>
             )}
           </View>
-          {unreadCount > 0 && (
-            <Text className="text-sm text-gray-500 font-JakartaMedium mt-1">
-              {unreadCount} unread
-            </Text>
-          )}
-        </View>
 
-        {/* Notifications List */}
-        <FlatList
-          data={notifications}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => handleNotificationPress(item)}
-              onLongPress={() =>
-                Alert.alert("Delete", "Delete this notification?", [
-                  { text: "Cancel", style: "cancel" },
-                  {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: () => handleDelete(item.id),
-                  },
-                ])
-              }
-              className={`px-4 py-4 border-b border-gray-100 ${
-                !item.read ? "bg-blue-50" : "bg-white"
-              }`}
-            >
-              <View className="flex-row items-center gap-4">
-                <View className="bg-primary-500 p-3 rounded-full shadow-md flex justify-center items-center h-16 w-16">
-                  <Image
-                    source={icons.notification}
-                    className="h-7 w-7 tint-white"
-                  />
-                </View>
-
-                <View className="flex-1">
-                  <View className="flex-row items-center justify-between mb-1">
-                    <Text className="text-base font-JakartaBold flex-1">
-                      {item.title}
-                    </Text>
-                    {!item.read && (
-                      <View className="w-2 h-2 bg-blue-500 rounded-full ml-2" />
-                    )}
+          {/* Notifications List */}
+          <FlatList
+            data={notifications}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => handleNotificationPress(item)}
+                onLongPress={() => openDeleteSheet(item.id)}
+                className={`px-4 py-4 border-b border-gray-100 ${
+                  !item.read ? "bg-blue-50" : "bg-white"
+                }`}
+              >
+                <View className="flex-row items-center gap-4">
+                  <View className="bg-primary-500 p-3 rounded-full shadow-md flex justify-center items-center h-16 w-16">
+                    <Image
+                      source={icons.notification}
+                      className="h-7 w-7 tint-white"
+                    />
                   </View>
 
-                  <Text className="text-sm text-gray-600 font-JakartaMedium mb-1">
-                    {item.message}
-                  </Text>
+                  <View className="flex-1">
+                    <View className="flex-row items-center justify-between mb-1">
+                      <Text className="text-base font-JakartaBold flex-1">
+                        {item.title}
+                      </Text>
+                      {!item.read && (
+                        <View className="w-2 h-2 bg-blue-500 rounded-full ml-2" />
+                      )}
+                    </View>
 
-                  <Text className="text-xs text-gray-400 font-JakartaMedium">
-                    {formatTime(item.createdAt)}
-                  </Text>
+                    <Text className="text-sm text-gray-600 font-JakartaMedium mb-1">
+                      {item.message}
+                    </Text>
+
+                    <Text className="text-xs text-gray-400 font-JakartaMedium">
+                      {formatTime(item.createdAt)}
+                    </Text>
+                  </View>
                 </View>
-              </View>
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={{ paddingBottom: 20 }}
+          />
+        </View>
+      </SafeAreaView>
+
+      {/* Delete Confirmation Bottom Sheet - Rendered outside SafeAreaView */}
+      <BottomSheet
+        visible={deleteSheetVisible}
+        onClose={handleCancelDelete}
+        height={320}
+        showDragHandle={true}
+        enablePanGesture={true}
+        backdropOpacity={0.3}
+      >
+        <View className="flex-1 px-6 py-4">
+          <Text className="text-xl font-JakartaBold text-center mb-2">
+            Delete Notification
+          </Text>
+          <Text className="text-base font-JakartaMedium text-gray-600 text-center mb-6">
+            Are you sure you want to delete this notification? This action
+            cannot be undone.
+          </Text>
+
+          <View className="gap-3">
+            <TouchableOpacity
+              onPress={handleDelete}
+              className="bg-red-500 py-4 rounded-lg"
+            >
+              <Text className="text-white text-center font-JakartaBold text-base">
+                Delete
+              </Text>
             </TouchableOpacity>
-          )}
-          contentContainerStyle={{ paddingBottom: 20 }}
-        />
-      </View>
-    </SafeAreaView>
+
+            <TouchableOpacity
+              onPress={handleCancelDelete}
+              className="bg-gray-200 py-4 rounded-lg"
+            >
+              <Text className="text-black text-center font-JakartaBold text-base">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </BottomSheet>
+    </>
   );
 };
 

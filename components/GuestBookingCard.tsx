@@ -90,7 +90,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
           style={{ width: "100%", height: 160, borderRadius: 5 }}
         />
         <View className="bg-white justify-center items-center gap-2 p-1 px-2 rounded-[5px] absolute top-2 left-2">
-          <Text className="color-secondary-700">{booking.bookingStatus}</Text>
+          <Text className="color-primary-500 font-JakartaSemiBold">{booking.bookingStatus.charAt(0).toUpperCase() + booking.bookingStatus.slice(1)}</Text>
         </View>
       </View>
 
@@ -164,7 +164,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
       </View>
 
       {/* Actions */}
-      <View className="px-4 py-3 flex-row gap-2">
+      <View className="py-3 flex-row gap-2">
         {booking.bookingStatus === "completed" ? (
           // Show review buttons for completed trips
           <>
@@ -183,18 +183,26 @@ const BookingCard: React.FC<BookingCardProps> = ({
               </TouchableOpacity>
             ) : (
               // Already reviewed
-              <View className="flex-1 bg-green-50 py-3.5 rounded-lg border border-green-200">
+              <TouchableOpacity
+                className="flex-1 bg-primary-500 py-3.5 rounded-lg"
+                onPress={() => {
+                  router.push({
+                    pathname: "/car-details/[id]",
+                    params: { id: booking.carId },
+                  });
+                }}
+              >
                 <View className="flex-row items-center justify-center gap-2">
                   <MaterialIcons
                     name="check-circle"
                     size={20}
-                    color="#16a34a"
+                    color="#ffffff"
                   />
-                  <Text className="text-center text-green-700 font-JakartaSemiBold">
-                    Review Submitted
+                  <Text className="text-center text-white font-JakartaSemiBold">
+                    Rent again
                   </Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             )}
 
             <TouchableOpacity
@@ -216,7 +224,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
               activeOpacity={0.7}
             >
               <Text className="text-center text-gray-700 font-JakartaSemiBold">
-                Contact Guest
+                Contact Host
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
