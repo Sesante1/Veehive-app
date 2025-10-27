@@ -545,7 +545,17 @@ const CarDetails = () => {
           )}
         </View>
         <View className="flex justify-center items-center my-6">
-          <Pressable onPress={() => {}}>
+          <Pressable
+            onPress={() => {
+              router.push({
+                pathname: "/reportListing",
+                params: {
+                  carId: car.id,
+                  carName: `${car.year} ${car.make} ${car.model}`,
+                },
+              });
+            }}
+          >
             <Text className="font-JakartaBold text-center text-primary-500">
               Report listing
             </Text>
