@@ -99,7 +99,7 @@ const CarManagementCard: React.FC<CarProps> = ({
         </View>
       </View>
 
-      <View className="flex-1">
+      <View className="flex-1 mt-3">
         <Text
           className="text-[18px] font-JakartaBold mb-2"
           numberOfLines={2}
@@ -132,7 +132,7 @@ const CarManagementCard: React.FC<CarProps> = ({
               </View>
             </View>
 
-            {tripDate && (
+            {/* {tripDate && (
               <Text
                 className="color-secondary-500 text-lg font-Jakarta flex-wrap"
                 style={{ flexShrink: 1 }}
@@ -141,7 +141,7 @@ const CarManagementCard: React.FC<CarProps> = ({
                   ? `On a trip: ${new Date(tripDate).toLocaleDateString()}`
                   : `Last trip: ${new Date(tripDate).toLocaleDateString()}`}
               </Text>
-            )}
+            )} */}
           </>
         ) : (
           <Text className="color-secondary-500 text-lg font-Jakarta flex-wrap mt-3">

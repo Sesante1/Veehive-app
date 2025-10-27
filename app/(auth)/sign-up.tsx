@@ -97,7 +97,7 @@ const SignUp = () => {
           />
 
           {isLoading ? (
-            <View className="flex-row items-center justify-center w-full bg-primary-500 p-4 rounded-full mt-6">
+            <View className="flex-row items-center justify-center w-full bg-primary-500 p-4 rounded-lg mt-6">
               <ActivityIndicator size="small" color="#FFFFFF" />
             </View>
           ) : (
