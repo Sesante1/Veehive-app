@@ -18,7 +18,6 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   Text,
@@ -26,9 +25,11 @@ import {
 } from "react-native";
 import ReactNativeModal from "react-native-modal";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useCustomAlert } from "@/components/CustomAlert";
 
 const CreateCar = () => {
   const { userData } = useUserData();
+  const { showAlert, AlertComponent } = useCustomAlert();
   const [carImages, setCarImages] = useState<ImageType[]>([]);
   const [receipt, setReceipt] = useState<ImageType[]>([]);
   const [certificateRegistration, setCertificateRegistration] = useState<
@@ -38,6 +39,7 @@ const CreateCar = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [errors, setErrors] = useState<Set<string>>(new Set());
 
   type FormFields = {
     make: string;
@@ -71,7 +73,6 @@ const CreateCar = () => {
 
   // Check if host identity is approved
   const isHostApproved = () => {
-    // Type assertion to access verificationStatus
     const identityVerification = userData?.identityVerification as any;
     return identityVerification?.verificationStatus === "approved";
   };
@@ -98,29 +99,50 @@ const CreateCar = () => {
     ];
     const missing = required.filter((field) => !form[field]);
 
+    // Set errors for empty fields
+    setErrors(new Set(missing));
+
     if (missing.length > 0) {
-      Alert.alert(
-        "Missing Information",
-        `Please fill in: ${missing.join(", ")}`
-      );
+      showAlert({
+        title: "Missing Information",
+        message: "Please fill in all required fields.",
+        icon: "alert-circle",
+        iconColor: "#EF4444",
+        buttons: [{ text: "OK", style: "default" }],
+      });
       return false;
     }
 
     if (carImages.length < 3) {
-      Alert.alert("Missing Images", "Please upload at least 3 car images");
+      showAlert({
+        title: "Missing Images",
+        message: "Please upload at least 3 car images",
+        icon: "images-outline",
+        iconColor: "#EF4444",
+        buttons: [{ text: "OK", style: "default" }],
+      });
       return false;
     }
 
     if (receipt.length === 0) {
-      Alert.alert("Missing Document", "Please upload the Official Receipt");
+      showAlert({
+        title: "Missing Document",
+        message: "Please upload the Official Receipt",
+        icon: "document-text-outline",
+        iconColor: "#EF4444",
+        buttons: [{ text: "OK", style: "default" }],
+      });
       return false;
     }
 
     if (certificateRegistration.length === 0) {
-      Alert.alert(
-        "Missing Document",
-        "Please upload the Certificate of Registration"
-      );
+      showAlert({
+        title: "Missing Document",
+        message: "Please upload the Certificate of Registration",
+        icon: "document-text-outline",
+        iconColor: "#EF4444",
+        buttons: [{ text: "OK", style: "default" }],
+      });
       return false;
     }
 
@@ -147,25 +169,35 @@ const CreateCar = () => {
       );
 
       setSuccess(true);
-      Alert.alert(
-        "Success!",
-        "Your car listing has been uploaded successfully and is pending approval.",
-        [
+      showAlert({
+        title: "Success!",
+        message:
+          "Your car listing has been uploaded successfully and is pending approval.",
+        icon: "checkmark-circle",
+        iconColor: "#10B981",
+        buttons: [
           {
             text: "OK",
+            style: "default",
             onPress: () => {
               router.back();
               resetForm();
             },
           },
-        ]
-      );
+        ],
+      });
     } catch (error) {
-      if (error instanceof Error) {
-        console.error(error.message);
-      } else {
-        console.error(String(error));
-      }
+      showAlert({
+        title: "Upload Failed",
+        message:
+          error instanceof Error
+            ? error.message
+            : "An error occurred while uploading your listing",
+        icon: "close-circle",
+        iconColor: "#EF4444",
+        buttons: [{ text: "OK", style: "default" }],
+      });
+      console.error(error);
     } finally {
       setIsUploading(false);
       setSuccess(false);
@@ -190,6 +222,7 @@ const CreateCar = () => {
     setCarImages([]);
     setReceipt([]);
     setCertificateRegistration([]);
+    setErrors(new Set());
   };
 
   const handlePress = (location: {
@@ -204,6 +237,23 @@ const CreateCar = () => {
       latitude: location.latitude,
       longitude: location.longitude,
     });
+    // Remove location from errors when filled
+    if (errors.has("location")) {
+      const newErrors = new Set(errors);
+      newErrors.delete("location");
+      setErrors(newErrors);
+    }
+  };
+
+  // Helper function to handle form changes and clear errors
+  const handleFormChange = (field: keyof FormFields, value: string) => {
+    setForm({ ...form, [field]: value });
+    // Remove field from errors when user starts typing
+    if (errors.has(field)) {
+      const newErrors = new Set(errors);
+      newErrors.delete(field);
+      setErrors(newErrors);
+    }
   };
 
   const getApprovalStatusMessage = () => {
@@ -289,7 +339,8 @@ const CreateCar = () => {
           icon={icons.email}
           textContentType="none"
           value={form.make}
-          onChangeText={(value) => setForm({ ...form, make: value })}
+          onChangeText={(value) => handleFormChange("make", value)}
+          hasError={errors.has("make")}
         />
 
         <InputField
@@ -298,7 +349,8 @@ const CreateCar = () => {
           icon={icons.email}
           textContentType="none"
           value={form.model}
-          onChangeText={(value) => setForm({ ...form, model: value })}
+          onChangeText={(value) => handleFormChange("model", value)}
+          hasError={errors.has("model")}
         />
 
         <InputField
@@ -309,7 +361,8 @@ const CreateCar = () => {
           icon={icons.email}
           textContentType="none"
           value={form.year}
-          onChangeText={(value) => setForm({ ...form, year: value })}
+          onChangeText={(value) => handleFormChange("year", value)}
+          hasError={errors.has("year")}
         />
 
         <InputField
@@ -318,14 +371,15 @@ const CreateCar = () => {
           icon={icons.email}
           textContentType="none"
           value={form.carType}
-          onChangeText={(value) => setForm({ ...form, carType: value })}
+          onChangeText={(value) => handleFormChange("carType", value)}
+          hasError={errors.has("carType")}
         />
 
         <TextAreaField
           label="Description"
           placeholder="Describe your car"
           value={form.description}
-          onChangeText={(value) => setForm({ ...form, description: value })}
+          onChangeText={(value) => handleFormChange("description", value)}
         />
 
         <Text className="text-2xl font-JakartaBold my-5">
@@ -339,12 +393,19 @@ const CreateCar = () => {
           icon={icons.email}
           textContentType="none"
           value={form.dailyRate}
-          onChangeText={(value) => setForm({ ...form, dailyRate: value })}
+          onChangeText={(value) => handleFormChange("dailyRate", value)}
+          hasError={errors.has("dailyRate")}
         />
 
         <View className="mb-4" style={{ zIndex: 1000 }}>
-          <Text className="text-lg font-JakartaSemiBold mb-3">Location</Text>
-          <GoogleTextInput icon={icons.pin} handlePress={handlePress} />
+          <Text className="text-lg font-JakartaSemiBold mb-3">
+            Location {errors.has("location") && <Text className="text-red-500">*</Text>}
+          </Text>
+          <GoogleTextInput 
+            icon={icons.pin} 
+            handlePress={handlePress}
+            containerStyle={errors.has("location") ? "border border-red-500 rounded-xl" : ""}
+          />
         </View>
 
         <Text className="text-2xl font-JakartaBold my-5">Specifications</Text>
@@ -357,10 +418,11 @@ const CreateCar = () => {
             { label: "Electric", value: "Electric" },
           ]}
           placeholder="Select Transmission"
-          onChangeValue={(value) =>
-            setForm({ ...form, transmission: value ?? "" })
-          }
+          onChangeValue={(value) => {
+            handleFormChange("transmission", value ?? "");
+          }}
           value={form.transmission}
+          hasError={errors.has("transmission")}
         />
 
         <InputField
@@ -371,7 +433,8 @@ const CreateCar = () => {
           icon={icons.email}
           textContentType="none"
           value={form.seats}
-          onChangeText={(value) => setForm({ ...form, seats: value })}
+          onChangeText={(value) => handleFormChange("seats", value)}
+          hasError={errors.has("seats")}
         />
 
         <DropdownField
@@ -382,8 +445,11 @@ const CreateCar = () => {
             { label: "Electric", value: "Electric" },
           ]}
           placeholder="Select Fuel Type"
-          onChangeValue={(value) => setForm({ ...form, fuel: value ?? "" })}
+          onChangeValue={(value) => {
+            handleFormChange("fuel", value ?? "");
+          }}
           value={form.fuel}
+          hasError={errors.has("fuel")}
         />
 
         <CarImagesComponent onImagesChange={setCarImages} />
@@ -442,21 +508,10 @@ const CreateCar = () => {
               onPress={handleApprovalModalAction}
               className="mb-3"
             />
-
-            {/* {(userData?.identityVerification as any)?.verificationStatus ===
-              "pending" && (
-              <Pressable
-                onPress={() => setShowApprovalModal(false)}
-                className="py-3"
-              >
-                <Text className="text-center text-gray-500 font-JakartaMedium">
-                  Continue Editing
-                </Text>
-              </Pressable>
-            )} */}
           </View>
         </ReactNativeModal>
       </ScrollView>
+      <AlertComponent />
     </SafeAreaView>
   );
 };
