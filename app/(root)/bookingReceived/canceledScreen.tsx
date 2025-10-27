@@ -14,6 +14,7 @@ import {
   QuerySnapshot,
   where,
 } from "firebase/firestore";
+import LottieView from "lottie-react-native";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -94,6 +95,12 @@ export default function CanceledScreen() {
 
   const renderEmpty = () => (
     <View className="items-center justify-center py-20">
+      <LottieView
+        source={require("../../../assets/animations/carSearching.json")}
+        loop={true}
+        autoPlay
+        style={{ width: 250, height: 250 }}
+      />
       <Text className="text-gray-400 text-lg font-medium">
         No cancelled trips
       </Text>
