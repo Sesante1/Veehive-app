@@ -19,6 +19,7 @@ const SignIn = () => {
 
   const onSignInPress = async () => {
     const { email, password } = form;
+
     if (!email || !password) {
       showAlert({
         title: "Error",
@@ -35,12 +36,22 @@ const SignIn = () => {
       await signIn(email, password);
       router.push("/(root)/(tabs)/home");
     } catch (error: any) {
+  
+      let message = "Invalid email or password. Please try again.";
+
+      if (error.message.includes("banned")) {
+        message = "Your account has been banned. Please contact support.";
+      } else if (error.message.includes("Email not verified")) {
+        message =
+          "Your email is not verified. Please verify it before logging in.";
+      }
+
       showAlert({
         title: "Login Failed",
-        message: "Invalid email or password. Please try again.",
+        message,
         icon: "close-circle",
         iconColor: "#EF4444",
-        buttons: [{ text: "Try Again", style: "default" }],
+        buttons: [{ text: "OK", style: "default" }],
       });
     } finally {
       setIsLoading(false);

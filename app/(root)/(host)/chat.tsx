@@ -154,6 +154,25 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
       : null;
   };
 
+  // Filter conversations based on search text
+  const filteredConversations = conversationsList.filter((conversation) => {
+    if (!searchText.trim()) return true;
+
+    const otherParticipant = getOtherParticipant(conversation);
+    if (!otherParticipant) return false;
+
+    const searchLower = searchText.toLowerCase();
+    const nameMatch = otherParticipant.name.toLowerCase().includes(searchLower);
+    const usernameMatch = otherParticipant.username
+      .toLowerCase()
+      .includes(searchLower);
+    const messageMatch = conversation.lastMessage
+      .toLowerCase()
+      .includes(searchLower);
+
+    return nameMatch || usernameMatch || messageMatch;
+  });
+
   if (loading) {
     return <MessageSkeleton />;
   }
@@ -193,19 +212,26 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
         <Text className="text-2xl font-JakartaBold">Messages</Text>
       </View>
 
-      {/* Search Bar */}
-      <View className="px-4 py-3 border-b border-gray-100">
-        <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-2">
-          <Feather name="search" size={20} color="#657786" />
-          <TextInput
-            placeholder="Search for people"
-            className="flex-1 ml-3 text-base"
-            placeholderTextColor="#657786"
-            value={searchText}
-            onChangeText={setSearchText}
-          />
+      {/* Search Bar - Only show if there are conversations */}
+      {conversationsList.length > 0 && (
+        <View className="px-4 py-3 border-b border-gray-100">
+          <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-2">
+            <Feather name="search" size={20} color="#657786" />
+            <TextInput
+              placeholder="Search for people"
+              className="flex-1 ml-3 text-base"
+              placeholderTextColor="#657786"
+              value={searchText}
+              onChangeText={setSearchText}
+            />
+            {searchText.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchText("")}>
+                <Feather name="x" size={20} color="#657786" />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </View>
+      )}
 
       {/* CONVERSATIONS LIST */}
       <ScrollView
@@ -213,7 +239,7 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
       >
-        {conversationsList.map((conversation) => {
+        {filteredConversations.map((conversation) => {
           const otherParticipant = getOtherParticipant(conversation);
           if (!otherParticipant) return null;
 
@@ -250,6 +276,23 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
           );
         })}
 
+        {/* Show "No results" when search returns nothing */}
+        {searchText.trim() && filteredConversations.length === 0 && (
+          <View
+            className="justify-center items-center px-4"
+            style={{ minHeight: 500 }}
+          >
+            <Feather name="search" size={64} color="#CBD5E0" />
+            <Text className="text-2xl font-JakartaBold mt-4">
+              No results found
+            </Text>
+            <Text className="text-base mt-2 font-Jakarta text-center px-7 text-gray-500">
+              No conversations match "{searchText}"
+            </Text>
+          </View>
+        )}
+
+        {/* Show empty state when no conversations at all */}
         {conversationsList.length === 0 && (
           <View
             className="justify-center items-center px-4"
@@ -269,12 +312,14 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
         )}
       </ScrollView>
 
-      {/* Quick Actions */}
-      <View className="px-4 py-2 border-t mb-5 border-gray-100 bg-white-50">
-        <Text className="text-xs text-gray-500 text-center font-JakartaRegular">
-          Tap to open conversation
-        </Text>
-      </View>
+      {/* Quick Actions - Only show when there are conversations */}
+      {conversationsList.length > 0 && (
+        <View className="px-4 py-2 border-t mb-5 border-gray-100 bg-white-50">
+          <Text className="text-xs text-gray-500 text-center font-JakartaRegular">
+            Tap to open conversation
+          </Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 };

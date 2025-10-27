@@ -1,5 +1,4 @@
 import CarManagementCard from "@/components/CarManagementCard";
-import DropdownField from "@/components/CarStatusDropdown";
 import SearchListingInput from "@/components/SearchListingInput";
 import { icons, images } from "@/constants";
 import { useAuth } from "@/hooks/useUser";
@@ -19,21 +18,23 @@ const UserListing = () => {
   const { user } = useAuth();
 
   const [userCars, setCars] = useState<any[]>([]);
+  const [filteredCars, setFilteredCars] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
 
-  const [status, setStatus] = useState<string | null>(null);
-
-  const fetchCars = React.useCallback(async () => {
+  const fetchCars = useCallback(async () => {
     if (!user?.uid) {
       setCars([]);
+      setFilteredCars([]);
       setLoading(false);
       return;
     }
-    
+
     try {
       const carList = await fetchCarsByOwner(user.uid);
       setCars(carList);
+      setFilteredCars(carList);
     } catch (error) {
       console.error(error);
     } finally {
@@ -53,59 +54,46 @@ const UserListing = () => {
   }, [fetchCars]);
 
   useEffect(() => {
-    const loadInitialData = async () => {
-      if (!user?.uid) {
-        setLoading(false);
-        return;
-      }
+    fetchCars();
+  }, [fetchCars]);
 
-      setLoading(true);
-      try {
-        await fetchCars();
-      } catch (error) {
-        console.error("Error loading user cars:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadInitialData();
-  }, [user?.uid]);
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredCars(userCars);
+    } else {
+      const lowerQuery = searchQuery.toLowerCase();
+      const filtered = userCars.filter(
+        (car) =>
+          car.name?.toLowerCase().includes(lowerQuery) ||
+          car.make?.toLowerCase().includes(lowerQuery) ||
+          car.model?.toLowerCase().includes(lowerQuery)
+      );
+      setFilteredCars(filtered);
+    }
+  }, [searchQuery, userCars]);
 
   return (
     <SafeAreaView className="flex-1 bg-white px-4 -mb-14">
       <View className="h-20">
-        <Text className="text-2xl font-JakartaSemiBold mt-6 ">
-          Your listing
-        </Text>
+        <Text className="text-2xl font-JakartaSemiBold mt-6">Your listing</Text>
       </View>
 
-      <>
-        <SearchListingInput
-          label=""
-          icon={icons.search}
-          containerStyle="bg-white"
-        />
+      {/* Search Bar */}
+      <SearchListingInput
+        label=""
+        icon={icons.search}
+        containerStyle="bg-white"
+        value={searchQuery}
+        onChangeText={(text) => setSearchQuery(text)}
+        placeholder="Search your cars..."
+      />
 
-        <DropdownField
-          items={[
-            { label: "Listed", value: "active" },
-            { label: "Pending", value: "pending" },
-            { label: "On a trip", value: "on a trip" },
-            { label: "Snoozed", value: "snoozed" },
-            { label: "Canceled", value: "canceled" },
-          ]}
-          value={status}
-          onChangeValue={setStatus}
-        />
-
-        <Text className="text-lg font-JakartaSemiBold my-4">
-          Vehicles ({userCars.length})
-        </Text>
-      </>
+      <Text className="text-lg font-JakartaSemiBold my-4">
+        Vehicles ({filteredCars.length})
+      </Text>
 
       <FlatList
-        data={userCars}
+        data={filteredCars}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <CarManagementCard {...item} />}
         showsVerticalScrollIndicator={false}

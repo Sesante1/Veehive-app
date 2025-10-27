@@ -229,7 +229,20 @@ const CarDetails = () => {
 
   const handleBookNow = () => {
     if (userDataLoading) {
-      return; // Wait for user data to load
+      return;
+    }
+
+    if (!user) {
+      router.push("/(auth)/signInOrSignUpScreen"); 
+      return;
+    }
+
+    if (userData?.status === "suspended") {
+      setSnackbarMessage(
+        "Your account is suspended. You can't book at this time."
+      );
+      setSnackbarVisible(true);
+      return;
     }
 
     // Check driver's license verification status

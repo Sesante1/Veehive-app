@@ -5,6 +5,7 @@ import { router } from "expo-router";
 import React from "react";
 import {
   Image,
+  Linking,
   Pressable,
   ScrollView,
   Text,
@@ -169,9 +170,9 @@ export default function Profile() {
 
             <Pressable
               className="flex flex-row items-center gap-3 py-4 px-6"
-              onPress={() => {}}
+              onPress={() => Linking.openURL("https://veehive-web.vercel.app/")}
             >
-              <Feather name="shield" size={20} color="#00000" />
+              <Feather name="book" size={20} color="#00000" />
               <Text className="text-lg font-Jakarta">Privacy Policy</Text>
               <MaterialIcons
                 className="absolute right-0"
