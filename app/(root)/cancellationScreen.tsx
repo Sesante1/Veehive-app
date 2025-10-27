@@ -1,3 +1,4 @@
+import { useCustomAlert } from "@/components/CustomAlert";
 import { icons } from "@/constants";
 import { db, FIREBASE_AUTH } from "@/FirebaseConfig";
 import { fetchAPI } from "@/lib/fetch";
@@ -7,7 +8,6 @@ import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function CancellationScreen() {
   const { booking } = useLocalSearchParams<{ booking?: string }>();
   const [actionLoading, setActionLoading] = useState(false);
+  const { showAlert, AlertComponent } = useCustomAlert();
 
   let bookingData: any = null;
   try {
@@ -116,9 +117,19 @@ export default function CancellationScreen() {
           updatedAt: serverTimestamp(),
         });
 
-        Alert.alert("Success", "Booking cancelled. No charges applied.", [
-          { text: "OK", onPress: () => router.back() },
-        ]);
+        showAlert({
+          title: "Success",
+          message: "Booking cancelled. No charges applied.",
+          icon: "checkmark-circle",
+          iconColor: "#10B981",
+          buttons: [
+            {
+              text: "OK",
+              style: "default",
+              onPress: () => router.back(),
+            },
+          ],
+        });
       } else if (isConfirmed && bookingData.paymentStatus === "paid") {
         if (refundAmount > 0) {
           const idToken = await FIREBASE_AUTH.currentUser?.getIdToken();
@@ -158,11 +169,19 @@ export default function CancellationScreen() {
             });
           }
 
-          Alert.alert(
-            "Refund Processed",
-            `Your booking has been cancelled and ₱${refundAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })} has been refunded.`,
-            [{ text: "OK", onPress: () => router.back() }]
-          );
+          showAlert({
+            title: "Refund Processed",
+            message: `Your booking has been cancelled and ₱${refundAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })} has been refunded.`,
+            icon: "cash",
+            iconColor: "#10B981",
+            buttons: [
+              {
+                text: "OK",
+                style: "default",
+                onPress: () => router.back(),
+              },
+            ],
+          });
         } else {
           await updateDoc(doc(db, "bookings", bookingData.id), {
             bookingStatus: "cancelled",
@@ -182,21 +201,34 @@ export default function CancellationScreen() {
             });
           }
 
-          Alert.alert(
-            "Booking Cancelled",
-            "Your booking has been cancelled. No refund issued per cancellation policy.",
-            [{ text: "OK", onPress: () => router.back() }]
-          );
+          showAlert({
+            title: "Booking Cancelled",
+            message:
+              "Your booking has been cancelled. No refund issued per cancellation policy.",
+            icon: "close-circle",
+            iconColor: "#F97316",
+            buttons: [
+              {
+                text: "OK",
+                style: "default",
+                onPress: () => router.back(),
+              },
+            ],
+          });
         }
       }
     } catch (error) {
       console.error("Error cancelling booking:", error);
-      Alert.alert(
-        "Error",
-        error instanceof Error
-          ? error.message
-          : "Failed to cancel booking. Please try again."
-      );
+      showAlert({
+        title: "Error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to cancel booking. Please try again.",
+        icon: "alert-circle",
+        iconColor: "#EF4444",
+        buttons: [{ text: "OK", style: "default" }],
+      });
     } finally {
       setActionLoading(false);
     }
@@ -225,139 +257,146 @@ export default function CancellationScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      {/* Header */}
-      <View className="flex justify-between items-center mb-6 pt-4 bg-white px-4">
-        <Pressable
-          onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center active:bg-gray-200 absolute left-4 top-2"
-        >
-          <Image source={icons.backArrow} style={{ width: 20, height: 20 }} />
-        </Pressable>
-      </View>
-
-      <ScrollView className="flex-1 px-4">
-        <View className="flex-1">
-          <Text className="font-JakartaBold text-3xl mt-6">Cancel Trip</Text>
-        </View>
-
-        {/* Car Info Section */}
-        <View className="flex-row justify-between mt-4 items-center">
-          <View className="flex-1 pr-4">
-            <Text className="font-JakartaSemiBold text-secondary-700 text-sm">
-              {bookingData.hostName || "Host's Vehicle"}
-            </Text>
-            <Text className="font-JakartaBold text-xl mt-1">
-              {bookingData.carMake} {bookingData.carModel} {bookingData.carYear}
-            </Text>
-          </View>
-
-          <Image
-            source={
-              bookingData.carImage
-                ? { uri: imageUrl }
-                : require("../../assets/images/adaptive-icon.png")
-            }
-            style={{ width: 120, height: 80, borderRadius: 8 }}
-          />
-        </View>
-
-        {/* Cancellation Policy Message */}
-        <View className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <Text className="font-JakartaMedium text-secondary-700 text-sm leading-5">
-            {getCancellationMessage()}
-          </Text>
-        </View>
-
-        {/* Cost Breakdown */}
-        <View className="mt-8">
-          <View className="flex-row justify-between border-t border-gray-200 py-4">
-            <Text className="font-JakartaSemiBold text-secondary-700">
-              {isPending ? "Booking amount (not charged)" : "Trip cost"}
-            </Text>
-            <Text className="font-JakartaSemiBold text-secondary-700">
-              ₱
-              {totalAmount.toLocaleString("en-PH", {
-                minimumFractionDigits: 2,
-              })}
-            </Text>
-          </View>
-
-          <View className="flex-row justify-between border-b border-gray-200 py-4">
-            <Text className="font-JakartaSemiBold text-secondary-700">
-              {isPending ? "Amount you'll be charged" : "Non-refundable amount"}
-            </Text>
-            <Text
-              className={`font-JakartaSemiBold ${isPending ? "text-green-600" : "text-red-600"}`}
-            >
-              {isPending
-                ? "₱0.00"
-                : `-₱${nonRefundableAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
-            </Text>
-          </View>
-
-          <View className="flex-row justify-between py-4">
-            <Text className="font-JakartaBold text-lg">
-              {isPending ? "Total charges" : "Your trip refund"}
-            </Text>
-            <Text className="font-JakartaBold text-lg text-green-600">
-              ₱
-              {isPending
-                ? "0.00"
-                : refundAmount.toLocaleString("en-PH", {
-                    minimumFractionDigits: 2,
-                  })}
-            </Text>
-          </View>
-        </View>
-
-        {/* Refund Information */}
-        <View className="mt-4 bg-gray-50 rounded-lg p-4">
-          <Text className="font-JakartaMedium text-secondary-700 text-sm leading-5">
-            Your refund is automatically determined by our cancellation policy.
-            {refundAmount > 0 &&
-              " Refunds typically take 5-10 business days to appear in your account."}
-          </Text>
-        </View>
-
-        {/* View Policy Link */}
-        <View className="items-center mt-6">
-          <TouchableOpacity
-            onPress={() => router.push("/CancellationPolicyScreen")}
-          >
-            <Text className="font-JakartaSemiBold text-primary-500 text-base">
-              View cancellation policy
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Cancel Button */}
-        <View className="mt-10 mb-6">
-          <TouchableOpacity
-            className="w-full bg-red-500 rounded-lg py-4 items-center"
-            onPress={handleCancelTrip}
-            disabled={actionLoading}
-          >
-            {actionLoading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text className="font-JakartaSemiBold text-lg text-white">
-                Confirm Cancellation
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="w-full border border-gray-300 rounded-lg py-4 items-center mt-4"
+    <>
+      <SafeAreaView className="flex-1 bg-white">
+        {/* Header */}
+        <View className="flex justify-between items-center mb-6 pt-4 bg-white px-4">
+          <Pressable
             onPress={() => router.back()}
-            disabled={actionLoading}
+            className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center active:bg-gray-200 absolute left-4 top-2"
           >
-            <Text className="font-JakartaSemiBold text-lg text-gray-700">
-              Keep Trip
-            </Text>
-          </TouchableOpacity>
+            <Image source={icons.backArrow} style={{ width: 20, height: 20 }} />
+          </Pressable>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        <ScrollView className="flex-1 px-4">
+          <View className="flex-1">
+            <Text className="font-JakartaBold text-3xl mt-6">Cancel Trip</Text>
+          </View>
+
+          {/* Car Info Section */}
+          <View className="flex-row justify-between mt-4 items-center">
+            <View className="flex-1 pr-4">
+              <Text className="font-JakartaSemiBold text-secondary-700 text-sm">
+                {bookingData.hostName || "Host's Vehicle"}
+              </Text>
+              <Text className="font-JakartaBold text-xl mt-1">
+                {bookingData.carMake} {bookingData.carModel}{" "}
+                {bookingData.carYear}
+              </Text>
+            </View>
+
+            <Image
+              source={
+                bookingData.carImage
+                  ? { uri: imageUrl }
+                  : require("../../assets/images/adaptive-icon.png")
+              }
+              style={{ width: 120, height: 80, borderRadius: 8 }}
+            />
+          </View>
+
+          {/* Cancellation Policy Message */}
+          <View className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <Text className="font-JakartaMedium text-secondary-700 text-sm leading-5">
+              {getCancellationMessage()}
+            </Text>
+          </View>
+
+          {/* Cost Breakdown */}
+          <View className="mt-8">
+            <View className="flex-row justify-between border-t border-gray-200 py-4">
+              <Text className="font-JakartaSemiBold text-secondary-700">
+                {isPending ? "Booking amount (not charged)" : "Trip cost"}
+              </Text>
+              <Text className="font-JakartaSemiBold text-secondary-700">
+                ₱
+                {totalAmount.toLocaleString("en-PH", {
+                  minimumFractionDigits: 2,
+                })}
+              </Text>
+            </View>
+
+            <View className="flex-row justify-between border-b border-gray-200 py-4">
+              <Text className="font-JakartaSemiBold text-secondary-700">
+                {isPending
+                  ? "Amount you'll be charged"
+                  : "Non-refundable amount"}
+              </Text>
+              <Text
+                className={`font-JakartaSemiBold ${isPending ? "text-green-600" : "text-red-600"}`}
+              >
+                {isPending
+                  ? "₱0.00"
+                  : `-₱${nonRefundableAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+              </Text>
+            </View>
+
+            <View className="flex-row justify-between py-4">
+              <Text className="font-JakartaBold text-lg">
+                {isPending ? "Total charges" : "Your trip refund"}
+              </Text>
+              <Text className="font-JakartaBold text-lg text-green-600">
+                ₱
+                {isPending
+                  ? "0.00"
+                  : refundAmount.toLocaleString("en-PH", {
+                      minimumFractionDigits: 2,
+                    })}
+              </Text>
+            </View>
+          </View>
+
+          {/* Refund Information */}
+          <View className="mt-4 bg-gray-50 rounded-lg p-4">
+            <Text className="font-JakartaMedium text-secondary-700 text-sm leading-5">
+              Your refund is automatically determined by our cancellation
+              policy.
+              {refundAmount > 0 &&
+                " Refunds typically take 5-10 business days to appear in your account."}
+            </Text>
+          </View>
+
+          {/* View Policy Link */}
+          <View className="items-center mt-6">
+            <TouchableOpacity
+              onPress={() => router.push("/CancellationPolicyScreen")}
+            >
+              <Text className="font-JakartaSemiBold text-primary-500 text-base">
+                View cancellation policy
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Cancel Button */}
+          <View className="mt-10 mb-6">
+            <TouchableOpacity
+              className="w-full bg-red-500 rounded-lg py-4 items-center"
+              onPress={handleCancelTrip}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="font-JakartaSemiBold text-lg text-white">
+                  Confirm Cancellation
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="w-full border border-gray-300 rounded-lg py-4 items-center mt-4"
+              onPress={() => router.back()}
+              disabled={actionLoading}
+            >
+              <Text className="font-JakartaSemiBold text-lg text-gray-700">
+                Keep Trip
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+      <AlertComponent />
+    </>
   );
 }
