@@ -28,9 +28,9 @@ export async function signIn(email: string, password: string) {
   const userDoc = await getDoc(doc(db, "users", user.uid));
   if (userDoc.exists()) {
     const userData = userDoc.data();
-    if (userData.status === "suspended") {
+    if (userData.status === "banned") {
       await signOut(FIREBASE_AUTH);
-      throw new Error("Your account has been suspended. Contact support.");
+      throw new Error("Your account has been banned. You cannot log in.");
     }
   }
 
