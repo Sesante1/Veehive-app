@@ -450,22 +450,25 @@ const CreateCar = () => {
                 })
               }
             >
-              <View className="flex-row items-center gap-4">
+              <View className="flex-row items-center gap-4 flex-1">
                 <View className="w-10 h-10 bg-red-100 rounded-full items-center justify-center">
                   <Ionicons name="location-outline" size={20} color="#EF4444" />
                 </View>
-                <View>
+
+                <View className="flex-1 pr-2">
                   <Text className="text-lg font-JakartaSemiBold text-gray-900">
                     Location
                   </Text>
                   <Text
                     className="text-sm text-gray-500 font-JakartaMedium"
-                    numberOfLines={3}
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
                   >
                     {car.location?.address || "Not set"}
                   </Text>
                 </View>
               </View>
+
               <MaterialIcons size={24} name="navigate-next" color="#9CA3AF" />
             </Pressable>
 
@@ -478,7 +481,7 @@ const CreateCar = () => {
                 })
               }
             >
-              <View className="flex-row items-center gap-4">
+              <View className="flex-row items-center gap-4 flex-1">
                 <View className="w-10 h-10 bg-purple-100 rounded-full items-center justify-center">
                   <Ionicons
                     name="document-text-outline"
@@ -486,18 +489,21 @@ const CreateCar = () => {
                     color="#8B5CF6"
                   />
                 </View>
-                <View className="flex-1">
+
+                <View className="flex-1 pr-2">
                   <Text className="text-lg font-JakartaSemiBold text-gray-900">
                     Description
                   </Text>
                   <Text
                     className="text-sm text-gray-500 font-JakartaMedium"
                     numberOfLines={1}
+                    ellipsizeMode="tail"
                   >
                     {car.description || "Add a description..."}
                   </Text>
                 </View>
               </View>
+
               <MaterialIcons size={24} name="navigate-next" color="#9CA3AF" />
             </Pressable>
 
@@ -514,7 +520,7 @@ const CreateCar = () => {
                 })
               }
             >
-              <View className="flex-row items-center gap-4">
+              <View className="flex-row items-center gap-4 flex-1">
                 <View className="w-10 h-10 bg-purple-100 rounded-full items-center justify-center">
                   <Ionicons
                     name="document-text-outline"
@@ -522,12 +528,18 @@ const CreateCar = () => {
                     color="#8B5CF6"
                   />
                 </View>
-                <View className="flex-1">
-                  <Text className="text-lg font-JakartaSemiBold text-gray-900">
+
+                <View className="flex-1 pr-2">
+                  <Text
+                    className="text-lg font-JakartaSemiBold text-gray-900"
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
                     OR and CR
                   </Text>
                 </View>
               </View>
+
               <MaterialIcons size={24} name="navigate-next" color="#9CA3AF" />
             </Pressable>
           </View>

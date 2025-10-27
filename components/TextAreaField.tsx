@@ -15,6 +15,7 @@ import React, { useState } from "react";
 
 interface TextAreaFieldProps extends InputFieldProps {
   numberOfLines?: number;
+  maxHeight?: number; // add maxHeight prop for flexibility
 }
 
 const TextAreaField = ({
@@ -25,6 +26,7 @@ const TextAreaField = ({
   inputStyle,
   iconStyle,
   numberOfLines = 20,
+  maxHeight = 400, // default max height
   className,
   ...props
 }: TextAreaFieldProps) => {
@@ -41,6 +43,7 @@ const TextAreaField = ({
           >
             {label}
           </Text>
+
           <View
             className={`flex flex-row justify-start items-start relative bg-neutral-100 rounded-2xl border border-neutral-100 focus:border-primary-500 ${containerStyle}`}
           >
@@ -52,17 +55,20 @@ const TextAreaField = ({
             )}
 
             <TextInput
-              multiline={true}
+              multiline
               onContentSizeChange={(e) =>
                 setHeight(e.nativeEvent.contentSize.height)
               }
-              style={{ height: Math.max(128, height) }}
+              style={{
+                height: Math.min(Math.max(128, height), maxHeight),
+              }}
               numberOfLines={numberOfLines}
               textAlignVertical="top"
               className={clsx(
                 "p-4 font-JakartaSemiBold text-[15px] flex-1 text-left",
                 inputStyle
               )}
+              scrollEnabled={height >= maxHeight}
               {...props}
             />
           </View>
