@@ -43,6 +43,7 @@ const BOTTOM_SHEET_MIN_HEIGHT = 120;
 const BOTTOM_SHEET_MAX_HEIGHT = height * 0.9;
 const CAR_CARD_HEIGHT = 150;
 const CAR_CARD_BOTTOM_MARGIN = 20;
+const SEARCH_RADIUS_KM = 50; // Search radius in kilometers
 
 interface Car {
   id: string;
@@ -77,14 +78,12 @@ const CarMarker = React.memo(
     const [tracksChanges, setTracksChanges] = React.useState(true);
 
     React.useEffect(() => {
-      // Stop tracking changes after initial render for performance
       const timer = setTimeout(() => {
         setTracksChanges(false);
       }, 1000);
       return () => clearTimeout(timer);
     }, []);
 
-    // Track changes when selection changes
     React.useEffect(() => {
       setTracksChanges(true);
       const timer = setTimeout(() => {
@@ -105,21 +104,20 @@ const CarMarker = React.memo(
         tracksViewChanges={tracksChanges}
       >
         <View
-          className={`rounded-full ${isSelected ? "bg-white" : "bg-gray-900"}`}
+          className={`rounded-full py-1 ${isSelected ? "bg-blue-500" : "bg-gray-900"}`}
         >
           <Text
-            className={`font-bold ${
-              isSelected ? "text-gray-900" : "text-white"
+            className={`font-bold text-xs ${
+              isSelected ? "text-white" : "text-white"
             }`}
           >
-            {car.pricePerHour}
+            ₱{car.pricePerHour}
           </Text>
         </View>
       </Marker>
     );
   },
   (prevProps, nextProps) => {
-    // Custom comparison for memo
     return (
       prevProps.car.id === nextProps.car.id &&
       prevProps.isSelected === nextProps.isSelected
@@ -139,6 +137,11 @@ const SearchScreen = () => {
     longitude: number;
   } | null>(null);
   const [searchLocation, setSearchLocation] = useState<string>("Anywhere");
+  const [selectedLocation, setSelectedLocation] = useState<{
+    latitude: number;
+    longitude: number;
+    address: string;
+  } | null>(null);
   const [showLocationSearch, setShowLocationSearch] = useState(false);
   const [makeModelSearch, setMakeModelSearch] = useState<string>("");
   const [mapRegion, setMapRegion] = useState({
@@ -273,7 +276,6 @@ const SearchScreen = () => {
     try {
       setLoading(true);
 
-      // Add timeout to prevent infinite loading
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("Request timeout")), 10000)
       );
@@ -294,7 +296,6 @@ const SearchScreen = () => {
       setCars(carsWithLocations);
       setFilteredCars(carsWithLocations);
     } catch (error) {
-      // Set empty array on error so UI still loads
       if (isMountedRef.current) {
         setCars([]);
         setFilteredCars([]);
@@ -332,6 +333,108 @@ const SearchScreen = () => {
       console.error("Error getting location:", error);
     }
   };
+
+  // Calculate distance between two coordinates
+  const getDistance = useCallback(
+    (lat1: number, lon1: number, lat2: number, lon2: number) => {
+      const R = 6371; // Earth's radius in km
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) *
+          Math.cos((lat2 * Math.PI) / 180) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    },
+    []
+  );
+
+  // Apply all filters (location, make/model, and other filters)
+  const applyAllFilters = useCallback(() => {
+    let filtered = [...cars];
+
+    // Apply location filter if selected
+    if (selectedLocation) {
+      filtered = filtered.filter((car) => {
+        if (!car.location) return false;
+        const distance = getDistance(
+          selectedLocation.latitude,
+          selectedLocation.longitude,
+          car.location.latitude,
+          car.location.longitude
+        );
+        return distance <= SEARCH_RADIUS_KM;
+      });
+    }
+
+    // Apply make/model search
+    if (makeModelSearch.trim()) {
+      filtered = filtered.filter((car) =>
+        car.name.toLowerCase().includes(makeModelSearch.toLowerCase())
+      );
+    }
+
+    // Apply other filters (price, type, etc.)
+    filtered = applyFilters(filtered, filters);
+
+    setFilteredCars(filtered);
+  }, [cars, selectedLocation, makeModelSearch, filters, getDistance]);
+
+  // Re-apply filters whenever dependencies change
+  useEffect(() => {
+    applyAllFilters();
+  }, [selectedLocation, makeModelSearch, filters]);
+
+  const handleLocationSelect = useCallback(
+    (location: { latitude: number; longitude: number; address: string }) => {
+      setSearchLocation(location.address);
+      setSelectedLocation(location);
+      setShowLocationSearch(false);
+
+      // Animate map to new location
+      if (mapRef.current) {
+        mapRef.current.animateToRegion(
+          {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            latitudeDelta: 0.15,
+            longitudeDelta: 0.15,
+          },
+          500
+        );
+      }
+
+      setMapRegion({
+        latitude: location.latitude,
+        longitude: location.longitude,
+        latitudeDelta: 0.15,
+        longitudeDelta: 0.15,
+      });
+    },
+    []
+  );
+
+  const handleClearLocation = useCallback(() => {
+    setSearchLocation("Anywhere");
+    setSelectedLocation(null);
+    setShowLocationSearch(false);
+
+    // Reset map to default view
+    if (mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: 10.3157,
+          longitude: 123.8854,
+          latitudeDelta: 0.5,
+          longitudeDelta: 0.5,
+        },
+        500
+      );
+    }
+  }, []);
 
   const handleMarkerPress = useCallback((car: Car) => {
     setSelectedCar(car);
@@ -388,48 +491,6 @@ const SearchScreen = () => {
     });
   }, []);
 
-  const handleLocationSelect = useCallback(
-    (location: { latitude: number; longitude: number; address: string }) => {
-      setSearchLocation(location.address);
-      setShowLocationSearch(false);
-
-      setMapRegion({
-        latitude: location.latitude,
-        longitude: location.longitude,
-        latitudeDelta: 0.1,
-        longitudeDelta: 0.1,
-      });
-
-      const filtered = cars.filter((car) => {
-        if (!car.location) return false;
-        const distance = getDistance(
-          location.latitude,
-          location.longitude,
-          car.location.latitude,
-          car.location.longitude
-        );
-        return distance < 50;
-      });
-
-      setFilteredCars(filtered.length > 0 ? filtered : cars);
-    },
-    [cars]
-  );
-
-  const handleMakeModelSearch = useCallback(() => {
-    let filtered = applyFilters(cars, filters);
-
-    // Apply make/model search
-    if (makeModelSearch.trim()) {
-      filtered = filtered.filter((car) =>
-        car.name.toLowerCase().includes(makeModelSearch.toLowerCase())
-      );
-    }
-
-    setFilteredCars(filtered);
-    setShowLocationSearch(false);
-  }, [cars, filters, makeModelSearch]);
-
   const handleMyLocationPress = useCallback(() => {
     if (userLocation && mapRef.current) {
       mapRef.current.animateToRegion(
@@ -466,23 +527,6 @@ const SearchScreen = () => {
     }).start();
     setIsBottomSheetExpanded(false);
   }, []);
-
-  const getDistance = useCallback(
-    (lat1: number, lon1: number, lat2: number, lon2: number) => {
-      const R = 6371;
-      const dLat = ((lat2 - lat1) * Math.PI) / 180;
-      const dLon = ((lon2 - lon1) * Math.PI) / 180;
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos((lat1 * Math.PI) / 180) *
-          Math.cos((lat2 * Math.PI) / 180) *
-          Math.sin(dLon / 2) *
-          Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    },
-    []
-  );
 
   const activeFilterCount = useMemo(
     () => getActiveFilterCount(filters),
@@ -559,23 +603,39 @@ const SearchScreen = () => {
             <Text className="text-gray-900 font-semibold">
               {searchLocation}
             </Text>
+            {selectedLocation && (
+              <Text className="text-xs text-gray-500 mt-0.5">
+                Within {SEARCH_RADIUS_KM}km radius
+              </Text>
+            )}
           </View>
+          {searchLocation !== "Anywhere" && (
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                handleClearLocation();
+              }}
+              className="mr-2"
+            >
+              <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+          )}
           <MaterialIcons name="tune" size={24} color="#9CA3AF" />
         </TouchableOpacity>
 
         {/* Location Search Dropdown */}
         {showLocationSearch && (
-          <View className="mt-5 bg-white rounded-lg">
+          <View className="mt-3 bg-white rounded-lg shadow-lg p-3">
             <GoogleTextInput
               icon={undefined}
               initialLocation="Search location..."
-              containerStyle="mb-2"
+              containerStyle="mb-3"
               handlePress={handleLocationSelect}
             />
 
             {/* Make and Model Search Input */}
-            <View className="mb-2">
-              <View className="bg-gray-100 rounded-lg px-4 py-2 flex-row items-center">
+            <View className="mb-3">
+              <View className="bg-gray-100 rounded-lg px-4 py-3 flex-row items-center">
                 <Ionicons name="car-outline" size={20} color="#9CA3AF" />
                 <TextInput
                   value={makeModelSearch}
@@ -583,22 +643,17 @@ const SearchScreen = () => {
                   placeholder="Search make & model..."
                   placeholderTextColor="#9CA3AF"
                   className="flex-1 ml-3 text-gray-900"
-                  onSubmitEditing={handleMakeModelSearch}
                   returnKeyType="search"
                 />
                 {makeModelSearch.length > 0 && (
-                  <TouchableOpacity
-                    onPress={() => {
-                      setMakeModelSearch("");
-                      setFilteredCars(cars);
-                    }}
-                  >
+                  <TouchableOpacity onPress={() => setMakeModelSearch("")}>
                     <Ionicons name="close-circle" size={20} color="#9CA3AF" />
                   </TouchableOpacity>
                 )}
               </View>
             </View>
 
+            {/* Current Location Button */}
             <TouchableOpacity
               onPress={() => {
                 if (userLocation) {
@@ -611,26 +666,24 @@ const SearchScreen = () => {
                   getCurrentLocation();
                 }
               }}
-              className="flex-row items-center py-2 px-2 bg-gray-700 rounded-lg mb-2"
+              className="flex-row items-center justify-center py-3 px-4 bg-blue-500 rounded-lg"
               activeOpacity={0.7}
             >
-              <MaterialIcons name="my-location" size={20} color="#007DFC" />
-              <Text className="text-white ml-2 font-medium">
-                Use current location
+              <MaterialIcons name="my-location" size={20} color="white" />
+              <Text className="text-white ml-2 font-semibold">
+                Use Current Location
               </Text>
             </TouchableOpacity>
 
-            {/* Search Button */}
-            {makeModelSearch.trim().length > 0 && (
-              <TouchableOpacity
-                onPress={handleMakeModelSearch}
-                className="bg-blue-500 py-3 rounded-lg"
-                activeOpacity={0.7}
-              >
-                <Text className="text-white text-center font-semibold">
-                  Search
+            {/* Results info */}
+            {(selectedLocation || makeModelSearch) && (
+              <View className="mt-3 p-3 bg-blue-50 rounded-lg">
+                <Text className="text-sm text-blue-700">
+                  {filteredCars.length} car
+                  {filteredCars.length !== 1 ? "s" : ""} found
+                  {selectedLocation && ` within ${SEARCH_RADIUS_KM}km`}
                 </Text>
-              </TouchableOpacity>
+              </View>
             )}
           </View>
         )}
@@ -778,12 +831,14 @@ const SearchScreen = () => {
         }}
       >
         <View className="items-center py-3" {...panResponder.panHandlers}>
-          {/* Handle bar removed as per original design */}
+          {/* Drag handle */}
+          <View className="w-12 h-1 bg-gray-300 rounded-full" />
         </View>
 
         <View className="px-4 pb-3 flex-row items-center justify-between">
           <Text className="font-bold text-lg">
-            {filteredCars.length}+ cars available
+            {filteredCars.length} car{filteredCars.length !== 1 ? "s" : ""}{" "}
+            available
           </Text>
           <TouchableOpacity
             onPress={
@@ -810,6 +865,24 @@ const SearchScreen = () => {
           updateCellsBatchingPeriod={50}
           windowSize={5}
           initialNumToRender={5}
+          ListEmptyComponent={
+            <View className="items-center justify-center py-10">
+              <Ionicons name="car-outline" size={48} color="#9CA3AF" />
+              <Text className="text-gray-500 mt-4 text-center">
+                No cars found matching your search
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setSearchLocation("Anywhere");
+                  setSelectedLocation(null);
+                  setMakeModelSearch("");
+                }}
+                className="mt-4 bg-blue-500 px-6 py-2 rounded-full"
+              >
+                <Text className="text-white font-semibold">Clear Filters</Text>
+              </TouchableOpacity>
+            </View>
+          }
         />
       </Animated.View>
     </SafeAreaView>
