@@ -1,5 +1,6 @@
 import { PhotoTourSection } from "@/components/PhotoTourSection";
 import { icons } from "@/constants";
+import { db } from "@/FirebaseConfig";
 import { useCardSpreadAnimation } from "@/hooks/useCardSpreadAnimation";
 import type { UserData } from "@/hooks/useUser";
 import { useUserData } from "@/hooks/useUser";
@@ -8,6 +9,7 @@ import { checkRequiredSteps } from "@/utils/stepValidator";
 import { Feather, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { encode as btoa } from "base-64";
 import { router, useLocalSearchParams } from "expo-router";
+import { doc, Timestamp, updateDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -34,6 +36,7 @@ type Car = {
   seats: number;
   description: string;
   status: string;
+  remarks?: string; // Add this for admin remarks
   images: { id: string; url: string }[];
   documents: {
     officialReceipt: {
@@ -68,6 +71,7 @@ const CreateCar = () => {
   const [car, setCar] = useState<Car | null>(null);
   const [isloading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isResubmitting, setIsResubmitting] = useState(false);
   const { identityCompleted, phoneCompleted, allStepsCompleted } =
     checkRequiredSteps(userData);
 
@@ -139,6 +143,54 @@ const CreateCar = () => {
     return shouldShow;
   };
 
+  // ✅ NEW: Handle resubmit for suspended/rejected cars
+  const handleResubmit = async () => {
+    if (!car) return;
+
+    Alert.alert(
+      "Resubmit for Review",
+      "Your car will be resubmitted for admin review. Are you sure?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Resubmit",
+          style: "default",
+          onPress: async () => {
+            try {
+              setIsResubmitting(true);
+
+              const carRef = doc(db, "cars", car.id);
+              await updateDoc(carRef, {
+                status: "pending",
+                remarks: null,
+                updatedAt: Timestamp.now(),
+              });
+
+              Alert.alert(
+                "Success",
+                "Your car has been resubmitted for review. You'll be notified once it's reviewed.",
+                [
+                  {
+                    text: "OK",
+                    onPress: () => fetchCar(), // Refresh the car data
+                  },
+                ]
+              );
+            } catch (error) {
+              console.error("Error resubmitting car:", error);
+              Alert.alert("Error", "Failed to resubmit car. Please try again.");
+            } finally {
+              setIsResubmitting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (isloading) {
     return (
       <SafeAreaView className="flex-1 bg-white">
@@ -204,6 +256,84 @@ const CreateCar = () => {
         }
       >
         <View className="flex-col gap-4">
+          {/* ✅ NEW: Suspended/Rejected Car Banner */}
+          {(car.status === "suspended" || car.status === "rejected") && (
+            <View className="px-5 py-4 bg-orange-50 rounded-xl border border-orange-200">
+              <View className="flex-row items-center gap-3 mb-3">
+                <View className="bg-orange-500 w-3 h-3 rounded-full"></View>
+                <Text className="text-lg font-JakartaBold text-orange-900">
+                  {car.status === "suspended"
+                    ? "Car Suspended"
+                    : "Car Rejected"}
+                </Text>
+              </View>
+
+              {car.remarks && (
+                <View className="mb-4 p-3 bg-white rounded-lg">
+                  <Text className="text-sm font-JakartaSemiBold text-gray-700 mb-1">
+                    Admin Remarks:
+                  </Text>
+                  <Text className="text-sm text-gray-600 font-JakartaMedium">
+                    {car.remarks}
+                  </Text>
+                </View>
+              )}
+
+              <Text className="text-sm text-orange-700 font-JakartaMedium mb-4">
+                {car.status === "suspended"
+                  ? "Your car listing has been temporarily suspended. Please review the remarks and make necessary changes before resubmitting."
+                  : "Your car listing was not approved. Please address the issues mentioned and resubmit for review."}
+              </Text>
+
+              <Pressable
+                onPress={handleResubmit}
+                disabled={isResubmitting}
+                className={`py-3 rounded-lg items-center ${
+                  isResubmitting ? "bg-orange-300" : "bg-orange-500"
+                }`}
+              >
+                {isResubmitting ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text className="text-white font-JakartaBold text-base">
+                    Resubmit for Review
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          )}
+
+          {/* ✅ NEW: Pending Car Banner */}
+          {car.status === "pending" && (
+            <View className="px-5 py-4 bg-yellow-50 rounded-xl border border-yellow-200">
+              <View className="flex-row items-center gap-3 mb-2">
+                <View className="bg-yellow-500 w-3 h-3 rounded-full"></View>
+                <Text className="text-lg font-JakartaBold text-yellow-900">
+                  Under Review
+                </Text>
+              </View>
+              <Text className="text-sm text-yellow-700 font-JakartaMedium">
+                Your car listing is currently being reviewed by our admin team.
+                You'll be notified once it's approved.
+              </Text>
+            </View>
+          )}
+
+          {/* ✅ NEW: Active Car Banner */}
+          {car.status === "active" && (
+            <View className="px-5 py-4 bg-green-50 rounded-xl border border-green-200">
+              <View className="flex-row items-center gap-3 mb-2">
+                <View className="bg-green-500 w-3 h-3 rounded-full"></View>
+                <Text className="text-lg font-JakartaBold text-green-900">
+                  Car Active
+                </Text>
+              </View>
+              <Text className="text-sm text-green-700 font-JakartaMedium">
+                Your car is approved and live! Users can now book it.
+              </Text>
+            </View>
+          )}
+
           {needsRequiredSteps(userData) && (
             <Pressable
               className="px-5 py-4 bg-white rounded-xl border border-gray-200 active:bg-gray-50 shadow-sm"

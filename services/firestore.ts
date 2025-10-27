@@ -14,7 +14,14 @@ import { db } from "../FirebaseConfig";
 // Fetch all cars
 export const fetchAllCars = async () => {
   try {
-    const querySnapshot = await getDocs(collection(db, "cars"));
+    const carsRef = collection(db, "cars");
+    const activeCarsQuery = query(
+      carsRef,
+      where("status", "==", "active"),
+      where("isDeleted", "==", false)
+    );
+
+    const querySnapshot = await getDocs(activeCarsQuery);
 
     const cars = await Promise.all(
       querySnapshot.docs.map(async (docSnap) => {

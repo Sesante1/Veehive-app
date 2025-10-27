@@ -544,6 +544,13 @@ const CarDetails = () => {
             </TouchableOpacity>
           )}
         </View>
+        <View className="flex justify-center items-center my-6">
+          <Pressable onPress={() => {}}>
+            <Text className="font-JakartaBold text-center text-primary-500">
+              Report listing
+            </Text>
+          </Pressable>
+        </View>
       </ScrollView>
 
       {/* Book now container */}
@@ -571,10 +578,7 @@ const CarDetails = () => {
 
         <View className="w-[180px] ">
           {user?.uid !== car.owner?.id && (
-            <CustomButton
-              title="Book Now"
-              onPress={handleBookNow} 
-            />
+            <CustomButton title="Book Now" onPress={handleBookNow} />
           )}
         </View>
 
