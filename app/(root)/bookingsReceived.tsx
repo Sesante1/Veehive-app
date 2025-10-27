@@ -57,7 +57,7 @@ const MyBooking = () => {
       >
         <Tab.Screen name="Upcoming" component={UpcomingScreen} />
         <Tab.Screen name="Completed" component={CompletedScreen} />
-        <Tab.Screen name="Canceled" component={CanceledScreen} />
+        <Tab.Screen name="Cancelled" component={CanceledScreen} />
       </Tab.Navigator>
     </SafeAreaView>
   );

@@ -1,3 +1,4 @@
+import CustomButton from "@/components/CustomButton";
 import GuestBookingCard from "@/components/GuestBookingCard";
 import { db } from "@/FirebaseConfig";
 import { useDirectConversation } from "@/hooks/useDirectConversation";
@@ -13,6 +14,7 @@ import {
   QuerySnapshot,
   where,
 } from "firebase/firestore";
+import LottieView from "lottie-react-native";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -92,12 +94,24 @@ export default function UpcomingScreen() {
 
   const renderEmpty = () => (
     <View className="items-center justify-center py-20">
-      <Text className="text-gray-400 text-lg font-medium">
+      <LottieView
+        source={require("../../../assets/animations/carSearching.json")}
+        loop={true}
+        autoPlay
+        style={{ width: 250, height: 250 }}
+      />
+      <Text className="text-gray-400 text-lg font-medium mt-4">
         No pending bookings
       </Text>
-      <Text className="text-gray-400 text-sm mt-2">
+      <Text className="text-gray-400 text-sm mt-2 mb-8">
         New requests will appear here
       </Text>
+      <CustomButton
+        title={"Start searching"}
+        onPress={() => {
+          router.push("/searchScreen");
+        }}
+      />
     </View>
   );
 
