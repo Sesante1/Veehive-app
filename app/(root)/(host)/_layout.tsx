@@ -1,4 +1,5 @@
 import { useNotifications } from "@/hooks/useNotifcation";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { useAuth, useUserData } from "@/hooks/useUser";
 import { Feather } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
@@ -12,6 +13,7 @@ export default function Layout() {
   const { user } = useAuth();
   const userId = user?.uid || null;
   const { unreadCount } = useNotifications(userId, "hoster");
+  const { unreadCount: messageUnreadCount } = useUnreadMessages(userId);
 
   const TabPressable = React.forwardRef<
     any,
@@ -38,7 +40,7 @@ export default function Layout() {
         tabBarStyle: {
           backgroundColor: "#fff",
           borderTopColor: "#F6F8FA",
-          height: 50 + insets.bottom,
+          height: 60 + insets.bottom,
           paddingTop: 8,
           elevation: 0,
         },
@@ -104,7 +106,37 @@ export default function Layout() {
           title: "Chat",
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Feather name="message-circle" size={size} color={color} />
+            <View style={{ position: "relative" }}>
+              <Feather name="message-circle" size={size} color={color} />
+              {messageUnreadCount > 0 && (
+                <View
+                  style={{
+                    position: "absolute",
+                    top: -4,
+                    right: -8,
+                    backgroundColor: "#3B82F6",
+                    borderRadius: 10,
+                    minWidth: 18,
+                    height: 18,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    paddingHorizontal: 4,
+                    borderWidth: 2,
+                    borderColor: "#fff",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontSize: 10,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {messageUnreadCount > 99 ? "99+" : messageUnreadCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           ),
         }}
       />

@@ -220,6 +220,11 @@ const CarDetails = () => {
   };
 
   const handleChatPress = () => {
+    if (!user) {
+      router.push("/(auth)/signInOrSignUpScreen");
+      return;
+    }
+
     if (car?.owner?.id) {
       openDirectConversation(car.owner.id, `${car.make} ${car.model}`);
     } else {
@@ -233,7 +238,7 @@ const CarDetails = () => {
     }
 
     if (!user) {
-      router.push("/(auth)/signInOrSignUpScreen"); 
+      router.push("/(auth)/signInOrSignUpScreen");
       return;
     }
 
@@ -523,13 +528,83 @@ const CarDetails = () => {
 
           {/* Reviews container */}
           <View className="mt-12">
-            <View className="flex-row items-center gap-2">
-              <AntDesign name="star" size={16} color="#FFD700" />
-              <Text className="font-JakartaSemiBold">
-                {car.averageRating || "0.0"} reviews
+            <Text className="font-JakartaBold text-lg">Ratings and Reviews</Text>
+            <View className="flex-row items-center gap-2 my-6">
+              <AntDesign name="star" size={20} color="#FFD700" />
+              <Text className="font-JakartaBold text-xl">
+                {car.averageRating || "0.0"}
+              </Text>
+              <Text className="font-Jakarta text-gray-600">
+                ( {car.reviews?.length || 0} ratings )
               </Text>
             </View>
 
+            {/* Category Ratings Breakdown */}
+            {car.reviews &&
+              car.reviews.length > 0 &&
+              (() => {
+                // Calculate category averages
+                const categoryTotals: {
+                  [key: string]: { sum: number; count: number };
+                } = {};
+
+                car.reviews.forEach((review: any) => {
+                  if (review.categories) {
+                    Object.entries(review.categories).forEach(
+                      ([category, rating]) => {
+                        if (!categoryTotals[category]) {
+                          categoryTotals[category] = { sum: 0, count: 0 };
+                        }
+                        categoryTotals[category].sum += rating as number;
+                        categoryTotals[category].count += 1;
+                      }
+                    );
+                  }
+                });
+
+                const categoryAverages = Object.entries(categoryTotals).map(
+                  ([category, data]) => ({
+                    name: category.charAt(0).toUpperCase() + category.slice(1),
+                    average: (data.sum / data.count).toFixed(1),
+                  })
+                );
+
+                return categoryAverages.length > 0 ? (
+                  <View className="mb-6 bg-gray-50 p-4 rounded-lg">
+                    {categoryAverages.map((category, index) => (
+                      <View key={index} className="mb-4">
+                        <View className="flex-row justify-between items-center mb-2">
+                          <Text
+                            className="font-JakartaMedium text-gray-700"
+                            style={{ width: 120 }}
+                          >
+                            {category.name}
+                          </Text>
+                          <View className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden mx-3">
+                            <View
+                              className="h-full bg-primary-500 rounded-full"
+                              style={{
+                                width: `${(parseFloat(category.average) / 5) * 100}%`,
+                              }}
+                            />
+                          </View>
+                          <Text
+                            className="font-JakartaSemiBold text-gray-900"
+                            style={{ width: 30 }}
+                          >
+                            {category.average}
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                    <Text className="text-xs text-gray-500 font-Jakarta mt-2">
+                      Based on {car.reviews.length} guest ratings
+                    </Text>
+                  </View>
+                ) : null;
+              })()}
+
+            {/* Review Cards */}
             {car.reviews && car.reviews.length > 0 ? (
               <FlatList
                 data={car.reviews.slice(0, 6)}

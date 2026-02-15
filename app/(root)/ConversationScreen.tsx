@@ -1,29 +1,34 @@
-// app/(root)/ConversationScreen.tsx
+// app/(root)/ConversationScreen.tsx - IMPROVED READ TRACKING
 import { Feather } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { FlashList } from "@shopify/flash-list";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Animated,
+  EmitterSubscription,
   Image,
+  Keyboard,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Platform,
-  Keyboard,
-  Animated,
-  EmitterSubscription,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { FlashList } from "@shopify/flash-list";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 import { db } from "@/FirebaseConfig";
+import OnlineIndicator from "@/components/OnlineIndicator";
 import { useAuth } from "@/hooks/useUser";
 import {
   addDoc,
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
@@ -31,6 +36,7 @@ import {
   serverTimestamp,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 
 // Types
@@ -42,6 +48,7 @@ export type MessageType = {
   time: string;
   senderId: string;
   conversationId: string;
+  read?: boolean;
 };
 
 export type ConversationType = {
@@ -59,8 +66,12 @@ export type ConversationType = {
   };
   lastMessage: string;
   lastMessageTime: any;
+  lastMessageSenderId?: string;
   time: string;
   createdAt?: any;
+  unreadCount?: {
+    [userId: string]: number;
+  };
 };
 
 const ConversationScreen = () => {
@@ -87,6 +98,71 @@ const ConversationScreen = () => {
   const { user } = useAuth();
   const currentUserId = user?.uid;
 
+  // Mark conversation as read - improved version
+  const markAsRead = useCallback(async () => {
+    if (!conversationId || !currentUserId) return;
+
+    try {
+      console.log("Marking conversation as read:", conversationId);
+
+      // Reset unread count immediately
+      const conversationRef = doc(
+        db,
+        "conversations",
+        conversationId as string
+      );
+      await updateDoc(conversationRef, {
+        [`unreadCount.${currentUserId}`]: 0,
+      });
+
+      // Mark all unread messages as read
+      const messagesRef = collection(db, "messages");
+      const q = query(
+        messagesRef,
+        where("conversationId", "==", conversationId as string),
+        where("read", "==", false),
+        where("senderId", "!=", currentUserId) // Only mark others' messages as read
+      );
+
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        const batch = writeBatch(db);
+        snapshot.docs.forEach((docSnap) => {
+          batch.update(docSnap.ref, { read: true });
+        });
+        await batch.commit();
+        console.log(`Marked ${snapshot.docs.length} messages as read`);
+      }
+    } catch (error) {
+      console.error("Error marking conversation as read:", error);
+    }
+  }, [conversationId, currentUserId]);
+
+  // Mark as read when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      markAsRead();
+
+      // Also mark as read when returning to screen
+      return () => {
+        // Optionally mark as read when leaving
+      };
+    }, [markAsRead])
+  );
+
+  // Also mark as read when new messages arrive while in the conversation
+  useEffect(() => {
+    if (messages.length > 0 && conversationId && currentUserId) {
+      // Small delay to ensure message is saved
+      const timer = setTimeout(() => {
+        markAsRead();
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [messages.length, conversationId, currentUserId, markAsRead]);
+
   // Keyboard listeners
   useEffect(() => {
     let keyboardWillShow: EmitterSubscription;
@@ -94,8 +170,8 @@ const ConversationScreen = () => {
     let keyboardDidShow: EmitterSubscription;
     let keyboardDidHide: EmitterSubscription;
 
-    if (Platform.OS === 'ios') {
-      keyboardWillShow = Keyboard.addListener('keyboardWillShow', (e) => {
+    if (Platform.OS === "ios") {
+      keyboardWillShow = Keyboard.addListener("keyboardWillShow", (e) => {
         Animated.timing(keyboardHeight, {
           toValue: e.endCoordinates.height - insets.bottom,
           duration: e.duration,
@@ -103,7 +179,7 @@ const ConversationScreen = () => {
         }).start();
       });
 
-      keyboardWillHide = Keyboard.addListener('keyboardWillHide', (e) => {
+      keyboardWillHide = Keyboard.addListener("keyboardWillHide", (e) => {
         Animated.timing(keyboardHeight, {
           toValue: 0,
           duration: e.duration,
@@ -111,7 +187,7 @@ const ConversationScreen = () => {
         }).start();
       });
     } else {
-      keyboardDidShow = Keyboard.addListener('keyboardDidShow', (e) => {
+      keyboardDidShow = Keyboard.addListener("keyboardDidShow", (e) => {
         Animated.timing(keyboardHeight, {
           toValue: e.endCoordinates.height,
           duration: 250,
@@ -119,7 +195,7 @@ const ConversationScreen = () => {
         }).start();
       });
 
-      keyboardDidHide = Keyboard.addListener('keyboardDidHide', () => {
+      keyboardDidHide = Keyboard.addListener("keyboardDidHide", () => {
         Animated.timing(keyboardHeight, {
           toValue: 0,
           duration: 250,
@@ -129,7 +205,7 @@ const ConversationScreen = () => {
     }
 
     return () => {
-      if (Platform.OS === 'ios') {
+      if (Platform.OS === "ios") {
         keyboardWillShow?.remove();
         keyboardWillHide?.remove();
       } else {
@@ -139,7 +215,7 @@ const ConversationScreen = () => {
     };
   }, [insets.bottom]);
 
-  // Single listener for conversation (replaces the two separate listeners)
+  // Single listener for conversation
   useEffect(() => {
     if (!conversationId) return;
 
@@ -294,19 +370,37 @@ const ConversationScreen = () => {
           senderId: currentUserId,
           conversationId: selectedConversation.id,
           timestamp: serverTimestamp(),
+          read: false,
         };
 
         await addDoc(collection(db, "messages"), messageData);
+
+        // Get the other participant's ID
+        const otherUserId = selectedConversation.participants.find(
+          (id) => id !== currentUserId
+        );
 
         const conversationRef = doc(
           db,
           "conversations",
           selectedConversation.id
         );
+
+        // Get current unread count for other user
+        const conversationSnap = await getDoc(conversationRef);
+        const currentUnreadCount = conversationSnap.exists()
+          ? conversationSnap.data().unreadCount?.[otherUserId!] || 0
+          : 0;
+
         await updateDoc(conversationRef, {
           lastMessage: newMessage.trim(),
           lastMessageTime: serverTimestamp(),
+          lastMessageSenderId: currentUserId,
           [`typing.${currentUserId}`]: false,
+          // Increment unread count for the other user
+          [`unreadCount.${otherUserId}`]: currentUnreadCount + 1,
+          // Make sure current user's count stays at 0
+          [`unreadCount.${currentUserId}`]: 0,
         });
 
         setNewMessage("");
@@ -382,6 +476,10 @@ const ConversationScreen = () => {
       : null;
   };
 
+  const getOtherParticipantId = (conversation: ConversationType) => {
+    return conversation.participants.find((id) => id !== currentUserId) || null;
+  };
+
   const renderMessage = ({ item: message }: { item: MessageType }) => {
     const otherParticipant = selectedConversation
       ? getOtherParticipant(selectedConversation)
@@ -410,7 +508,16 @@ const ConversationScreen = () => {
               {message.text}
             </Text>
           </View>
-          <Text className="text-xs text-gray-400 mt-1">{message.time}</Text>
+          <View className="flex-row items-center gap-1 mt-1">
+            <Text className="text-xs text-gray-400">{message.time}</Text>
+            {message.fromUser && (
+              <Feather
+                name={message.read ? "check-circle" : "check"}
+                size={12}
+                color={message.read ? "#3B82F6" : "#9CA3AF"}
+              />
+            )}
+          </View>
         </View>
       </View>
     );
@@ -475,6 +582,8 @@ const ConversationScreen = () => {
     );
   }
 
+  const otherParticipantId = getOtherParticipantId(selectedConversation);
+
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       <View className="flex-1">
@@ -489,19 +598,42 @@ const ConversationScreen = () => {
 
             return (
               <>
-                <Image
-                  source={{ uri: otherParticipant.avatar }}
-                  className="w-10 h-10 rounded-full mr-3"
-                />
+                <View className="relative">
+                  <Image
+                    source={{ uri: otherParticipant.avatar }}
+                    className="w-10 h-10 rounded-full mr-3"
+                  />
+                  {/* Online status indicator on avatar */}
+                  {otherParticipantId && (
+                    <View className="absolute bottom-0 right-2">
+                      <OnlineIndicator
+                        userId={otherParticipantId}
+                        size="small"
+                      />
+                    </View>
+                  )}
+                </View>
                 <View className="flex-1">
                   <View className="flex-row items-center">
                     <Text className="font-JakartaSemiBold text-gray-900 mr-1">
                       {otherParticipant.name}
                     </Text>
                   </View>
-                  <Text className="text-gray-500 text-sm">
-                    @{otherParticipant.username}
-                  </Text>
+                  <View className="flex-row items-center">
+                    <Text className="text-gray-500 text-sm">
+                      @{otherParticipant.username}
+                    </Text>
+                    {otherParticipantId && (
+                      <>
+                        <Text className="text-gray-500 text-sm mx-1">•</Text>
+                        <OnlineIndicator
+                          userId={otherParticipantId}
+                          showText={true}
+                          size="medium"
+                        />
+                      </>
+                    )}
+                  </View>
                 </View>
               </>
             );
@@ -530,8 +662,8 @@ const ConversationScreen = () => {
         {/* Message Input - Now with Animated positioning */}
         <Animated.View
           className="border-t border-gray-100 bg-white"
-          style={{ 
-            transform: [{ translateY: Animated.multiply(keyboardHeight, -1) }]
+          style={{
+            transform: [{ translateY: Animated.multiply(keyboardHeight, -1) }],
           }}
         >
           <View

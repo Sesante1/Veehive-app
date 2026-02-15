@@ -1,4 +1,4 @@
-// components/ChatComponent.tsx
+// components/ChatComponent.tsx - WITH UNREAD INDICATORS
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -17,6 +17,7 @@ import {
 
 import { db } from "@/FirebaseConfig";
 import MessageSkeleton from "@/components/MessageSkeleton";
+import OnlineIndicator from "@/components/OnlineIndicator";
 import { useAuth } from "@/hooks/useUser";
 import {
   collection,
@@ -43,8 +44,12 @@ export type ConversationType = {
   };
   lastMessage: string;
   lastMessageTime: any;
+  lastMessageSenderId?: string; // Who sent the last message
   time: string;
   createdAt?: any;
+  unreadCount?: {
+    [userId: string]: number;
+  };
 };
 
 interface ChatComponentProps {
@@ -63,6 +68,8 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
 
   const { user } = useAuth();
   const currentUserId = user?.uid;
+
+  // Presence tracking is handled at app level (in root layout)
 
   // Use ref to track if component is mounted
   const isMountedRef = useRef(true);
@@ -154,6 +161,22 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
       : null;
   };
 
+  const getOtherParticipantId = (conversation: ConversationType) => {
+    return conversation.participants.find((id) => id !== currentUserId) || null;
+  };
+
+  // Check if conversation has unread messages for current user
+  const hasUnreadMessages = (conversation: ConversationType) => {
+    if (!currentUserId || !conversation.unreadCount) return false;
+    return (conversation.unreadCount[currentUserId] || 0) > 0;
+  };
+
+  // Get unread count for current user
+  const getUnreadCount = (conversation: ConversationType) => {
+    if (!currentUserId || !conversation.unreadCount) return 0;
+    return conversation.unreadCount[currentUserId] || 0;
+  };
+
   // Filter conversations based on search text
   const filteredConversations = conversationsList.filter((conversation) => {
     if (!searchText.trim()) return true;
@@ -163,8 +186,12 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
 
     const searchLower = searchText.toLowerCase();
     const nameMatch = otherParticipant.name.toLowerCase().includes(searchLower);
-    const usernameMatch = otherParticipant.username.toLowerCase().includes(searchLower);
-    const messageMatch = conversation.lastMessage.toLowerCase().includes(searchLower);
+    const usernameMatch = otherParticipant.username
+      .toLowerCase()
+      .includes(searchLower);
+    const messageMatch = conversation.lastMessage
+      .toLowerCase()
+      .includes(searchLower);
 
     return nameMatch || usernameMatch || messageMatch;
   });
@@ -237,34 +264,72 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
       >
         {filteredConversations.map((conversation) => {
           const otherParticipant = getOtherParticipant(conversation);
-          if (!otherParticipant) return null;
+          const otherParticipantId = getOtherParticipantId(conversation);
+          const isUnread = hasUnreadMessages(conversation);
+          const unreadCount = getUnreadCount(conversation);
+
+          if (!otherParticipant || !otherParticipantId) return null;
 
           return (
             <TouchableOpacity
               key={conversation.id}
-              className="flex-row items-center p-4 border-b border-gray-50 active:bg-gray-50"
+              className={`flex-row items-center p-4 border-b border-gray-50 active:bg-gray-50 ${
+                isUnread ? "bg-blue-50" : ""
+              }`}
               onPress={() => openConversation(conversation.id)}
             >
-              <Image
-                source={{ uri: otherParticipant.avatar }}
-                className="w-16 h-16 rounded-full mr-3"
-              />
+              <View className="relative">
+                <Image
+                  source={{ uri: otherParticipant.avatar }}
+                  className="w-16 h-16 rounded-full mr-3"
+                />
+                {/* Online status indicator on avatar */}
+                <View className="absolute bottom-0 right-2">
+                  <OnlineIndicator userId={otherParticipantId} size="large" />
+                </View>
+              </View>
 
               <View className="flex-1">
                 <View className="flex-row items-center justify-between mb-1">
-                  <View className="flex-row items-center gap-1">
-                    <Text className="font-JakartaSemiBold text-gray-900">
+                  <View className="flex-row items-center gap-1 flex-1">
+                    <Text
+                      className={`${
+                        isUnread ? "font-JakartaBold" : "font-JakartaSemiBold"
+                      } text-gray-900`}
+                      numberOfLines={1}
+                    >
                       {otherParticipant.name}
                     </Text>
-                    <Text className="text-gray-500 text-sm ml-1">
+                    <Text
+                      className="text-gray-500 text-sm ml-1"
+                      numberOfLines={1}
+                    >
                       @{otherParticipant.username}
                     </Text>
                   </View>
-                  <Text className="text-gray-500 text-sm">
-                    {conversation.time}
-                  </Text>
+                  <View className="flex-row items-center gap-2 ml-2">
+                    <Text
+                      className={`text-sm ${isUnread ? "text-blue-600 font-JakartaSemiBold" : "text-gray-500"}`}
+                    >
+                      {conversation.time}
+                    </Text>
+                    {isUnread && unreadCount > 0 && (
+                      <View className="bg-blue-600 rounded-full min-w-[20px] h-5 items-center justify-center px-1.5">
+                        <Text className="text-white text-xs font-JakartaBold">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-                <Text className="text-sm text-gray-500" numberOfLines={1}>
+                <Text
+                  className={`text-sm ${
+                    isUnread
+                      ? "text-gray-900 font-JakartaSemiBold"
+                      : "text-gray-500 font-Jakarta"
+                  }`}
+                  numberOfLines={1}
+                >
                   {conversation.lastMessage}
                 </Text>
               </View>
@@ -279,7 +344,9 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
             style={{ minHeight: 500 }}
           >
             <Feather name="search" size={64} color="#CBD5E0" />
-            <Text className="text-2xl font-JakartaBold mt-4">No results found</Text>
+            <Text className="text-2xl font-JakartaBold mt-4">
+              No results found
+            </Text>
             <Text className="text-base mt-2 font-Jakarta text-center px-7 text-gray-500">
               No conversations match "{searchText}"
             </Text>

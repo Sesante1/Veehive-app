@@ -1,3 +1,4 @@
+import { usePresence } from "@/hooks/usePresence";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -16,6 +17,9 @@ export default function RootLayout() {
     Jakarta: require("../assets/fonts/PlusJakartaSans-Regular.ttf"),
     "Jakarta-SemiBold": require("../assets/fonts/PlusJakartaSans-SemiBold.ttf"),
   });
+
+  // Set up presence tracking for current user
+  usePresence();
 
   useEffect(() => {
     if (loaded) {
