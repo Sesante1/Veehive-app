@@ -1,3 +1,4 @@
+import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -35,6 +36,14 @@ const Home = () => {
   const [active, setActive] = useState("All");
 
   const options = ["All", "Automatic", "Electric", "Manual"];
+
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const BLUE_HEADER_HEIGHT = 180;
+
+  const handleScroll = (event: any) => {
+    const scrollY = event.nativeEvent.contentOffset.y;
+    setIsHeaderVisible(scrollY < BLUE_HEADER_HEIGHT);
+  };
 
   const fetchCars = async () => {
     try {
@@ -74,7 +83,7 @@ const Home = () => {
     await toggleWishlist(user.uid, carId, isWishlisted);
 
     setWishlist((prev) =>
-      isWishlisted ? prev.filter((id) => id !== carId) : [...prev, carId]
+      isWishlisted ? prev.filter((id) => id !== carId) : [...prev, carId],
     );
   };
 
@@ -106,7 +115,7 @@ const Home = () => {
       filtered = filtered.filter(
         (car) =>
           car.name.toLowerCase().includes(q) ||
-          (car.type ? car.type.toLowerCase().includes(q) : false)
+          (car.type ? car.type.toLowerCase().includes(q) : false),
       );
     }
 
@@ -124,101 +133,120 @@ const Home = () => {
   }, [cars, search, active]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white px-4 -mb-14">
-      <FlatList
-        data={filteredCars}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <CarCard
-            {...item}
-            isWishlisted={wishlist.includes(item.id)}
-            onToggleWishlist={handleToggleWishlist}
-          />
-        )}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: 20 }}
-        ListEmptyComponent={() => (
-          <View className="flex flex-col items-center justify-center">
-            {!loading ? (
-              <>
-                <Image
-                  source={images.noResult}
-                  className="w-40 h-40"
-                  alt="No cars found"
-                  resizeMode="contain"
-                />
-                <Text className="text-sm">No cars found</Text>
-              </>
-            ) : (
-              <ActivityIndicator size="large" color="#007DFC" />
-            )}
-          </View>
-        )}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={handlePullToRefresh}
-            tintColor={"#007DFC"}
-            colors={["#007DFC"]}
-          />
-        }
-        ListHeaderComponent={
-          <View>
-            <View className="flex-row items-center justify-between">
-              <Text className="text-2xl font-JakartaMedium mt-6">
-                Explore new {"\n"}Destinations with ease!
-              </Text>
+    <>
+      <StatusBar
+        style={isHeaderVisible ? "light" : "dark"}
+        backgroundColor={isHeaderVisible ? "transparent" : "white"}
+        translucent
+      />
+      <SafeAreaView
+        className="flex-1 bg-white -mb-14"
+        edges={["bottom", "left", "right"]}
+      >
+        <FlatList
+          data={filteredCars}
+          keyExtractor={(item) => item.id.toString()}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          renderItem={({ item }) => (
+            <CarCard
+              {...item}
+              isWishlisted={wishlist.includes(item.id)}
+              onToggleWishlist={handleToggleWishlist}
+            />
+          )}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: 20 }}
+          ListEmptyComponent={() => (
+            <View className="flex flex-col items-center justify-center">
+              {!loading ? (
+                <>
+                  <Image
+                    source={images.noResult}
+                    className="w-40 h-40"
+                    alt="No cars found"
+                    resizeMode="contain"
+                  />
+                  <Text className="text-sm">No cars found</Text>
+                </>
+              ) : (
+                <ActivityIndicator size="large" color="#007DFC" />
+              )}
             </View>
+          )}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={handlePullToRefresh}
+              tintColor={"#007DFC"}
+              colors={["#007DFC"]}
+            />
+          }
+          ListHeaderComponent={
+            <>
+              <View className="bg-primary-500 px-4 pt-8 pb-4 rounded-b-2xl">
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-2xl font-JakartaMedium mt-6 text-white">
+                    Explore new {"\n"}Destinations with ease!
+                  </Text>
+                </View>
 
-            <Pressable
-              className="flex-row gap-6 bg-secondary-100 py-5 px-4 rounded-lg mt-8"
-              onPress={() => router.push("/searchScreen")}
-            >
-              <Image source={icons.search} className="h-6 w-6" />
-              <Text className="font-JakartaSemiBold text-secondary-700">
-                Search car
-              </Text>
-            </Pressable>
-
-            <Text className="font-JakartaMedium mt-6">
-              Select by transmission
-            </Text>
-
-            <ScrollView
-              className="my-6"
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 20,
-              }}
-            >
-              {options.map((option) => (
                 <Pressable
-                  key={option}
-                  onPress={() => setActive(option)}
-                  className={`px-5 py-3 rounded-full ${
-                    active === option ? "bg-primary-500" : "bg-secondary-400"
-                  }`}
+                  className="flex-row gap-6 bg-secondary-100 py-5 px-4 rounded-lg mt-8"
+                  onPress={() => router.push("/searchScreen")}
                 >
-                  <Text
-                    className={`font-JakartaMedium ${
-                      active === option ? "text-white" : "text-black"
-                    }`}
-                  >
-                    {option}
+                  <Image source={icons.search} className="h-6 w-6" />
+                  <Text className="font-JakartaSemiBold text-secondary-700">
+                    Search car
                   </Text>
                 </Pressable>
-              ))}
-            </ScrollView>
+              </View>
+              <View className="px-4">
+                <Text className="font-JakartaMedium mt-6">
+                  Select by transmission
+                </Text>
 
-            <Text className="font-JakartaMedium mt-6">Car Recommendation</Text>
-          </View>
-        }
-      />
-    </SafeAreaView>
+                <ScrollView
+                  className="my-6"
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 20,
+                  }}
+                >
+                  {options.map((option) => (
+                    <Pressable
+                      key={option}
+                      onPress={() => setActive(option)}
+                      className={`px-5 py-3 rounded-full ${
+                        active === option
+                          ? "bg-primary-500"
+                          : "bg-secondary-400"
+                      }`}
+                    >
+                      <Text
+                        className={`font-JakartaMedium ${
+                          active === option ? "text-white" : "text-black"
+                        }`}
+                      >
+                        {option}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+
+                <Text className="font-JakartaMedium mt-6">
+                  Car Recommendation
+                </Text>
+              </View>
+            </>
+          }
+        />
+      </SafeAreaView>
+    </>
   );
 };
 

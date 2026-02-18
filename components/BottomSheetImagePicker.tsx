@@ -151,7 +151,7 @@ const BottomSheetImagePicker: React.FC<BottomSheetImagePickerProps> = ({
               <GestureDetector gesture={panGesture}>
                 <Animated.View>
                   <View className="items-center pt-4 pb-2">
-                    <View className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                    <View className="w-12 h-1 bg-gray-300 rounded-full" />
                   </View>
 
                   <View className="px-6 pb-6">

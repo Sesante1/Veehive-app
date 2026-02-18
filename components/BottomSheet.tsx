@@ -197,7 +197,8 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                       <View
                         style={{
                           width: 48,
-                          height: 4,
+                          // Height Adjusted to 3 for a sleeker look
+                          height: 3,
                           backgroundColor: "#D1D5DB",
                           borderRadius: 3,
                         }}

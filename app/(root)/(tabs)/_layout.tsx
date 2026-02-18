@@ -56,7 +56,12 @@ export default function Layout() {
           title: "Home",
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Feather name="home" size={size} color={color} />
+            // <Feather name="home" size={size} color={color} />
+            <Image
+              source={require("../../../assets/icons/home-solid.png")}
+              style={{ width: size, height: size, tintColor: color }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
@@ -67,7 +72,12 @@ export default function Layout() {
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <View style={{ position: "relative" }}>
-              <Feather name="bell" size={size} color={color} />
+              {/* <Feather name="bell" size={size} color={color} /> */}
+              <Image
+                source={require("../../../assets/icons/notifications.png")}
+                style={{ width: size, height: size, tintColor: color }}
+                resizeMode="contain"
+              />
               {unreadCount > 0 && (
                 <View
                   style={{
@@ -107,7 +117,12 @@ export default function Layout() {
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <View style={{ position: "relative" }}>
-              <Feather name="message-circle" size={size} color={color} />
+              {/* <Feather name="message-circle" size={size} color={color} /> */}
+              <Image
+                source={require("../../../assets/icons/message-outline.png")}
+                style={{ width: size, height: size, tintColor: color }}
+                resizeMode="contain"
+              />
               {messageUnreadCount > 0 && (
                 <View
                   style={{

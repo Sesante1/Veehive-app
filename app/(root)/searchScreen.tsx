@@ -5,6 +5,7 @@ import {
   getActiveFilterCount,
 } from "@/components/FilterComponents";
 import GoogleTextInput from "@/components/GoogleTextInput";
+import { icons } from "@/constants";
 import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import {
   fetchAllCars,
@@ -28,6 +29,7 @@ import {
   FlatList,
   Image,
   PanResponder,
+  Pressable,
   StatusBar,
   Text,
   TextInput,
@@ -122,7 +124,7 @@ const CarMarker = React.memo(
       prevProps.car.id === nextProps.car.id &&
       prevProps.isSelected === nextProps.isSelected
     );
-  }
+  },
 );
 
 const SearchScreen = () => {
@@ -170,7 +172,7 @@ const SearchScreen = () => {
   // Refs
   const mapRef = useRef<MapView>(null);
   const bottomSheetY = useRef(
-    new Animated.Value(height - BOTTOM_SHEET_MIN_HEIGHT)
+    new Animated.Value(height - BOTTOM_SHEET_MIN_HEIGHT),
   ).current;
   const carCardY = useRef(new Animated.Value(height)).current;
   const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(false);
@@ -222,7 +224,7 @@ const SearchScreen = () => {
           friction: 10,
         }).start();
       },
-    })
+    }),
   ).current;
 
   // Cleanup on unmount
@@ -262,7 +264,7 @@ const SearchScreen = () => {
     await toggleWishlist(user.uid, carId, isWishlisted);
 
     setWishlist((prev) =>
-      isWishlisted ? prev.filter((id) => id !== carId) : [...prev, carId]
+      isWishlisted ? prev.filter((id) => id !== carId) : [...prev, carId],
     );
   };
 
@@ -277,7 +279,7 @@ const SearchScreen = () => {
       setLoading(true);
 
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Request timeout")), 10000)
+        setTimeout(() => reject(new Error("Request timeout")), 10000),
       );
 
       const fetchedCars = await Promise.race([fetchAllCars(), timeoutPromise]);
@@ -349,7 +351,7 @@ const SearchScreen = () => {
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return R * c;
     },
-    []
+    [],
   );
 
   // Apply all filters (location, make/model, and other filters)
@@ -364,7 +366,7 @@ const SearchScreen = () => {
           selectedLocation.latitude,
           selectedLocation.longitude,
           car.location.latitude,
-          car.location.longitude
+          car.location.longitude,
         );
         return distance <= SEARCH_RADIUS_KM;
       });
@@ -373,7 +375,7 @@ const SearchScreen = () => {
     // Apply make/model search
     if (makeModelSearch.trim()) {
       filtered = filtered.filter((car) =>
-        car.name.toLowerCase().includes(makeModelSearch.toLowerCase())
+        car.name.toLowerCase().includes(makeModelSearch.toLowerCase()),
       );
     }
 
@@ -403,7 +405,7 @@ const SearchScreen = () => {
             latitudeDelta: 0.15,
             longitudeDelta: 0.15,
           },
-          500
+          500,
         );
       }
 
@@ -414,7 +416,7 @@ const SearchScreen = () => {
         longitudeDelta: 0.15,
       });
     },
-    []
+    [],
   );
 
   const handleClearLocation = useCallback(() => {
@@ -431,7 +433,7 @@ const SearchScreen = () => {
           latitudeDelta: 0.5,
           longitudeDelta: 0.5,
         },
-        500
+        500,
       );
     }
   }, []);
@@ -447,7 +449,7 @@ const SearchScreen = () => {
           latitudeDelta: 0.05,
           longitudeDelta: 0.05,
         },
-        350
+        350,
       );
     }
 
@@ -499,7 +501,7 @@ const SearchScreen = () => {
           latitudeDelta: 0.1,
           longitudeDelta: 0.1,
         },
-        350
+        350,
       );
     }
   }, [userLocation]);
@@ -530,7 +532,7 @@ const SearchScreen = () => {
 
   const activeFilterCount = useMemo(
     () => getActiveFilterCount(filters),
-    [filters]
+    [filters],
   );
 
   // Memoized render item
@@ -551,7 +553,7 @@ const SearchScreen = () => {
         onToggleWishlist={handleToggleWishlist}
       />
     ),
-    [wishlist, handleToggleWishlist]
+    [wishlist, handleToggleWishlist],
   );
 
   const keyExtractor = useCallback((item: Car) => item.id, []);
@@ -591,37 +593,47 @@ const SearchScreen = () => {
         ))}
       </MapView>
 
-      {/* Search Bar */}
       <View className="absolute top-0 left-0 right-0 z-30 bg-white pt-12 px-4 pb-3">
-        <TouchableOpacity
-          onPress={() => setShowLocationSearch(!showLocationSearch)}
-          className="bg-gray-100 rounded-lg px-4 py-3 flex-row items-center"
-          activeOpacity={0.7}
-        >
-          <Ionicons name="search" size={20} color="#9CA3AF" />
-          <View className="flex-1 ml-3">
-            <Text className="text-gray-900 font-semibold">
-              {searchLocation}
-            </Text>
-            {selectedLocation && (
-              <Text className="text-xs text-gray-500 mt-0.5">
-                Within {SEARCH_RADIUS_KM}km radius
+        <View className="flex-row items-center justify-between gap-4">
+          {/* Back Button */}
+          <Pressable
+            onPress={() => router.back()}
+            className="w-15 h-15 items-center justify-center"
+          >
+            <Image source={icons.backArrow} style={{ width: 25, height: 25 }} />
+          </Pressable>
+
+          {/* Search Bar */}
+          <TouchableOpacity
+            onPress={() => setShowLocationSearch(!showLocationSearch)}
+            className="bg-gray-100 rounded-lg px-4 py-3 flex-row items-center flex-1"
+            activeOpacity={0.7}
+          >
+            <Ionicons name="search" size={20} color="#9CA3AF" />
+            <View className="flex-1 ml-3">
+              <Text className="text-gray-900 font-semibold">
+                {searchLocation}
               </Text>
+              {selectedLocation && (
+                <Text className="text-xs text-gray-500 mt-0.5">
+                  Within {SEARCH_RADIUS_KM}km radius
+                </Text>
+              )}
+            </View>
+            {searchLocation !== "Anywhere" && (
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleClearLocation();
+                }}
+                className="mr-2"
+              >
+                <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
             )}
-          </View>
-          {searchLocation !== "Anywhere" && (
-            <TouchableOpacity
-              onPress={(e) => {
-                e.stopPropagation();
-                handleClearLocation();
-              }}
-              className="mr-2"
-            >
-              <Ionicons name="close-circle" size={20} color="#9CA3AF" />
-            </TouchableOpacity>
-          )}
-          <MaterialIcons name="tune" size={24} color="#9CA3AF" />
-        </TouchableOpacity>
+            <MaterialIcons name="tune" size={24} color="#9CA3AF" />
+          </TouchableOpacity>
+        </View>
 
         {/* Location Search Dropdown */}
         {showLocationSearch && (
