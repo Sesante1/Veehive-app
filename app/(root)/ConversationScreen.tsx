@@ -585,12 +585,12 @@ const ConversationScreen = () => {
   const otherParticipantId = getOtherParticipantId(selectedConversation);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-primary-500" edges={["top"]}>
       <View className="flex-1">
         {/* Chat Header */}
-        <View className="flex-row items-center px-4 py-3 border-b border-gray-100 bg-white">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3">
-            <Feather name="arrow-left" size={24} color="#1DA1F2" />
+        <View className="flex-row items-center px-4 py-3">
+          <TouchableOpacity onPress={() => router.back()} className="mr-3 bg-white p-2 rounded-full">
+            <Feather name="arrow-left" size={24} color="#000000" />
           </TouchableOpacity>
           {(() => {
             const otherParticipant = getOtherParticipant(selectedConversation);
@@ -603,29 +603,29 @@ const ConversationScreen = () => {
                     source={{ uri: otherParticipant.avatar }}
                     className="w-10 h-10 rounded-full mr-3"
                   />
-                  {/* Online status indicator on avatar */}
-                  {otherParticipantId && (
+                  {/* Online status */}
+                  {/* {otherParticipantId && (
                     <View className="absolute bottom-0 right-2">
                       <OnlineIndicator
                         userId={otherParticipantId}
                         size="small"
                       />
                     </View>
-                  )}
+                  )} */}
                 </View>
                 <View className="flex-1">
                   <View className="flex-row items-center">
-                    <Text className="font-JakartaSemiBold text-gray-900 mr-1">
+                    <Text className="font-JakartaSemiBold text-white mr-1">
                       {otherParticipant.name}
                     </Text>
                   </View>
                   <View className="flex-row items-center">
-                    <Text className="text-gray-500 text-sm">
+                    {/* <Text className="text-gray-500 text-sm">
                       @{otherParticipant.username}
-                    </Text>
+                    </Text> */}
                     {otherParticipantId && (
                       <>
-                        <Text className="text-gray-500 text-sm mx-1">•</Text>
+                        {/* <Text className="text-gray-500 text-sm mx-1">•</Text> */}
                         <OnlineIndicator
                           userId={otherParticipantId}
                           showText={true}
@@ -641,7 +641,7 @@ const ConversationScreen = () => {
         </View>
 
         {/* Chat Messages Area */}
-        <View className="flex-1">
+        <View className="flex-1 bg-white rounded-t-3xl mt-2">
           <FlashList
             ref={listRef}
             data={messages}
@@ -656,6 +656,7 @@ const ConversationScreen = () => {
               }
             }}
             keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           />
         </View>
 

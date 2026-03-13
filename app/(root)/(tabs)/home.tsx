@@ -1,8 +1,8 @@
+import Constants from "expo-constants";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
   Image,
   Pressable,
   RefreshControl,
@@ -10,6 +10,14 @@ import {
   Text,
   View,
 } from "react-native";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  runOnJS,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 
 import CarCard from "@/components/CarCard";
 import { icons, images } from "@/constants";
@@ -22,6 +30,8 @@ import {
   fetchUserWishlist,
   toggleWishlist,
 } from "../../../services/firestore";
+
+const AnimatedFlatList = Animated.FlatList;
 
 const Home = () => {
   const currentUser = FIREBASE_AUTH.currentUser;
@@ -38,12 +48,61 @@ const Home = () => {
   const options = ["All", "Automatic", "Electric", "Manual"];
 
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const BLUE_HEADER_HEIGHT = 180;
+  const scrollY = useSharedValue(0);
+  const HEADER_MAX_HEIGHT = 220;
+  const HEADER_MIN_HEIGHT = 115;
+  const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
+
+  // const scrollHandler = useAnimatedScrollHandler({
+  //   onScroll: (event) => {
+  //     scrollY.value = event.contentOffset.y;
+  //   },
+  // });
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+
+      // Also update the status bar state
+      runOnJS(setIsHeaderVisible)(
+        event.contentOffset.y < HEADER_SCROLL_DISTANCE,
+      );
+    },
+  });
 
   const handleScroll = (event: any) => {
-    const scrollY = event.nativeEvent.contentOffset.y;
-    setIsHeaderVisible(scrollY < BLUE_HEADER_HEIGHT);
+    const scrollYValue = event.nativeEvent.contentOffset.y;
+    setIsHeaderVisible(scrollYValue < HEADER_SCROLL_DISTANCE);
   };
+
+  const headerAnimatedStyle = useAnimatedStyle(() => {
+    const height = interpolate(
+      scrollY.value,
+      [0, HEADER_SCROLL_DISTANCE],
+      [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
+      Extrapolation.CLAMP,
+    );
+    return { height };
+  });
+
+  const titleAnimatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollY.value,
+      [0, HEADER_SCROLL_DISTANCE / 2],
+      [1, 0],
+      Extrapolation.CLAMP,
+    );
+    return { opacity };
+  });
+
+  const searchBarAnimatedStyle = useAnimatedStyle(() => {
+    const translateY = interpolate(
+      scrollY.value,
+      [0, HEADER_SCROLL_DISTANCE],
+      [0, -80],
+      Extrapolation.CLAMP,
+    );
+    return { transform: [{ translateY }] };
+  });
 
   const fetchCars = async () => {
     try {
@@ -139,15 +198,51 @@ const Home = () => {
         backgroundColor={isHeaderVisible ? "transparent" : "white"}
         translucent
       />
+
+      {/* Animated Header */}
+      <Animated.View
+        style={[
+          headerAnimatedStyle,
+          { paddingTop: (Constants.statusBarHeight || 0) + 8 },
+        ]}
+        className="bg-primary-500 px-4 absolute top-0 left-0 right-0 z-10 rounded-b-2xl"
+      >
+        <Animated.View style={titleAnimatedStyle} className="my-5">
+          <Text className="text-2xl font-JakartaMedium text-white">
+            Explore new {"\n"}Destinations with ease!
+          </Text>
+        </Animated.View>
+
+        <Animated.View style={searchBarAnimatedStyle}>
+          <Pressable
+            className="flex-row gap-6 bg-secondary-100 py-5 px-4 rounded-lg my-4"
+            onPress={() => router.push("/searchScreen")}
+          >
+            <Image source={icons.search} className="h-6 w-6" />
+            <Text className="font-JakartaSemiBold text-secondary-700">
+              Search car
+            </Text>
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
+
       <SafeAreaView
         className="flex-1 bg-white -mb-14"
         edges={["bottom", "left", "right"]}
       >
-        <FlatList
+        <AnimatedFlatList
           data={filteredCars}
           keyExtractor={(item) => item.id.toString()}
-          onScroll={handleScroll}
+          // onScroll={(e) => {
+          //   scrollHandler(e);
+          //   handleScroll(e);
+          // }}
+          onScroll={scrollHandler}
           scrollEventThrottle={16}
+          contentContainerStyle={{
+            paddingTop: HEADER_MAX_HEIGHT + 20,
+            paddingBottom: 20,
+          }}
           renderItem={({ item }) => (
             <CarCard
               {...item}
@@ -157,7 +252,6 @@ const Home = () => {
           )}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingBottom: 20 }}
           ListEmptyComponent={() => (
             <View className="flex flex-col items-center justify-center">
               {!loading ? (
@@ -181,27 +275,11 @@ const Home = () => {
               onRefresh={handlePullToRefresh}
               tintColor={"#007DFC"}
               colors={["#007DFC"]}
+              progressViewOffset={HEADER_MAX_HEIGHT}
             />
           }
           ListHeaderComponent={
             <>
-              <View className="bg-primary-500 px-4 pt-8 pb-4 rounded-b-2xl">
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-2xl font-JakartaMedium mt-6 text-white">
-                    Explore new {"\n"}Destinations with ease!
-                  </Text>
-                </View>
-
-                <Pressable
-                  className="flex-row gap-6 bg-secondary-100 py-5 px-4 rounded-lg mt-8"
-                  onPress={() => router.push("/searchScreen")}
-                >
-                  <Image source={icons.search} className="h-6 w-6" />
-                  <Text className="font-JakartaSemiBold text-secondary-700">
-                    Search car
-                  </Text>
-                </Pressable>
-              </View>
               <View className="px-4">
                 <Text className="font-JakartaMedium mt-6">
                   Select by transmission

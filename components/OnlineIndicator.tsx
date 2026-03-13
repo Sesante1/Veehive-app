@@ -1,4 +1,3 @@
-// components/OnlineIndicator.tsx
 import {
   formatLastSeen,
   subscribeToUserPresence,
@@ -14,10 +13,6 @@ interface OnlineIndicatorProps {
   className?: string;
 }
 
-/**
- * Component to display a user's online status
- * Can show just the dot indicator or include "Active now" text
- */
 const OnlineIndicator = ({
   userId,
   showText = false,
@@ -57,8 +52,8 @@ const OnlineIndicator = ({
         />
       )}
       {showText && (
-        <Text className="text-xs text-gray-500 ml-1">
-          {presence.isOnline ? "Active now" : formatLastSeen(presence.lastSeen)}
+        <Text className="text-xs text-white ml-1">
+          {presence.isOnline ? "Online" : formatLastSeen(presence.lastSeen)}
         </Text>
       )}
     </View>
