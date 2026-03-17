@@ -205,17 +205,24 @@ const Home = () => {
           headerAnimatedStyle,
           { paddingTop: (Constants.statusBarHeight || 0) + 8 },
         ]}
-        className="bg-primary-500 px-4 absolute top-0 left-0 right-0 z-10 rounded-b-2xl"
+        className="bg-primary-500 absolute top-0 left-0 right-0 z-10 rounded-b-2xl"
       >
-        <Animated.View style={titleAnimatedStyle} className="my-5">
-          <Text className="text-2xl font-JakartaMedium text-white">
+        <Animated.View style={titleAnimatedStyle} className=" flex-row items-center">
+          <View className="h-20 w-20">
+            <Image source={images.appLogo} className="h-full w-full" />
+          </View>
+          
+          {/* <Text className="text-2xl font-JakartaMedium text-white">
             Explore new {"\n"}Destinations with ease!
+          </Text> */}
+          <Text className="text-4xl font-JakartaBold text-white">
+            Veehive
           </Text>
         </Animated.View>
 
         <Animated.View style={searchBarAnimatedStyle}>
           <Pressable
-            className="flex-row gap-6 bg-secondary-100 py-5 px-4 rounded-lg my-4"
+            className="flex-row gap-6 bg-secondary-100 py-5 px-4 rounded-lg m-4"
             onPress={() => router.push("/searchScreen")}
           >
             <Image source={icons.search} className="h-6 w-6" />

@@ -19,12 +19,15 @@ import {
   MaterialCommunityIcons,
   MaterialIcons,
 } from "@expo/vector-icons";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import Foundation from "@expo/vector-icons/Foundation";
 import { encode as btoa } from "base-64";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Animated,
   Dimensions,
   FlatList,
   Modal,
@@ -158,6 +161,20 @@ const CarDetails = () => {
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  const headerBg = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: ["rgba(0,0,0,0)", "rgba(255,255,255,1)"],
+    extrapolate: "clamp",
+  });
+
+  const titleOpacity = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
+
   useEffect(() => {
     if (car) {
       addRecentlyViewedCar({
@@ -215,7 +232,7 @@ const CarDetails = () => {
     await toggleWishlist(user.uid, carId, isWishlisted);
 
     setWishlist((prev) =>
-      isWishlisted ? prev.filter((id) => id !== carId) : [...prev, carId]
+      isWishlisted ? prev.filter((id) => id !== carId) : [...prev, carId],
     );
   };
 
@@ -244,7 +261,7 @@ const CarDetails = () => {
 
     if (userData?.status === "suspended") {
       setSnackbarMessage(
-        "Your account is suspended. You can't book at this time."
+        "Your account is suspended. You can't book at this time.",
       );
       setSnackbarVisible(true);
       return;
@@ -287,10 +304,68 @@ const CarDetails = () => {
 
   return (
     <>
-      <ScrollView
+      <Animated.View
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 10,
+          backgroundColor: headerBg,
+          borderBottomWidth: 1,
+          borderBottomColor: "rgba(167, 167, 167, 0.1)",
+        }}
+      >
+        <SafeAreaView
+          className="w-full px-3 py-3 flex flex-row justify-between"
+          edges={["top"]}
+        >
+          <View className="flex-row gap-12 items-center">
+            <Pressable
+              className="bg-white rounded-full p-1"
+              onPress={() => {
+                router.back();
+              }}
+            >
+              <Image
+                source={icons.backArrow}
+                style={{ width: 30, height: 30 }}
+              />
+            </Pressable>
+
+            <Animated.Text
+              style={{ opacity: titleOpacity }}
+              className="font-JakartaSemiBold text-lg"
+              numberOfLines={1}
+            >
+              {car?.make} {car?.model}
+            </Animated.Text>
+          </View>
+
+          {user && (
+            <Pressable
+              className="bg-white flex justify-center aspect-square items-center rounded-full p-2"
+              onPress={() => handleToggleWishlist(id)}
+            >
+              {wishlist.includes(id) ? (
+                <AntDesign name="heart" size={20} color="#F40F1F" />
+              ) : (
+                <AntDesign name="heart" size={20} color="#d6d6d6ff" />
+              )}
+            </Pressable>
+          )}
+        </SafeAreaView>
+      </Animated.View>
+
+      <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         className="bg-white h-full"
         contentContainerStyle={{ paddingBottom: 105 }}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false },
+        )}
+        scrollEventThrottle={16}
       >
         <View className="relative mb-5">
           <FlatList
@@ -321,33 +396,6 @@ const CarDetails = () => {
               />
             )}
           />
-
-          <SafeAreaView className="absolute w-full px-3 flex flex-row justify-between">
-            <Pressable
-              className="bg-white rounded-full p-1"
-              onPress={() => {
-                router.back();
-              }}
-            >
-              <Image
-                source={icons.backArrow}
-                style={{ width: 30, height: 30 }}
-              />
-            </Pressable>
-
-            {user && (
-              <Pressable
-                className="bg-white flex justify-center aspect-square items-center rounded-full p-2"
-                onPress={() => handleToggleWishlist(id)}
-              >
-                {wishlist.includes(id) ? (
-                  <AntDesign name="heart" size={20} color="#F40F1F" />
-                ) : (
-                  <AntDesign name="heart" size={20} color="#d6d6d6ff" />
-                )}
-              </Pressable>
-            )}
-          </SafeAreaView>
 
           {car.images.length > 1 && (
             <View className="absolute bottom-4 right-4 bg-black/70 rounded-lg px-2 py-1">
@@ -526,9 +574,54 @@ const CarDetails = () => {
             </>
           )}
 
+          {/* Cancellation Policy */}
+          <View>
+            <Text className="font-JakartaBold mt-10">Cancellation Policy</Text>
+
+            <View className="flex-row gap-6 items-center mt-4">
+              <Foundation name="like" size={30} color="black" />
+
+              <Text className="text-sm color-secondary-700 font-JakartaSemiBold mt-2">
+                Free cancellation within 24 hours of booking. More flexible
+                options available at checkout.
+              </Text>
+            </View>
+          </View>
+
+          {/* Peace of mind */}
+          <View>
+            <Text className="font-JakartaBold mt-10">Peace of Mind</Text>
+
+            <View className="flex-row gap-6 items-center mt-4">
+              <FontAwesome5 name="grin-stars" size={24} color="black" />
+
+              <Text className="text-sm color-secondary-700 font-JakartaSemiBold mt-2">
+                No car wash necessary, buy keep the vehicle tidy
+              </Text>
+            </View>
+
+            <View className="flex-row gap-6 items-center mt-4">
+              <MaterialIcons name="support-agent" size={24} color="black" />
+
+              <Text className="text-sm color-secondary-700 font-JakartaSemiBold mt-2">
+                2/7 customer support
+              </Text>
+            </View>
+
+            <View className="flex-row gap-6 items-center mt-4">
+              <FontAwesome name="road" size={24} color="black" />
+
+              <Text className="text-sm color-secondary-700 font-JakartaSemiBold mt-2">
+                Free access to 24/7 roadside assistance
+              </Text>
+            </View>
+          </View>
+
           {/* Reviews container */}
           <View className="mt-12">
-            <Text className="font-JakartaBold text-lg">Ratings and Reviews</Text>
+            <Text className="font-JakartaBold text-lg">
+              Ratings and Reviews
+            </Text>
             <View className="flex-row items-center gap-2 my-6">
               <AntDesign name="star" size={20} color="#FFD700" />
               <Text className="font-JakartaBold text-xl">
@@ -557,7 +650,7 @@ const CarDetails = () => {
                         }
                         categoryTotals[category].sum += rating as number;
                         categoryTotals[category].count += 1;
-                      }
+                      },
                     );
                   }
                 });
@@ -566,7 +659,7 @@ const CarDetails = () => {
                   ([category, data]) => ({
                     name: category.charAt(0).toUpperCase() + category.slice(1),
                     average: (data.sum / data.count).toFixed(1),
-                  })
+                  }),
                 );
 
                 return categoryAverages.length > 0 ? (
@@ -632,6 +725,63 @@ const CarDetails = () => {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Rules of the road */}
+        <View className="px-4">
+          <Text className="font-JakartaBold mt-10">Rules of the road</Text>
+
+          <View className="flex-row gap-6 items-center mt-4">
+            <FontAwesome5 name="smoking-ban" size={24} color="black" />
+
+            <View>
+              <Text className="text-sm font-JakartaSemiBold mt-2">
+                No smoking allowed
+              </Text>
+              <Text className="text-xs color-secondary-700 font-JakartaSemiBold mt-2">
+                Smoking in any Veehive vehicle would result in a 500 peso fee
+              </Text>
+            </View>
+          </View>
+
+          <View className="flex-row gap-6 items-center mt-4">
+            <FontAwesome5 name="grin-stars" size={24} color="black" />
+
+            <View>
+              <Text className="text-sm font-JakartaSemiBold mt-2">
+                Keep the vehicle tidy
+              </Text>
+              <Text className="text-xs color-secondary-700 font-JakartaSemiBold mt-2">
+                Unreasonably dirty vehicles may result in a 500 peso fee
+              </Text>
+            </View>
+          </View>
+
+          <View className="flex-row gap-6 items-center mt-4">
+            <MaterialCommunityIcons
+              name="gas-station-in-use"
+              size={24}
+              color="black"
+            />
+
+            <View>
+              <Text className="text-sm font-JakartaSemiBold mt-2">
+                Refuel the vehicle tidy
+              </Text>
+              <Text className="text-xs color-secondary-700 font-JakartaSemiBold mt-2">
+                Missing fuel may result in an additional fee
+              </Text>
+            </View>
+          </View>
+
+          <View className="flex-row gap-6 items-center mt-4">
+            <FontAwesome name="road" size={24} color="black" />
+
+            <Text className="text-sm font-JakartaSemiBold mt-2">
+              No off-roading
+            </Text>
+          </View>
+        </View>
+
         <View className="flex justify-center items-center my-6">
           <Pressable
             onPress={() => {
@@ -649,7 +799,7 @@ const CarDetails = () => {
             </Text>
           </Pressable>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Book now container */}
       <View
@@ -692,7 +842,7 @@ const CarDetails = () => {
                 pathname: "/driversLicenseVerification",
                 params: {
                   documents: btoa(
-                    JSON.stringify(userData?.driversLicense || {})
+                    JSON.stringify(userData?.driversLicense || {}),
                   ),
                   userId: user?.uid,
                 },

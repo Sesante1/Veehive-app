@@ -1,7 +1,24 @@
-// app/(root)/ConversationScreen.tsx - IMPROVED READ TRACKING
+import { db } from "@/FirebaseConfig";
+import OnlineIndicator from "@/components/OnlineIndicator";
+import { useAuth } from "@/hooks/useUser";
 import { Feather } from "@expo/vector-icons";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, FlashListRef } from "@shopify/flash-list";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+  writeBatch,
+} from "firebase/firestore";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -20,26 +37,6 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-import { db } from "@/FirebaseConfig";
-import OnlineIndicator from "@/components/OnlineIndicator";
-import { useAuth } from "@/hooks/useUser";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
-  writeBatch,
-} from "firebase/firestore";
-
-// Types
 export type MessageType = {
   id: string;
   text: string;
@@ -89,7 +86,7 @@ const ConversationScreen = () => {
 
   // Keyboard handling
   const keyboardHeight = useRef(new Animated.Value(0)).current;
-  const listRef = useRef<FlashList<any>>(null);
+  const listRef = useRef<FlashListRef<MessageType>>(null);
 
   // Refs for typing indicator
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -109,7 +106,7 @@ const ConversationScreen = () => {
       const conversationRef = doc(
         db,
         "conversations",
-        conversationId as string
+        conversationId as string,
       );
       await updateDoc(conversationRef, {
         [`unreadCount.${currentUserId}`]: 0,
@@ -121,7 +118,7 @@ const ConversationScreen = () => {
         messagesRef,
         where("conversationId", "==", conversationId as string),
         where("read", "==", false),
-        where("senderId", "!=", currentUserId) // Only mark others' messages as read
+        where("senderId", "!=", currentUserId), // Only mark others' messages as read
       );
 
       const snapshot = await getDocs(q);
@@ -148,7 +145,7 @@ const ConversationScreen = () => {
       return () => {
         // Optionally mark as read when leaving
       };
-    }, [markAsRead])
+    }, [markAsRead]),
   );
 
   // Also mark as read when new messages arrive while in the conversation
@@ -236,7 +233,7 @@ const ConversationScreen = () => {
       (error) => {
         console.error("Error listening to conversation:", error);
         setLoading(false);
-      }
+      },
     );
 
     return () => {
@@ -252,7 +249,7 @@ const ConversationScreen = () => {
     const q = query(
       messagesRef,
       where("conversationId", "==", conversationId as string),
-      orderBy("timestamp", "asc")
+      orderBy("timestamp", "asc"),
     );
 
     const unsubscribe = onSnapshot(
@@ -279,7 +276,7 @@ const ConversationScreen = () => {
       },
       (error) => {
         console.error("Error fetching messages:", error);
-      }
+      },
     );
 
     return () => {
@@ -338,17 +335,17 @@ const ConversationScreen = () => {
               const messagesRef = collection(db, "messages");
               const q = query(
                 messagesRef,
-                where("conversationId", "==", conversationId as string)
+                where("conversationId", "==", conversationId as string),
               );
               const messagesSnapshot = await getDocs(q);
 
               const deletePromises = messagesSnapshot.docs.map((doc) =>
-                deleteDoc(doc.ref)
+                deleteDoc(doc.ref),
               );
               await Promise.all(deletePromises);
 
               await deleteDoc(
-                doc(db, "conversations", conversationId as string)
+                doc(db, "conversations", conversationId as string),
               );
 
               router.back();
@@ -358,7 +355,7 @@ const ConversationScreen = () => {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -377,13 +374,13 @@ const ConversationScreen = () => {
 
         // Get the other participant's ID
         const otherUserId = selectedConversation.participants.find(
-          (id) => id !== currentUserId
+          (id) => id !== currentUserId,
         );
 
         const conversationRef = doc(
           db,
           "conversations",
-          selectedConversation.id
+          selectedConversation.id,
         );
 
         // Get current unread count for other user
@@ -469,7 +466,7 @@ const ConversationScreen = () => {
 
   const getOtherParticipant = (conversation: ConversationType) => {
     const otherParticipantId = conversation.participants.find(
-      (id) => id !== currentUserId
+      (id) => id !== currentUserId,
     );
     return otherParticipantId
       ? conversation.participantDetails[otherParticipantId]
@@ -537,7 +534,7 @@ const ConversationScreen = () => {
 
   const ListFooter = () => {
     const otherParticipantId = selectedConversation?.participants.find(
-      (id) => id !== currentUserId
+      (id) => id !== currentUserId,
     );
 
     if (
@@ -589,7 +586,10 @@ const ConversationScreen = () => {
       <View className="flex-1">
         {/* Chat Header */}
         <View className="flex-row items-center px-4 py-3">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3 bg-white p-2 rounded-full">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="mr-3 bg-white p-2 rounded-full"
+          >
             <Feather name="arrow-left" size={24} color="#000000" />
           </TouchableOpacity>
           {(() => {
@@ -646,7 +646,6 @@ const ConversationScreen = () => {
             ref={listRef}
             data={messages}
             renderItem={renderMessage}
-            estimatedItemSize={80}
             ListHeaderComponent={ListHeader}
             ListFooterComponent={ListFooter}
             keyExtractor={(item) => item.id}
@@ -671,7 +670,7 @@ const ConversationScreen = () => {
             className="flex-row items-center px-4 py-3"
             style={{ paddingBottom: Math.max(insets.bottom, 12) }}
           >
-            <View className="flex-1 flex-row items-center bg-gray-100 rounded-full px-4 mr-3">
+            <View className="flex-1 flex-row items-center bg-gray-100 rounded-full px-4 mr-3 mb-3">
               <TextInput
                 className="flex-1 text-base py-2.5"
                 placeholder="Start a message..."

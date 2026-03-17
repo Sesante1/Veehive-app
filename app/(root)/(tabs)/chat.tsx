@@ -299,12 +299,12 @@ const ChatComponent = ({ initialConversation }: ChatComponentProps) => {
                       >
                         {otherParticipant.name}
                       </Text>
-                      <Text
+                      {/* <Text
                         className="text-gray-500 text-sm ml-1"
                         numberOfLines={1}
                       >
                         @{otherParticipant.username}
-                      </Text>
+                      </Text> */}
                     </View>
                     <View className="flex-row items-center gap-2 ml-2">
                       <Text

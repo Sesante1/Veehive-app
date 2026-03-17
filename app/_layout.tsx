@@ -7,6 +7,8 @@ import { Provider as PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
 import { RoleProvider } from "../context/RoleContext";
 
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
   const [loaded] = useFonts({
     "Jakarta-Bold": require("../assets/fonts/PlusJakartaSans-Bold.ttf"),

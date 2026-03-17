@@ -45,7 +45,7 @@ const BOTTOM_SHEET_MIN_HEIGHT = 120;
 const BOTTOM_SHEET_MAX_HEIGHT = height * 0.9;
 const CAR_CARD_HEIGHT = 150;
 const CAR_CARD_BOTTOM_MARGIN = 20;
-const SEARCH_RADIUS_KM = 50; // Search radius in kilometers
+const SEARCH_RADIUS_KM = 50;
 
 interface Car {
   id: string;
@@ -176,7 +176,6 @@ const SearchScreen = () => {
   ).current;
   const carCardY = useRef(new Animated.Value(height)).current;
   const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(false);
-  const isMountedRef = useRef(true);
 
   // Pan responder for bottom sheet drag gesture
   const panResponder = useRef(
@@ -227,10 +226,9 @@ const SearchScreen = () => {
     }),
   ).current;
 
-  // Cleanup on unmount
+  // Cleanup animated value listeners on unmount
   useEffect(() => {
     return () => {
-      isMountedRef.current = false;
       bottomSheetY.removeAllListeners();
       carCardY.removeAllListeners();
     };
@@ -269,45 +267,55 @@ const SearchScreen = () => {
   };
 
   useEffect(() => {
-    loadCars();
     loadWishlist();
-    getCurrentLocation();
   }, [currentUser]);
 
-  const loadCars = async () => {
-    try {
-      setLoading(true);
+  useEffect(() => {
+    let cancelled = false;
 
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Request timeout")), 10000),
-      );
+    const loadCars = async () => {
+      try {
+        setLoading(true);
 
-      const fetchedCars = await Promise.race([fetchAllCars(), timeoutPromise]);
+        const fetchedCars = await Promise.race([
+          fetchAllCars(),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Request timeout")), 10000),
+          ),
+        ]);
 
-      if (!isMountedRef.current) return;
+        if (cancelled) return;
 
-      const carsWithLocations = fetchedCars.map((car) => ({
-        ...car,
-        location: car.location || {
-          latitude: 10.3157 + (Math.random() - 0.5) * 0.2,
-          longitude: 123.8854 + (Math.random() - 0.5) * 0.2,
-          address: "Cebu City, Philippines",
-        },
-      }));
+        const carsWithLocations = fetchedCars.map((car) => ({
+          ...car,
+          location: car.location || {
+            latitude: 10.3157 + (Math.random() - 0.5) * 0.2,
+            longitude: 123.8854 + (Math.random() - 0.5) * 0.2,
+            address: "Cebu City, Philippines",
+          },
+        }));
 
-      setCars(carsWithLocations);
-      setFilteredCars(carsWithLocations);
-    } catch (error) {
-      if (isMountedRef.current) {
+        setCars(carsWithLocations);
+        setFilteredCars(carsWithLocations);
+      } catch (error) {
+        if (cancelled) return;
         setCars([]);
         setFilteredCars([]);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-    } finally {
-      if (isMountedRef.current) {
-        setLoading(false);
-      }
-    }
-  };
+    };
+
+    loadCars();
+    getCurrentLocation();
+
+    return () => {
+      // On Fast Refresh or unmount, cancel any in-flight updates
+      cancelled = true;
+    };
+  }, []);
 
   const getCurrentLocation = async () => {
     try {
@@ -316,8 +324,6 @@ const SearchScreen = () => {
         const location = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
-
-        if (!isMountedRef.current) return;
 
         const userLoc = {
           latitude: location.coords.latitude,
@@ -339,7 +345,7 @@ const SearchScreen = () => {
   // Calculate distance between two coordinates
   const getDistance = useCallback(
     (lat1: number, lon1: number, lat2: number, lon2: number) => {
-      const R = 6371; // Earth's radius in km
+      const R = 6371;
       const dLat = ((lat2 - lat1) * Math.PI) / 180;
       const dLon = ((lon2 - lon1) * Math.PI) / 180;
       const a =
@@ -396,7 +402,6 @@ const SearchScreen = () => {
       setSelectedLocation(location);
       setShowLocationSearch(false);
 
-      // Animate map to new location
       if (mapRef.current) {
         mapRef.current.animateToRegion(
           {
@@ -424,7 +429,6 @@ const SearchScreen = () => {
     setSelectedLocation(null);
     setShowLocationSearch(false);
 
-    // Reset map to default view
     if (mapRef.current) {
       mapRef.current.animateToRegion(
         {
@@ -567,7 +571,7 @@ const SearchScreen = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-2 bg-white">
       <StatusBar barStyle="light-content" />
 
       {/* Full-Screen Map */}
@@ -578,8 +582,8 @@ const SearchScreen = () => {
         provider={PROVIDER_GOOGLE}
         showsUserLocation={userLocation !== null}
         showsMyLocationButton={false}
-        maxZoomLevel={18}
-        minZoomLevel={8}
+        // maxZoomLevel={18}
+        // minZoomLevel={8}
         loadingEnabled
         loadingIndicatorColor="#007DFC"
       >
@@ -594,7 +598,7 @@ const SearchScreen = () => {
       </MapView>
 
       <View className="absolute top-0 left-0 right-0 z-30 bg-white pt-12 px-4 pb-3">
-        <View className="flex-row items-center justify-between gap-4">
+        <View className="flex-row items-center justify-between gap-4 border border-gray-200 rounded-full px-3 h-16">
           {/* Back Button */}
           <Pressable
             onPress={() => router.back()}
@@ -606,10 +610,10 @@ const SearchScreen = () => {
           {/* Search Bar */}
           <TouchableOpacity
             onPress={() => setShowLocationSearch(!showLocationSearch)}
-            className="bg-gray-100 rounded-lg px-4 py-3 flex-row items-center flex-1"
+            className="bg-white px-4 py-3 flex-row items-center flex-1 border-l border-gray-200"
             activeOpacity={0.7}
           >
-            <Ionicons name="search" size={20} color="#9CA3AF" />
+            {/* <Ionicons name="search" size={20} color="#9CA3AF" /> */}
             <View className="flex-1 ml-3">
               <Text className="text-gray-900 font-semibold">
                 {searchLocation}
@@ -870,7 +874,7 @@ const SearchScreen = () => {
           keyExtractor={keyExtractor}
           renderItem={renderCarItem}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+          contentContainerStyle={{ paddingHorizontal: 0, paddingBottom: 100 }}
           scrollEnabled={isBottomSheetExpanded}
           removeClippedSubviews={true}
           maxToRenderPerBatch={5}
