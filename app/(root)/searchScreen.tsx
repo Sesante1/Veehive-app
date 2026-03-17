@@ -13,6 +13,7 @@ import {
   toggleWishlist,
 } from "@/services/firestore";
 import { AntDesign, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import Feather from "@expo/vector-icons/Feather";
 import * as Location from "expo-location";
 import { router } from "expo-router";
 import React, {
@@ -838,6 +839,7 @@ const SearchScreen = () => {
       <Animated.View
         style={{
           position: "absolute",
+          top: 10,
           left: 0,
           right: 0,
           height: BOTTOM_SHEET_MAX_HEIGHT,
@@ -846,60 +848,71 @@ const SearchScreen = () => {
           elevation: 10,
         }}
       >
-        <View className="items-center py-3" {...panResponder.panHandlers}>
-          {/* Drag handle */}
-          <View className="w-12 h-1 bg-gray-300 rounded-full" />
-        </View>
-
-        <View className="px-4 pb-3 flex-row items-center justify-between">
-          <Text className="font-bold text-lg">
-            {filteredCars.length} car{filteredCars.length !== 1 ? "s" : ""}{" "}
-            available
-          </Text>
-          <TouchableOpacity
-            onPress={
-              isBottomSheetExpanded ? minimizeBottomSheet : expandBottomSheet
-            }
-            className="bg-gray-700 px-4 py-2 rounded-full"
-            activeOpacity={0.7}
-          >
-            <Text className="text-white text-xs font-medium">
-              {isBottomSheetExpanded ? "Show Map" : "View List"}
+        <View className="relative">
+          <View className="items-center py-3" {...panResponder.panHandlers}>
+            {/* Drag handle */}
+            <View className="w-12 h-1 bg-gray-300 rounded-full" />
+          </View>
+          <View className="px-4 pb-3 flex-row items-center justify-between">
+            <Text className="font-bold text-lg">
+              {filteredCars.length} car{filteredCars.length !== 1 ? "s" : ""}{" "}
+              available
             </Text>
-          </TouchableOpacity>
-        </View>
-
-        <FlatList
-          data={filteredCars}
-          keyExtractor={keyExtractor}
-          renderItem={renderCarItem}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 0, paddingBottom: 100 }}
-          scrollEnabled={isBottomSheetExpanded}
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={5}
-          updateCellsBatchingPeriod={50}
-          windowSize={5}
-          initialNumToRender={5}
-          ListEmptyComponent={
-            <View className="items-center justify-center py-10">
-              <Ionicons name="car-outline" size={48} color="#9CA3AF" />
-              <Text className="text-gray-500 mt-4 text-center">
-                No cars found matching your search
+            {/* <TouchableOpacity
+              onPress={
+                isBottomSheetExpanded ? minimizeBottomSheet : expandBottomSheet
+              }
+              className="bg-gray-700 px-4 py-2 rounded-full"
+              activeOpacity={0.7}
+            >
+              <Text className="text-white text-xs font-medium">
+                {isBottomSheetExpanded ? "Show Map" : "View List"}
               </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setSearchLocation("Anywhere");
-                  setSelectedLocation(null);
-                  setMakeModelSearch("");
-                }}
-                className="mt-4 bg-blue-500 px-6 py-2 rounded-full"
-              >
-                <Text className="text-white font-semibold">Clear Filters</Text>
-              </TouchableOpacity>
+            </TouchableOpacity> */}
+          </View>
+
+          {/* Map */}
+          <TouchableOpacity onPress={minimizeBottomSheet} className="absolute bottom-44 left-0 right-0 z-20 items-center">
+            <View className="bg-primary-500 rounded-lg py-3 px-4 shadow-lg flex-row items-center gap-3">
+              <Feather name="map" size={24} color="white" />
+              <Text className="text-white text-sm font-JakartaMedium">Map</Text>
             </View>
-          }
-        />
+          </TouchableOpacity>
+
+          <FlatList
+            data={filteredCars}
+            keyExtractor={keyExtractor}
+            renderItem={renderCarItem}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 0, paddingBottom: 100 }}
+            scrollEnabled={isBottomSheetExpanded}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={5}
+            updateCellsBatchingPeriod={50}
+            windowSize={5}
+            initialNumToRender={5}
+            ListEmptyComponent={
+              <View className="items-center justify-center py-10">
+                <Ionicons name="car-outline" size={48} color="#9CA3AF" />
+                <Text className="text-gray-500 mt-4 text-center">
+                  No cars found matching your search
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchLocation("Anywhere");
+                    setSelectedLocation(null);
+                    setMakeModelSearch("");
+                  }}
+                  className="mt-4 bg-blue-500 px-6 py-2 rounded-full"
+                >
+                  <Text className="text-white font-semibold">
+                    Clear Filters
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            }
+          />
+        </View>
       </Animated.View>
     </SafeAreaView>
   );

@@ -82,11 +82,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
       {/* Trip Details */}
       <View className="w-ful relative">
         <Image
-          source={
-            carData && carData.images.length > 0
-              ? { uri: carData.images[0].url }
-              : require("../assets/images/adaptive-icon.png")
-          }
+          source={{ uri: carData?.images?.[0]?.url }}
           style={{ width: "100%", height: 160, borderRadius: 5 }}
         />
         <View className="bg-white justify-center items-center gap-2 p-1 px-2 rounded-[5px] absolute top-2 left-2">

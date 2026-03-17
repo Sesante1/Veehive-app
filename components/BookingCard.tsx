@@ -158,11 +158,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
       <View className="px-4 py-4 border-b border-gray-100">
         <View className="flex-row">
           <Image
-            source={
-              carData && carData.images.length > 0
-                ? { uri: carData.images[0].url }
-                : require("../assets/images/adaptive-icon.png")
-            }
+            source={{ uri: carData?.images?.[0]?.url }}
             style={{ width: 100, height: 100, borderRadius: 8 }}
           />
           <View className="ml-3 flex-1">
