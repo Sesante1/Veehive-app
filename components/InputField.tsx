@@ -48,9 +48,10 @@ const InputField = ({
               <Image source={icon} className={`w-6 h-6 ml-4 ${iconStyle}`} />
             )}
             <TextInput
-              className={`rounded-full p-4 font-JakartaMedium text-[15px] flex-1 ${inputStyle} text-left`}
+              className={`rounded-full p-4 font-JakartaMedium text-blue text-[15px] flex-1 ${inputStyle} text-left`}
               secureTextEntry={secureTextEntry}
               {...props}
+              placeholderTextColor={"#9CA3AF"}
             />
           </View>
         </View>

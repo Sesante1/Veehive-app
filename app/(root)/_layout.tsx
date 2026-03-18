@@ -178,6 +178,10 @@ export default function Layout() {
         name="reportListing"
         options={{ headerShown: false, animation: "slide_from_right" }}
       />
+      <Stack.Screen
+        name="VideoCallScreen"
+        options={{ headerShown: false, animation: "slide_from_right" }}
+      />
     </Stack>
   );
 }

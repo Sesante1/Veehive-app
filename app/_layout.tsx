@@ -9,21 +9,34 @@ import { Provider as PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
 import { ToastProvider } from "../components/Toastcontext";
 import { RoleProvider } from "../context/RoleContext";
+import { useIncomingCall } from "../hooks/Useincomingcall";
+import IncomingCallSheet from "@/components/Incomingcallsheet";
 
 SplashScreen.preventAutoHideAsync();
 
 function AppContent() {
   const { user } = useAuth();
+  const { incomingCall, acceptCall, declineCall } = useIncomingCall(user?.uid ?? null);
   usePresence();
   useBookingNotifications(user?.uid ?? null);
 
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(root)" options={{ headerShown: false }} />
-      <Stack.Screen name="+not-found" />
-    </Stack>
+    <>
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(root)" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+
+      <IncomingCallSheet
+        visible={!!incomingCall}
+        callerName={incomingCall?.callerName ?? ""}
+        callerAvatar={incomingCall?.callerAvatar}
+        onAccept={acceptCall}
+        onDecline={declineCall}
+      />
+    </>
   );
 }
 

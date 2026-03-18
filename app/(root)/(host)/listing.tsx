@@ -86,6 +86,7 @@ const UserListing = () => {
         value={searchQuery}
         onChangeText={(text) => setSearchQuery(text)}
         placeholder="Search your cars..."
+        placeholderTextColor={"#9CA3AF"}
       />
 
       <Text className="text-lg font-JakartaSemiBold my-4">

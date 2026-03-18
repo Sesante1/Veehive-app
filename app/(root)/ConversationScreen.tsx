@@ -1,5 +1,7 @@
 import { db } from "@/FirebaseConfig";
 import OnlineIndicator from "@/components/OnlineIndicator";
+import { VideoCallButton } from "@/components/Videocallbutton";
+import { useActiveChatStore } from "@/hooks/useActiveChatStore";
 import { useAuth } from "@/hooks/useUser";
 import { Feather } from "@expo/vector-icons";
 import { FlashList, FlashListRef } from "@shopify/flash-list";
@@ -36,7 +38,6 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { useActiveChatStore } from "@/hooks/useActiveChatStore";
 
 export type MessageType = {
   id: string;
@@ -154,7 +155,6 @@ const ConversationScreen = () => {
   // Also mark as read when new messages arrive while in the conversation
   useEffect(() => {
     if (messages.length > 0 && conversationId && currentUserId) {
-
       const timer = setTimeout(() => {
         markAsRead();
       }, 300);
@@ -216,8 +216,8 @@ const ConversationScreen = () => {
   }, [insets.bottom]);
 
   useEffect(() => {
-    setActiveChatId(conversationId as string); 
-    return () => setActiveChatId(null);        
+    setActiveChatId(conversationId as string);
+    return () => setActiveChatId(null);
   }, [conversationId]);
 
   // Single listener for conversation
@@ -627,20 +627,30 @@ const ConversationScreen = () => {
                       {otherParticipant.name}
                     </Text>
                   </View>
-                  <View className="flex-row items-center">
-                    {/* <Text className="text-gray-500 text-sm">
+
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center">
+                      {/* <Text className="text-gray-500 text-sm">
                       @{otherParticipant.username}
                     </Text> */}
-                    {otherParticipantId && (
-                      <>
-                        {/* <Text className="text-gray-500 text-sm mx-1">•</Text> */}
-                        <OnlineIndicator
-                          userId={otherParticipantId}
-                          showText={true}
-                          size="medium"
-                        />
-                      </>
-                    )}
+                      {otherParticipantId && (
+                        <>
+                          {/* <Text className="text-gray-500 text-sm mx-1">•</Text> */}
+                          <OnlineIndicator
+                            userId={otherParticipantId}
+                            showText={true}
+                            size="medium"
+                          />
+                        </>
+                      )}
+                    </View>
+
+                    <VideoCallButton
+                      currentUserId={currentUserId!}
+                      currentUserName={user?.displayName ?? ""}
+                      otherUserId={otherParticipantId!}
+                      otherUserName={otherParticipant.name}
+                    />
                   </View>
                 </View>
               </>
