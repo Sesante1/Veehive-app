@@ -1,13 +1,31 @@
+import { useBookingNotifications } from "@/hooks/useBookingNotifications";
 import { usePresence } from "@/hooks/usePresence";
+import { useAuth } from "@/hooks/useUser";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { Provider as PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
+import { ToastProvider } from "../components/Toastcontext";
 import { RoleProvider } from "../context/RoleContext";
 
 SplashScreen.preventAutoHideAsync();
+
+function AppContent() {
+  const { user } = useAuth();
+  usePresence();
+  useBookingNotifications(user?.uid ?? null);
+
+  return (
+    <Stack>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(root)" options={{ headerShown: false }} />
+      <Stack.Screen name="+not-found" />
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -20,29 +38,19 @@ export default function RootLayout() {
     "Jakarta-SemiBold": require("../assets/fonts/PlusJakartaSans-SemiBold.ttf"),
   });
 
-  // Set up presence tracking for current user
-  usePresence();
-
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
+    if (loaded) SplashScreen.hideAsync();
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
+  if (!loaded) return null;
 
   return (
-    <PaperProvider>
-      <RoleProvider>
-        <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(root)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-      </RoleProvider>
-    </PaperProvider>
+    <ToastProvider>
+      <PaperProvider>
+        <RoleProvider>
+          <AppContent />
+        </RoleProvider>
+      </PaperProvider>
+    </ToastProvider>
   );
 }

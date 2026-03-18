@@ -207,17 +207,18 @@ const Home = () => {
         ]}
         className="bg-primary-500 absolute top-0 left-0 right-0 z-10 rounded-b-2xl"
       >
-        <Animated.View style={titleAnimatedStyle} className=" flex-row items-center">
+        <Animated.View
+          style={titleAnimatedStyle}
+          className=" flex-row items-center"
+        >
           <View className="h-20 w-20">
             <Image source={images.appLogo} className="h-full w-full" />
           </View>
-          
+
           {/* <Text className="text-2xl font-JakartaMedium text-white">
             Explore new {"\n"}Destinations with ease!
           </Text> */}
-          <Text className="text-4xl font-JakartaBold text-white">
-            Veehive
-          </Text>
+          <Text className="text-4xl font-JakartaBold text-white">VeeHive</Text>
         </Animated.View>
 
         <Animated.View style={searchBarAnimatedStyle}>

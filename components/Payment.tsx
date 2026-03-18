@@ -98,12 +98,13 @@ const Payment = ({
         subtotal: Math.round(parseFloat(subtotal) * 100),
         platformFee: Math.round(parseFloat(platformFee) * 100),
         totalAmount: Math.round(parseFloat(amount) * 100),
-        paymentStatus: "authorized", // Changed from "paid" to "authorized"
+        paymentStatus: "authorized", 
         paymentIntentId: paymentIntentId,
-        bookingStatus: "pending", // Waiting for host acceptance
+        bookingStatus: "pending", 
         tripStatus: "not_started",
+        renterName: fullName,
+        carName: `${carDetails?.make} ${carDetails?.model}`,
 
-        //Location
         location: location
           ? {
               address: location.address,
@@ -112,7 +113,6 @@ const Payment = ({
             }
           : null,
 
-        // Cancellation & Refund fields
         cancellationStatus: null,
         cancellationRequestedAt: null,
         cancellationReason: null,

@@ -36,6 +36,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { useActiveChatStore } from "@/hooks/useActiveChatStore";
 
 export type MessageType = {
   id: string;
@@ -83,6 +84,8 @@ const ConversationScreen = () => {
   const [newMessage, setNewMessage] = useState("");
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const setActiveChatId = useActiveChatStore((s) => s.setActiveChatId);
 
   // Keyboard handling
   const keyboardHeight = useRef(new Animated.Value(0)).current;
@@ -151,7 +154,7 @@ const ConversationScreen = () => {
   // Also mark as read when new messages arrive while in the conversation
   useEffect(() => {
     if (messages.length > 0 && conversationId && currentUserId) {
-      // Small delay to ensure message is saved
+
       const timer = setTimeout(() => {
         markAsRead();
       }, 300);
@@ -211,6 +214,11 @@ const ConversationScreen = () => {
       }
     };
   }, [insets.bottom]);
+
+  useEffect(() => {
+    setActiveChatId(conversationId as string); 
+    return () => setActiveChatId(null);        
+  }, [conversationId]);
 
   // Single listener for conversation
   useEffect(() => {
