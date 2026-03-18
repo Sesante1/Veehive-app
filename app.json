@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "config": {
-        "googleMapsApiKey": ""
+        "googleMapsApiKey": "AIzaSyCkTI8nkpCoArYz5NosuStMw9bIiJOj04M"
       }
     },
     "android": {
@@ -21,9 +21,15 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": ""
+          "apiKey": "AIzaSyCkTI8nkpCoArYz5NosuStMw9bIiJOj04M"
         }
       },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.INTERNET"
+      ],
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.carrentalapp"
     },
@@ -48,6 +54,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b9fe196e-d1fa-43b3-9fef-294f20c063c6"
+      }
     }
   }
 }
