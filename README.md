@@ -52,6 +52,7 @@ A full-featured mobile car rental application built with React Native that conne
 ### 📱 Frontend
 - React Native
 - JavaScript
+- NativeWind (Tailwind CSS for React Native)
 
 ### 🔥 Backend & Database
 - Firebase Authentication
@@ -68,6 +69,9 @@ A full-featured mobile car rental application built with React Native that conne
 - Firebase (Chat)
 - Agora SDK (Video & Voice Calling)
 
+### 🎨 Styling
+- NativeWind
+
 ### 🧰 Tools & Services
 - Git & GitHub
 - REST APIs
@@ -76,11 +80,16 @@ A full-featured mobile car rental application built with React Native that conne
 
 - Real-time chat system
 - Video calling using Agora SDK
-- Secure payment integration with Stripe
-- Firebase-powered backend
-- Google Maps location system
+- Secure Stripe payment integration
+- Firebase backend (auth, database, storage)
+- Google Maps integration
+- Modern UI built with NativeWind
 - Ratings and review system
 - Fully mobile-first experience
+
+## 📸 Screenshots
+
+(Add your screenshots here)
 
 ## 🎯 Future Improvements
 
