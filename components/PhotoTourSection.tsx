@@ -8,8 +8,8 @@ interface PhotoTourSectionProps {
   images: { id: string; url: string }[];
   isSpread: boolean;
   onToggleSpread: () => void;
-  onCardPress: () => void; // This will navigate to /managePhotos
-  // Animation shared values
+  onCardPress: () => void; // navigate to managePhotos
+  
   leftTranslateX: SharedValue<number>;
   rightTranslateX: SharedValue<number>;
   leftRotation: SharedValue<number>;

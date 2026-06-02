@@ -81,8 +81,8 @@ export async function POST(request: Request) {
         currency: "php",
         customer: customerId,
         payment_method: paymentMethodId,
-        confirm: true, // Immediately confirm and charge
-        off_session: true, // Allow charging without customer present
+        confirm: true, 
+        off_session: true,
         metadata: {
           booking_id,
           charge_type: "late_fee",

@@ -47,7 +47,6 @@ export default function CancellationScreen() {
   const calculateRefundAmount = () => {
     const now = new Date();
 
-    // ✅ FIXED: Use pickupTime (full datetime) instead of pickupDate
     const pickupDateTime = new Date(bookingData.pickupTime);
     const hoursUntilPickup =
       (pickupDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
@@ -77,7 +76,6 @@ export default function CancellationScreen() {
     calculateRefundAmount();
   const totalAmount = bookingData.totalAmount / 100;
 
-  // ✅ FIXED: For pending bookings, show ₱0 non-refundable (since they're not charged)
   const isPending = bookingData.bookingStatus === "pending";
   const nonRefundableAmount = isPending ? 0 : totalAmount - refundAmount;
 

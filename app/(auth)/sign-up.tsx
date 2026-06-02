@@ -158,7 +158,7 @@ const SignUp = () => {
               }}
             />
 
-            {/* ✅ Terms & Conditions Checkbox */}
+            {/* Terms & Conditions Checkbox */}
             <View className="flex-row items-center mt-4">
               <Checkbox
                 value={isChecked}
@@ -210,7 +210,7 @@ const SignUp = () => {
             </Link>
           </View>
 
-          {/* ✅ Success Modal */}
+          {/* Success Modal */}
           <ReactNativeModal
             isVisible={showSuccessModal}
             backdropColor="black"

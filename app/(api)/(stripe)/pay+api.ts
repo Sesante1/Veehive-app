@@ -28,7 +28,6 @@ export async function POST(request: Request) {
     if (paymentIntent.status !== "requires_capture") {
       console.error("Unexpected payment status:", paymentIntent.status);
       
-      // If it's already succeeded, that might be okay depending on your flow
       if (paymentIntent.status === "succeeded") {
         return new Response(
           JSON.stringify({

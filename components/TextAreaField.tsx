@@ -15,7 +15,7 @@ import React, { useState } from "react";
 
 interface TextAreaFieldProps extends InputFieldProps {
   numberOfLines?: number;
-  maxHeight?: number; // add maxHeight prop for flexibility
+  maxHeight?: number; 
 }
 
 const TextAreaField = ({

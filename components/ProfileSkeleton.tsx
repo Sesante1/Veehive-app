@@ -10,14 +10,14 @@ const Row = () => (
 const ProfileSkeleton = () => {
   return (
     <View className="px-4 bg-white my-11 flex-1">
-      {/* Header avatar + name */}
+      {/* Header avatar name */}
       <View className="flex items-center justify-center my-5 mb-20">
         {/* Avatar placeholder with shadow */}
         <View
           className="h-[110px] w-[110px] rounded-full bg-gray-100/80 animate-pulse border-[3px] border-white"
         />
 
-        {/* Name + Guest placeholders */}
+        {/* Name Guest placeholders */}
         <View className="mt-5 items-center space-y-2">
           <View className="h-5 w-48 rounded-md bg-gray-100/80 animate-pulse" />
           <View className="h-4 w-24 rounded-md bg-gray-100/80 animate-pulse mt-5" />

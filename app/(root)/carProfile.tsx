@@ -143,7 +143,6 @@ const CreateCar = () => {
     return shouldShow;
   };
 
-  // ✅ NEW: Handle resubmit for suspended/rejected cars
   const handleResubmit = async () => {
     if (!car) return;
 
@@ -256,7 +255,7 @@ const CreateCar = () => {
         }
       >
         <View className="flex-col gap-4">
-          {/* ✅ NEW: Suspended/Rejected Car Banner */}
+          {/* Suspended/Rejected Car Banner */}
           {(car.status === "suspended" || car.status === "rejected") && (
             <View className="px-5 py-4 bg-orange-50 rounded-xl border border-orange-200">
               <View className="flex-row items-center gap-3 mb-3">
@@ -303,7 +302,7 @@ const CreateCar = () => {
             </View>
           )}
 
-          {/* ✅ NEW: Pending Car Banner */}
+          {/* Pending Car Banner */}
           {car.status === "pending" && (
             <View className="px-5 py-4 bg-yellow-50 rounded-xl border border-yellow-200">
               <View className="flex-row items-center gap-3 mb-2">
@@ -319,7 +318,7 @@ const CreateCar = () => {
             </View>
           )}
 
-          {/* ✅ NEW: Active Car Banner */}
+          {/* Active Car Banner */}
           {car.status === "active" && (
             <View className="px-5 py-4 bg-green-50 rounded-xl border border-green-200">
               <View className="flex-row items-center gap-3 mb-2">

@@ -44,7 +44,7 @@ const SPRING_CONFIG = {
   mass: 0.9,
 };
 
-// ─── Step definitions ────────────────────────────────────────────────────────
+// Step definitions 
 const STEPS = [
   { id: 0, title: "Basic Info",       subtitle: "Tell us about your car"         },
   { id: 1, title: "Pricing",          subtitle: "Set your rate and location"     },
@@ -53,7 +53,7 @@ const STEPS = [
   { id: 4, title: "Documents",        subtitle: "Required for verification"      },
 ];
 
-// ─── Animated Step Slide ─────────────────────────────────────────────────────
+// Animated Step Slide
 type StepSlideProps = {
   children: React.ReactNode;
   stepIndex: number;
@@ -92,7 +92,7 @@ const StepSlide = ({ children, stepIndex, currentStep, direction }: StepSlidePro
   return <Animated.View style={animStyle}>{children}</Animated.View>;
 };
 
-// ─── Progress Bar ─────────────────────────────────────────────────────────────
+// Progress Bar
 const StepProgressBar = ({ current, total }: { current: number; total: number }) => {
   return (
     <View className="flex-row gap-1 mb-6 px-1">
@@ -120,7 +120,6 @@ const StepProgressBar = ({ current, total }: { current: number; total: number })
   );
 };
 
-// ─── Main Component ───────────────────────────────────────────────────────────
 const CreateCar = () => {
   const { userData } = useUserData();
   const { showAlert, AlertComponent } = useCustomAlert();

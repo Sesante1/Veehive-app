@@ -40,12 +40,11 @@ const DriversLicenseVerification = () => {
     null
   );
   
-  // New states for expiration date and verification status
   const [expirationDate, setExpirationDate] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false); // Track if user already submitted
   const [verificationStatus, setVerificationStatus] = useState<"pending" | "approved" | "declined" | null>(null);
 
-  // Decode passed documents
+  // decode passed documents
   React.useEffect(() => {
     try {
       if (documents) {

@@ -92,13 +92,13 @@ interface Photo {
   id: string;
   url: string;
   uri?: string;
-  filename?: string; // Firebase storage filename
+  filename?: string; //storage filename
   uploadedAt?: string;
 }
 
 interface PhotoManagementContentProps {
   images: Photo[] | null;
-  carId?: string; // Firebase storage folder ID
+  carId?: string; // storage folder ID
   onAddPhoto: (newPhotos: Photo | Photo[]) => void;
   onDeletePhoto: (photoId: string, filename?: string) => void;
   onUploadProgress?: (progress: number, message: string) => void;
@@ -128,7 +128,7 @@ const PhotoItem: React.FC<{
         style: "destructive",
         onPress: () => {
           setIsDeleting(true);
-          // Animate out before deleting
+          // Animatebefore deleting
           scale.value = withTiming(0.8, { duration: 200 });
           opacity.value = withTiming(0, { duration: 200 }, () => {
             runOnJS(onDelete)();

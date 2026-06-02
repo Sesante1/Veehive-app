@@ -39,7 +39,6 @@ const EditPhoneNumber = () => {
 
     const limitedDigits = digits.slice(0, 10);
 
-    // Format as XXX XXX XXXX for better readability
     if (limitedDigits.length <= 3) {
       return limitedDigits;
     } else if (limitedDigits.length <= 6) {
