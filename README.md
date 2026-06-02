@@ -1,51 +1,100 @@
-# Welcome to your Expo app 👋
+# 🚗 Car Rental App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A full-featured mobile car rental application built with React Native that connects vehicle owners and renters through a secure, real-time platform. Users can browse vehicles, make bookings, communicate through chat and video calls, complete payments, and leave ratings and reviews.
 
-## Get started
+## 📱 Features
 
-1. Install dependencies
+### 🔐 Authentication
+- User Registration & Login
+- Secure Authentication with Firebase
+- User Profile Management
 
-   ```bash
-   npm install
-   ```
+### 🚘 Vehicle Listings
+- Create Vehicle Listings
+- Upload Multiple Vehicle Images
+- Edit and Delete Listings
+- Vehicle Availability Management
 
-2. Start the app
+### 📅 Booking System
+- Browse Available Vehicles
+- Search and Filter Cars
+- Book Vehicles
+- Booking Status Tracking
+- Booking History
 
-   ```bash
-   npx expo start
-   ```
+### 💳 Payments
+- Secure Payment Processing with Stripe
+- Transaction Tracking
+- Payment Confirmation
 
-In the output, you'll find options to open the app in a
+### 💬 Communication
+- Real-Time In-App Chat (Firebase)
+- Video Calling Between Users (Agora SDK)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### ⭐ Reviews & Ratings
+- Vehicle Ratings
+- User Reviews
+- Review Management
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 🗺️ Maps & Location
+- Google Maps Integration
+- Location Picker
+- Address Search
+- Navigation Support
 
-## Get a fresh project
+### 🔔 Notifications
+- Real-Time Updates
+- Booking Notifications
+- Payment Notifications
 
-When you're ready, run:
+## 🛠️ Tech Stack
 
-```bash
-npm run reset-project
-```
+### 📱 Frontend
+- React Native
+- JavaScript
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 🔥 Backend & Database
+- Firebase Authentication
+- Firebase Firestore
+- Firebase Storage
 
-## Learn more
+### 💳 Payments
+- Stripe API
 
-To learn more about developing your project with Expo, look at the following resources:
+### 📍 Maps & Location
+- Google Maps API
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 📡 Real-Time Communication
+- Firebase (Chat)
+- Agora SDK (Video & Voice Calling)
 
-## Join the community
+### 🧰 Tools & Services
+- Git & GitHub
+- REST APIs
 
-Join our community of developers creating universal apps.
+## 🚀 Key Highlights
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Real-time chat system
+- Video calling using Agora SDK
+- Secure payment integration with Stripe
+- Firebase-powered backend
+- Google Maps location system
+- Ratings and review system
+- Fully mobile-first experience
 
+## 🎯 Future Improvements
+
+- Push Notifications via Firebase Cloud Messaging
+- AI-based car recommendations
+- Advanced admin analytics dashboard
+- Multi-language support
+- Loyalty rewards system
+
+## 👨‍💻 Developer
+
+**Jomel**
+Bachelor of Science in Information Technology
+
+## 📄 License
+
+This project is for educational and portfolio purposes.
